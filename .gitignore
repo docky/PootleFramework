@@ -75,3 +75,12 @@ crashlytics-build.properties
 
 
 # End of https://www.gitignore.io/api/unity
+
+# Preserve stable GUIDs for Pootle folders and their assets.
+!Pootle_Unity/Assets/Pootle.meta
+!Pootle_Unity/Assets/Pootle/**/*.meta
+
+# Odin creates these default local configurations during editor/build verification.
+Pootle_Unity/Assets/Plugins/Sirenix/Odin Inspector/Config/Editor/TypeRegistryUserConfig.asset*
+Pootle_Unity/Assets/Plugins/Sirenix/Odin Inspector/Config/Editor/AOTGenerationConfig.asset*
+Pootle_Unity/Assets/Plugins/Sirenix/Odin Inspector/Config/Resources/
