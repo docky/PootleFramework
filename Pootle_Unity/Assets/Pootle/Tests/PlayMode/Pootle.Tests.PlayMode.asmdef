@@ -1,5 +1,15 @@
 {
   "name": "Pootle.Tests.PlayMode",
-  "references": ["Pootle.Runtime", "Pootle.Cinemachine", "Unity.Cinemachine", "Unity.InputSystem"],
-  "optionalUnityReferences": ["TestAssemblies"]
+  "references": [
+    "Pootle.Runtime",
+    "Pootle.Cinemachine",
+    "Unity.Cinemachine",
+    "Unity.InputSystem",
+    "Pootle.Splines",
+    "Unity.Splines",
+    "Unity.Mathematics"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
 }

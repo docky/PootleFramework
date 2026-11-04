@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleProfile
   walkSpeed: 7.5
   runSpeed: 9
+  allowRun: 1
   minimumAnalogueSpeed: 2
   groundAcceleration: 16
   runAcceleration: 20
@@ -24,6 +25,7 @@ MonoBehaviour:
   minimumBrakeSpeed: 5
   brakeThreshold: -0.8
   excessSpeedDeceleration: 10
+  decelerateExcessSpeed: 1
   airAcceleration: 32
   airTurningDrag: 60
   risingGravity: 49
@@ -41,5 +43,37 @@ MonoBehaviour:
   landingMomentumConversion: 0
   requireCentralSupport: 1
   edgeSlipSpeed: 2
+  enableSteepSliding: 1
+  slideGravity: 38
+  slideSlopeFriction: 0.6
+  slideFlatDeceleration: 5
+  slideMaximumSpeed: 22
+  slideMinimumTime: 0.4
+  slideStopSpeed: 0.7
+  seatedSlopeNormalBlend: 0.65
+  seatedPoseSpeed: 12
+  climbSpeed: 3
+  climbSidewaysSpeed: 2.5
+  climbReach: 0.3
+  climbJumpSpeed: 7
+  regrabDelay: 0.3
+  ledgeHandHeight: 1.65
+  ledgeCatchReach: 0.4
+  topOutDuration: 0.5
+  topOutHopHeight: 0.4
+  poleTurnSpeed: 180
+  poleBodyDistance: 0.45
+  poleAttachmentSpeed: 4
+  slideLateralRetention: 0.1
+  slideLateralDamping: 18
+  railLandingRadiusFraction: 0.6
+  allowGliding: 1
+  glidingSpeed: 9
+  glidingCruiseSpeed: 3
+  glidingAcceleration: 12
+  glidingTurningDrag: 8
+  glidingGravity: 10
+  glidingMaximumFallSpeed: 2
+  glidingRotationSpeed: 180
   facingSpeed: 970
   tiltAvatarToGround: 0

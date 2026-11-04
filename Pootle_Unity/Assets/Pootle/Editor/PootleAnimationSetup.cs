@@ -36,6 +36,9 @@ namespace Pootle.Editor
                 machine.AddState("LedgeClimb").motion = Clip("LedgeClimbing");
                 EditorUtility.SetDirty(controller);
             }
+            var states = controller.layers[0].stateMachine;
+            if (!states.states.Any(s => s.state.name == "Glide"))
+            { states.AddState("Glide").motion = Clip("Gliding"); EditorUtility.SetDirty(controller); }
             foreach (var a in character.GetComponentsInChildren<Animator>(true))
             {
                 a.runtimeAnimatorController = controller; a.applyRootMotion = false; a.enabled = true;
@@ -48,6 +51,9 @@ namespace Pootle.Editor
             adapter.character = character; adapter.animator = character.GetComponentInChildren<Animator>();
             var seated = character.GetComponent<PootleSeatedPose>() ?? character.gameObject.AddComponent<PootleSeatedPose>();
             seated.character = character; seated.animator = adapter.animator;
+            var grip = character.GetComponent<PootleGripPose>() ?? character.gameObject.AddComponent<PootleGripPose>();
+            grip.character = character; grip.animator = adapter.animator;
+            EditorUtility.SetDirty(grip);
             EditorUtility.SetDirty(adapter); EditorUtility.SetDirty(seated);
         }
     }

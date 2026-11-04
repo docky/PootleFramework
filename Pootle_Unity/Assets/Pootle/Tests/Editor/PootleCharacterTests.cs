@@ -456,6 +456,222 @@ namespace Pootle.Tests
         }
 
         [Test]
+        public void PoleAttachmentSettlesInFrontOfRetainedFacingAndTurnsAroundPole()
+        {
+            var go = new GameObject("Pole"); objects.Add(go); go.transform.position = origin + new Vector3(0, 3, 0.7f);
+            var pole = go.AddComponent<PootlePole>(); pole.length = 6;
+            var trigger = go.AddComponent<CapsuleCollider>(); trigger.height = 6; trigger.radius = 0.12f; trigger.isTrigger = true;
+            ResetAt(new Vector3(0, 1, 0));
+            Step(30, new PootleInputFrame { grip = true });
+            Vector3 toPole = Vector3.ProjectOnPlane(go.transform.position - character.transform.position, Vector3.up);
+            Assert.That(toPole.magnitude, Is.EqualTo(pole.radius + profile.poleBodyDistance).Within(0.03f));
+            Assert.That(Vector3.Dot(toPole.normalized, character.Facing), Is.GreaterThan(0.99f));
+            Step(30, new PootleInputFrame { grip = true, move = Vector2.right });
+            toPole = Vector3.ProjectOnPlane(go.transform.position - character.transform.position, Vector3.up);
+            Assert.That(Vector3.Dot(toPole.normalized, character.Facing), Is.GreaterThan(0.95f));
+        }
+        [Test]
+        public void ForgivingRailLandingCatchesCapsuleEdgeButNotFarMiss()
+        {
+            Rail(new Vector3(0, 2, -5), new Vector3(0, 2, 5));
+            ResetAt(new Vector3(0.45f, 4, 0));
+            for (int i = 0; i < 90 && character.Mode != PootleMode.RailWalking; i++) Step(1);
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.RailWalking));
+            Assert.That(character.transform.position.x - origin.x, Is.Zero.Within(0.03f));
+        }
+        [Test]
+        public void WalkingOntoGroundLevelRailClimbsInclineWithoutJumping()
+        {
+            Rail(new Vector3(0, 0.02f, 1), new Vector3(0, 2, 7));
+            ResetAt(new Vector3(0, 0.02f, 0)); Step(2);
+            Step(60, new PootleInputFrame { move = Vector2.up });
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.RailWalking));
+            Assert.That(character.transform.position.y, Is.GreaterThan(0.8f));
+        }
+        [Test]
+        public void CanStepOntoMiddleStairFromSideButNotHigherRiser()
+        {
+            Box("Fourth riser", new Vector3(0, 0.3f, 0), new Vector3(4, 0.6f, 3));
+            ResetAt(new Vector3(-4, 0.02f, 0)); Step(2);
+            Step(45, new PootleInputFrame { move = Vector2.right });
+            Assert.That(character.transform.position.y, Is.GreaterThan(0.58f));
+            Assert.That(character.transform.position.x - origin.x, Is.GreaterThan(-1.9f));
+            Box("Too tall", new Vector3(0, 0.4f, 8), new Vector3(4, 0.8f, 3));
+            ResetAt(new Vector3(-4, 0.02f, 8)); Step(2);
+            Step(60, new PootleInputFrame { move = Vector2.right });
+            Assert.That(character.transform.position.x - origin.x, Is.LessThan(-2.4f));
+        }
+        [Test]
+        public void SteepSlopeDiscardsMostSidewaysLandingMomentum()
+        {
+            LandingRamp(60); ResetAt(new Vector3(-2, 9, 0));
+            for (int i = 0; i < 100 && character.Mode != PootleMode.Sliding; i++)
+                Step(1, new PootleInputFrame { move = Vector2.right });
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.Sliding));
+            Assert.That(Mathf.Abs(character.Velocity.x), Is.LessThan(0.8f));
+            Step(15);
+            Assert.That(Mathf.Abs(character.Velocity.x), Is.LessThan(0.05f));
+            Assert.That(character.Velocity.z, Is.LessThan(-2));
+        }
+        [Test]
+        public void TopOutFinishesWithSmallSmoothStepsAndNoResidualLaunch()
+        {
+            Box("Climbable", new Vector3(0, 1.5f, 1), new Vector3(6, 3, 1)).AddComponent<PootleClimbSurface>();
+            ResetAt(new Vector3(0, 0.03f, -0.05f));
+            for (int i = 0; i < 120 && character.Mode != PootleMode.LedgeHop; i++) Step(1, new PootleInputFrame { grip = true, move = Vector2.up });
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.LedgeHop));
+            Vector3 last = character.transform.position; float finalStep = 1;
+            for (int i = 0; i < 60 && character.Mode == PootleMode.LedgeHop; i++)
+            {
+                Step(1); finalStep = Vector3.Distance(last, character.transform.position);
+                Assert.That(finalStep, Is.LessThan(0.14f)); last = character.transform.position;
+            }
+            Assert.That(finalStep, Is.LessThan(0.03f));
+            Assert.That(character.Velocity.magnitude, Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void MovingPlatformCarriesTranslationAndJumpInheritsSpeed()
+        {
+            var deck = Box("Moving deck", new Vector3(0, 0.25f, 0), new Vector3(4, 0.5f, 4));
+            deck.AddComponent<PootleMovingSurface>(); ResetAt(new Vector3(0, 0.52f, 0)); Step(3);
+            for (int i = 0; i < 60; i++) { deck.transform.position += Vector3.right * 0.03f; Step(1); }
+            Assert.That(character.IsGrounded);
+            Assert.That(character.transform.position.x - deck.transform.position.x, Is.Zero.Within(0.03f));
+            deck.transform.position += Vector3.right * 0.03f;
+            Step(1, new PootleInputFrame { jumpPressed = true, jumpHeld = true });
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.Airborne));
+            Assert.That(character.Velocity.x, Is.GreaterThan(1));
+            Assert.That(character.GetComponent<PootlePlatformRider>().Surface, Is.Null);
+        }
+        [Test]
+        public void MovingPlatformLiftDoesNotDoubleCarryAndRotationPreservesAnchor()
+        {
+            var deck = Box("Lift", new Vector3(0, 0.25f, 0), new Vector3(4, 0.5f, 4));
+            deck.AddComponent<PootleMovingSurface>(); ResetAt(new Vector3(1, 0.52f, 0)); Step(3);
+            float start = character.transform.position.y;
+            for (int i = 0; i < 40; i++) { deck.transform.position += Vector3.up * 0.02f; Step(1); }
+            Assert.That(character.transform.position.y - start, Is.EqualTo(0.8f).Within(0.04f));
+            deck.transform.rotation = Quaternion.Euler(0, 90, 0); Step(1);
+            Assert.That(character.transform.position.x - origin.x, Is.Zero.Within(0.04f));
+            Assert.That(character.transform.position.z - origin.z, Is.EqualTo(-1).Within(0.04f));
+        }
+        private PootleDangleHook Hook(Vector3 point)
+        {
+            var go = new GameObject("Test hook"); objects.Add(go); go.transform.position = origin + point;
+            return go.AddComponent<PootleDangleHook>();
+        }
+        [Test]
+        public void HookCarriesUntilGripReleasedOrJumpedAndTeleportClearsIt()
+        {
+            var hook = Hook(new Vector3(0, 3, 0)); ResetAt(hook.HangingPosition(Vector3.forward)-origin);
+            Step(1, new PootleInputFrame { grip = true }); Assert.That(character.Mode, Is.EqualTo(PootleMode.Dangling));
+            for (int i = 0; i < 30; i++) { hook.transform.position += Vector3.right * 0.02f; Step(1, new PootleInputFrame { grip = true }); }
+            Assert.That(Vector3.Distance(character.transform.position, hook.HangingPosition(character.Facing)), Is.LessThan(0.03f));
+            Step(1); Assert.That(character.Mode, Is.EqualTo(PootleMode.Airborne));
+            ResetAt(hook.HangingPosition(character.Facing) - origin); Step(1, new PootleInputFrame { grip = true });
+            Step(1, new PootleInputFrame { grip = true, jumpPressed = true, jumpHeld = true, move = Vector2.right });
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.Airborne)); Assert.That(character.Velocity.x, Is.GreaterThan(5));
+            ResetAt(new Vector3(4, 0.02f, 0)); Assert.That(character.GetComponent<PootleHookRider>().Hook, Is.Null);
+        }
+        [Test]
+        public void HookDetachesWhenCarriedCapsuleCannotFollowThroughWall()
+        {
+            var hook = Hook(new Vector3(0, 3, 0));
+            var wall = Box("Hook obstruction", new Vector3(1, 2, 0), new Vector3(0.3f, 4, 4));
+            ResetAt(hook.HangingPosition(Vector3.forward)-origin); Step(1, new PootleInputFrame { grip = true });
+            for (int i = 0; i < 60 && character.Mode == PootleMode.Dangling; i++)
+            { hook.transform.position += Vector3.right * 0.05f; Step(1, new PootleInputFrame { grip = true }); }
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.Airborne));
+            Assert.That(character.GetComponent<PootleHookRider>().Hook, Is.Null);
+            Assert.That(character.transform.position.x - origin.x, Is.LessThan(0.4f));
+            Assert.That(Physics.ComputePenetration(character.GetComponent<CapsuleCollider>(), character.transform.position, Quaternion.identity,
+                wall.GetComponent<Collider>(), wall.transform.position, wall.transform.rotation, out _, out _), Is.False);
+        }
+        [Test]
+        public void SplineMoverFollowsCurveAtConfiguredSpeedAndReverses()
+        {
+            var pathObject = new GameObject("Test spline"); objects.Add(pathObject); pathObject.transform.position = origin;
+            var container = pathObject.AddComponent<UnityEngine.Splines.SplineContainer>();
+            var spline = new UnityEngine.Splines.Spline();
+            spline.Add(new UnityEngine.Splines.BezierKnot(new Unity.Mathematics.float3(0,0,0)), UnityEngine.Splines.TangentMode.AutoSmooth);
+            spline.Add(new UnityEngine.Splines.BezierKnot(new Unity.Mathematics.float3(2,1,2)), UnityEngine.Splines.TangentMode.AutoSmooth);
+            spline.Add(new UnityEngine.Splines.BezierKnot(new Unity.Mathematics.float3(4,0,0)), UnityEngine.Splines.TangentMode.AutoSmooth);
+            container.Spline = spline;
+            var go = new GameObject("Mover"); objects.Add(go); go.transform.position = origin;
+            var mover = go.AddComponent<PootleSplineMover>(); mover.simulateAutomatically = false; mover.path = container; mover.speed = 2; mover.Rebuild();
+            float travelled = 0; Vector3 previous = go.transform.position; float maximumX = 0;
+            for (int i = 0; i < 300; i++) { mover.Tick(Dt); travelled += Vector3.Distance(previous, go.transform.position); previous = go.transform.position; maximumX = Mathf.Max(maximumX, previous.x - origin.x); }
+            Assert.That(travelled, Is.InRange(9.8f, 10.2f)); Assert.That(maximumX, Is.GreaterThan(3.9f));
+            Assert.That(go.transform.position.x - origin.x, Is.LessThan(3));
+        }
+
+        [Test]
+        public void HookTurnsFreelyWithCameraRelativeInputAndJumpRetainsFacing()
+        {
+            var hook = Hook(new Vector3(0,3,0)); ResetAt(hook.HangingPosition(Vector3.forward)-origin);
+            var camera = new GameObject("Hook camera"); objects.Add(camera); camera.transform.rotation = Quaternion.Euler(0,90,0);
+            character.outputCamera = camera.transform;
+            Step(1,new PootleInputFrame { grip=true });
+            Step(60,new PootleInputFrame { grip=true, move=Vector2.up });
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.Dangling));
+            Assert.That(Vector3.Dot(character.Facing,Vector3.right), Is.GreaterThan(.99f));
+            Assert.That(Vector3.Dot(hook.transform.forward,character.Facing), Is.GreaterThan(.99f));
+            Step(1,new PootleInputFrame { grip=true,jumpPressed=true,jumpHeld=true });
+            Assert.That(character.Velocity.x,Is.GreaterThan(5));
+        }
+        [Test]
+        public void GliderSlowsDescentSteersAndReleaseRestoresGravity()
+        {
+            ResetAt(new Vector3(0,20,0)); Step(30);
+            Step(60,new PootleInputFrame {glide=true,move=Vector2.right});
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Gliding));
+            Assert.That(character.Velocity.y,Is.EqualTo(-profile.glidingMaximumFallSpeed).Within(.01f));
+            Assert.That(character.Velocity.x,Is.GreaterThan(5));
+            float height=character.transform.position.y;
+            Step(15); Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));
+            Assert.That(character.Velocity.y,Is.LessThan(-5));
+            Step(1,new PootleInputFrame {glide=true});
+            Assert.That(character.transform.position.y,Is.LessThan(height)); Assert.That(character.Velocity.y,Is.LessThanOrEqualTo(0));
+        }
+        [Test]
+        public void GliderRequiresDescentAndClosesOnLanding()
+        {
+            Step(3,new PootleInputFrame {glide=true}); Assert.That(character.IsGrounded);
+            Step(1,new PootleInputFrame {jumpPressed=true,jumpHeld=true,glide=true});
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne)); Assert.That(character.Velocity.y,Is.GreaterThan(0));
+            ResetAt(new Vector3(0,2,0)); Step(180,new PootleInputFrame {glide=true});
+            Assert.That(character.IsGrounded); Assert.That(character.transform.position.y,Is.LessThan(.05f));
+        }
+        [Test]
+        public void GliderCanLandOnOneWayRail()
+        {
+            var rail=Rail(new Vector3(-4,1,0),new Vector3(4,1,0));
+            character.Teleport(origin+new Vector3(0,2,0),Quaternion.Euler(0,90,0));
+            Step(60,new PootleInputFrame {glide=true});
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.RailWalking));
+            Assert.That(character.transform.position.y,Is.EqualTo(1).Within(.03f));
+        }
+        [Test]
+        public void SpringLaunchIsFullStrengthWithoutJumpHeldAndCanBounceAgain()
+        {
+            var pad=Box("Spring",new Vector3(0,.2f,0),new Vector3(3,.4f,3)); var spring=pad.AddComponent<PootleSpring>();
+            int launches=0; spring.onLaunch.AddListener(()=>launches++);
+            ResetAt(new Vector3(0,.42f,0)); Step(1);
+            Assert.That(character.Velocity.y,Is.GreaterThan(24)); Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));
+            float peak=0; for(int i=0;i<240;i++){Step(1);peak=Mathf.Max(peak,character.transform.position.y);}
+            Assert.That(peak,Is.EqualTo(.4f + spring.launchSpeed * spring.launchSpeed / (2 * profile.risingGravity)).Within(.15f)); Assert.That(launches,Is.GreaterThanOrEqualTo(2));
+        }
+        [Test]
+        public void AngledSpringUsesLaunchDirectionAndDisabledPadDoesNotLaunch()
+        {
+            var pad=Box("Spring",new Vector3(0,.2f,0),new Vector3(3,.4f,3)); var spring=pad.AddComponent<PootleSpring>();
+            spring.localLaunchDirection=new Vector3(1,1,0); spring.enabled=false;
+            ResetAt(new Vector3(0,.42f,0));Step(3);Assert.That(character.IsGrounded);
+            spring.enabled=true;Step(1);Assert.That(character.Velocity.x,Is.GreaterThan(17));Assert.That(character.Velocity.y,Is.EqualTo(spring.launchSpeed / Mathf.Sqrt(2) - profile.risingGravity * Dt).Within(.03f));
+        }
+
+        [Test]
         public void RepeatedCameraSetupReusesObjectsAndCapsuleFitIgnoresOtherRenderers()
         {
             var camera = Pootle.Editor.PootleSceneSetup.ConnectCamera(character);

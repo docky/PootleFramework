@@ -1,6 +1,19 @@
 {
   "name": "Pootle.Tests.Editor",
-  "references": ["Pootle.Runtime", "Pootle.Editor", "Pootle.Cinemachine", "Unity.InputSystem", "Unity.Cinemachine"],
-  "includePlatforms": ["Editor"],
-  "optionalUnityReferences": ["TestAssemblies"]
+  "references": [
+    "Pootle.Runtime",
+    "Pootle.Editor",
+    "Pootle.Cinemachine",
+    "Unity.InputSystem",
+    "Unity.Cinemachine",
+    "Pootle.Splines",
+    "Unity.Splines",
+    "Unity.Mathematics"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
 }

@@ -19,7 +19,7 @@ namespace Pootle
         }
         public bool Catch(PootleCharacter c, Vector3 from, Vector3 to)
         {
-            if (Rail || cooldown > 0 || c.Velocity.y > 0 || c.Mode != PootleMode.Airborne && c.Mode != PootleMode.Sliding) return false;
+            if (Rail || cooldown > 0 || c.Velocity.y > 0 || c.Mode != PootleMode.Airborne && c.Mode != PootleMode.Sliding && c.Mode != PootleMode.Gliding) return false;
             float best = float.PositiveInfinity, bestAlong = 0; int bestSegment = 0; PootleRail bestRail = null;
             foreach (var rail in PootleRail.Active)
                 if (rail && rail.Landing(from, to, out int s, out float d, out float t, c.Motor.Radius * c.profile.railLandingRadiusFraction) && t < best)

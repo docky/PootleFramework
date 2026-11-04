@@ -42,7 +42,7 @@ Effective Regular values: walk/run 7.5/9 m/s, minimum analogue speed 2 m/s, grou
 
 ## Borrowed visuals
 
-Only Lily's FBX, Lily material, Lily texture, and its Lit Rim Shader Graph were copied into `Assets/Pootle/Samples/Art/Lily/`, preserving their GUIDs inside the separate destination project. The gameplay Lily prefab, animation controller, effects, hitboxes and glider were not copied. The source asset is Platformer Project **1.12.7**. Keep these assets within the user's applicable asset licence.
+Initially Lily's FBX, Lily material, Lily texture, and its Lit Rim Shader Graph were copied into `Assets/Pootle/Samples/Art/Lily/`, preserving their GUIDs inside the separate destination project. The gameplay Lily prefab, animation controller, effects and hitboxes were not copied. The later requested gliding pass also copies the glider FBX/material/texture and open/close/spring audio, preserving GUIDs. The source asset is Platformer Project **1.12.7**. Keep these assets within the user's applicable asset licence.
 
 `Art Source/Pootle Pooch test model.blend` was inspected before the user requested Lily, but was not exported, modified, copied into Unity, or used by the implementation. The later user instruction controls the delivered avatar.
 
@@ -56,7 +56,7 @@ The installed package source is the authority for the target API. Additional pri
 
 ## Destination change set
 
-All new character code, profiles, input actions, sample art/prefab/scene, editor tools, tests and notes live under `Assets/Pootle/`. Outside that folder, the changes are the Cinemachine package manifest/lock, enabled playground scene in build settings, `.gitignore` rules for Pootle GUIDs and generated local Odin configuration, and Odin’s automatically enabled Unity.Mathematics editor drawer module/configuration. Unity regenerates that small editor integration when its dependency is available; it has no Pootle runtime role. Local macOS builds and preview images live in the ignored `Builds/Pootle-v0.1/` folder. No commits were created.
+All new character code, profiles, input actions, sample art/prefab/scene, editor tools, tests and notes live under `Assets/Pootle/`. Outside that folder, the changes are the Cinemachine and Splines package manifest/lock, enabled playground scene in build settings, `.gitignore` rules for Pootle GUIDs and generated local Odin configuration, and Odin’s automatically enabled Unity.Mathematics editor drawer module/configuration. Unity regenerates that small editor integration when its dependency is available; it has no Pootle runtime role. Local macOS builds and preview images live in the ignored `Builds/Pootle-v0.1/` folder. No commits were created.
 
 ## Character feedback and traversal pass · 4 November 2026
 
@@ -65,3 +65,9 @@ The user's follow-up expands the initial scope to basic animation, wall/cylinder
 Intentional control changes: run is LB/L1 (left shoulder), grip LT/L2 or E, WASD/Shift/Space plus independently gated RMB mouse look; default camera pitch inverted. Poles retain facing and allow in-place turning; their jump direction is facing, never a forced radial outward vector. Seated slide facing snaps to four directions relative to downhill as the user selected. Slide tilt and coasting friction are profile settings.
 
 The motor now resolves slope-tangent displacement once, filters tangential/separating sweep contacts, validates central support with actual capsule-to-plane clearance, and samples step tops in the riser's normal direction. A nearby rounded sphere contact cannot override a physically valid central face normal or trigger a seated slide on stairs. Top-out motion sweeps the capsule throughout and checks destination clearance. Static cylinder examples use mesh colliders with flat tops; straight pole/rope colliders are triggers so a jump can pass across them in the retained facing direction.
+
+## Carrier, glider and spring additions · 4 November 2026
+
+The user's follow-up authorizes moving platforms, spline hooks, gliding and launch springs. Reference `Platform`/`MovingPlatform` informed translation/rotation carry, speed and optional facing; `GlidingPlayerState` informed controlled descent and steering; `Spring` informed upward support activation, full-force launch and jump reset. Pootle adapts these behaviors without the reference entity/state/level framework. Unity Splines 2.9.1 is isolated in `Pootle.Splines`; the core motor depends on neither Splines nor the reference project.
+
+The gliding pose uses the already-copied `Lily|Gliding` clip. A separate `PootleGliderVisual` handles deployment and sounds; `PootleGripPose` places hands on poles/hooks without root motion. Pole attachment is relative to retained facing, rail landing uses capsule-radius assistance, and step height is now 0.6 m for side entry onto the stairs. Seated slope entry removes 90% of lateral velocity and damps the remainder. Hook facing is omnidirectional and camera-relative, as explicitly requested.

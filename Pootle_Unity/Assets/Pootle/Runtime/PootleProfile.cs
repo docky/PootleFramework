@@ -62,11 +62,20 @@ namespace Pootle
         [Min(0)] public float topOutDuration = 0.5f;
         [Min(0)] public float topOutHopHeight = 0.4f;
         [Min(0)] public float poleTurnSpeed = 180f;
-        [Min(0.05f)] public float poleBodyDistance = 0.28f;
+        [Min(0.05f)] public float poleBodyDistance = 0.45f;
         [Min(0.1f)] public float poleAttachmentSpeed = 4f;
         [Range(0, 1)] public float slideLateralRetention = 0.1f;
         [Min(0)] public float slideLateralDamping = 18f;
         [Range(0, 1)] public float railLandingRadiusFraction = 0.6f;
+        [Header("Gliding · hold RB / R1 or F in the air")]
+        public bool allowGliding = true;
+        [Min(0)] public float glidingSpeed = 9f;
+        [Min(0)] public float glidingCruiseSpeed = 3f;
+        [Min(0)] public float glidingAcceleration = 12f;
+        [Min(0)] public float glidingTurningDrag = 8f;
+        [Min(0)] public float glidingGravity = 10f;
+        [Min(0)] public float glidingMaximumFallSpeed = 2f;
+        [Min(0)] public float glidingRotationSpeed = 180f;
         [Header("Presentation")]
         [Min(0), Tooltip("Degrees per second.")] public float facingSpeed = 970f;
         public bool tiltAvatarToGround;

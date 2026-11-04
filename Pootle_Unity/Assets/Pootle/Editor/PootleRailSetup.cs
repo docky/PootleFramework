@@ -22,7 +22,7 @@ namespace Pootle.Editor
                 var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Pootle/Samples/Materials/Accent.mat");
                 Rail("Walk + turn · jump through from below", new[] { new Vector3(-4,1.4f,3),new Vector3(4,1.4f,3),new Vector3(4,1.4f,8) }, group.transform, mat);
                 Rail("Steep slide + flat coast", new[] { new Vector3(18,7,18),new Vector3(18,1,22),new Vector3(18,1,29) }, group.transform, mat);
-                Rail("Gentle inclined rail", new[] { new Vector3(-5,0.7f,22),new Vector3(-5,3,29) }, group.transform, mat);
+                Rail("Gentle inclined rail", new[] { new Vector3(-5,0.02f,22),new Vector3(-5,3,29) }, group.transform, mat);
             }
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
         }

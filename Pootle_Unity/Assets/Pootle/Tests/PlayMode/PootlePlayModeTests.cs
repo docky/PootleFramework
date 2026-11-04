@@ -136,6 +136,61 @@ namespace Pootle.Tests
         }
 
         [UnityTest]
+        public IEnumerator SplinePlatformCarriesStandingCharacterInLiveScene()
+        {
+            PootleMovingSurface surface = null;
+            foreach (var candidate in Object.FindObjectsByType<PootleMovingSurface>())
+                if (candidate.name.StartsWith("Moving platform")) surface = candidate;
+            Assert.That(surface, Is.Not.Null);
+            Bounds bounds = surface.GetComponentInChildren<Collider>().bounds;
+            character.Teleport(new Vector3(bounds.center.x, bounds.max.y + 0.03f, bounds.center.z), Quaternion.identity);
+            yield return new WaitForSeconds(0.15f);
+            Vector3 start = character.transform.position;
+            yield return new WaitForSeconds(0.4f);
+            Assert.That(character.IsGrounded);
+            Assert.That(character.GetComponent<PootlePlatformRider>().Surface, Is.SameAs(surface));
+            Assert.That(Vector3.Distance(start, character.transform.position), Is.GreaterThan(0.2f));
+        }
+        [UnityTest]
+        public IEnumerator MovingHookCanBeHeldAndReleasedWithGamepad()
+        {
+            PootleDangleHook hook = null;
+            foreach (var candidate in Object.FindObjectsByType<PootleDangleHook>())
+                if (candidate.name.StartsWith("Dangle shuttle")) hook = candidate;
+            Assert.That(hook, Is.Not.Null);
+            character.Teleport(hook.HangingPosition(character.Facing), Quaternion.identity);
+            InputSystem.QueueStateEvent(gamepad, new GamepadState { leftTrigger = 1 });
+            yield return new WaitForSeconds(0.3f);
+            Assert.That(character.Mode, Is.EqualTo(PootleMode.Dangling));
+            Assert.That(Vector3.Distance(character.transform.position, hook.HangingPosition(character.Facing)), Is.LessThan(0.1f));
+            Assert.That(character.GetComponents<PootleHookRider>().Length, Is.EqualTo(1));
+            InputSystem.QueueStateEvent(gamepad, new GamepadState());
+            yield return new WaitForSeconds(0.1f);
+            Assert.That(character.Mode, Is.Not.EqualTo(PootleMode.Dangling));
+        }
+
+        [UnityTest]
+        public IEnumerator RightShoulderDeploysAnimatedGliderAndReleaseClosesIt()
+        {
+            character.Teleport(new Vector3(0,12,-4),Quaternion.identity);
+            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.RightShoulder));
+            yield return new WaitForSeconds(.4f);
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Gliding));
+            Assert.That(character.GetComponentInChildren<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Glide"));
+            var visual=character.GetComponent<PootleGliderVisual>(); Assert.That(visual.gliderRoot.localScale.x,Is.GreaterThan(.95f));
+            InputSystem.QueueStateEvent(gamepad,new GamepadState()); yield return new WaitForSeconds(.3f);
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));Assert.That(visual.gliderRoot.localScale.sqrMagnitude,Is.LessThan(.001f));
+        }
+        [UnityTest]
+        public IEnumerator SpringLaunchesWithoutJumpButtonInLiveScene()
+        {
+            character.Teleport(new Vector3(-5,.43f,-3),Quaternion.identity);
+            yield return new WaitForSeconds(.3f);
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));
+            Assert.That(character.transform.position.y,Is.GreaterThan(4));Assert.That(character.Velocity.y,Is.GreaterThan(10));
+        }
+
+        [UnityTest]
         public IEnumerator HeldJumpFiresOnceAndInputSurvivesEnableDisable()
         {
             int jumps = 0; character.Jumped += () => jumps++;

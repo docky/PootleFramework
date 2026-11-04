@@ -43,6 +43,8 @@ namespace Pootle
                 PootleMode.Climbing => "Climb",
                 PootleMode.PoleClimbing => "Climb",
                 PootleMode.LedgeHanging => "LedgeHang",
+                PootleMode.Dangling => "LedgeHang",
+                PootleMode.Gliding => "Glide",
                 PootleMode.LedgeHop => character.Velocity.y >= 0 ? "Jump" : "Fall",
                 _ => character.Velocity.y > 0 ? "Jump" : "Fall"
             };

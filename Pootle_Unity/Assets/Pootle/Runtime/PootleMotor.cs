@@ -151,6 +151,13 @@ namespace Pootle
             return support;
         }
 
+        // Resolve existing overlap before calculating travel to a moving support/anchor.
+        public PootleMotionResult MoveTo(Vector3 target)
+        {
+            Vector3 recovered = Recover(transform.position);
+            return Move(target - recovered, false);
+        }
+
         public PootleMotionResult Move(Vector3 motion, bool allowSteps, float snapDistance = 0, bool steepSlide = false, float maximumSnap = float.PositiveInfinity)
         {
             Vector3 start = transform.position;
