@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 0826ae1798a1b4746a8d5093d8b773da
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Editor/CapsuleEditor.cs
+  uploadId: 655671

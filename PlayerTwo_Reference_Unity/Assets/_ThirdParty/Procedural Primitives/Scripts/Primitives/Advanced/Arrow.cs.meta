@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 8d8cc1bd32b7ade489cddc65014c6ce6
+timeCreated: 1566723028
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Primitives/Advanced/Arrow.cs
+  uploadId: 655671

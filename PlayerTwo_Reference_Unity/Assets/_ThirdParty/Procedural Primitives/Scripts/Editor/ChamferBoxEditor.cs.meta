@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: cf3f7bd06ffe77242bb3869f068cb38a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Editor/ChamferBoxEditor.cs
+  uploadId: 655671
