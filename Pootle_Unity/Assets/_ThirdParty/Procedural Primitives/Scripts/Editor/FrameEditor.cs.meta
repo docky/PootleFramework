@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: b617401cb394dfb42a149279b70ca87d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Editor/FrameEditor.cs
+  uploadId: 655671

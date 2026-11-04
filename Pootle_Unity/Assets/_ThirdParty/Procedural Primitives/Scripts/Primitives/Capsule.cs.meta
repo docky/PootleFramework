@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: c5930e8039fd9134eb7c16c42ebe3bcf
+timeCreated: 1564739024
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Primitives/Capsule.cs
+  uploadId: 655671

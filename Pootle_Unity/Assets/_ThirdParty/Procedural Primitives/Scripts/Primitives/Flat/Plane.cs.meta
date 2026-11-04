@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: cc2687f17565124488995dc297578ab5
+timeCreated: 1563195386
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Primitives/Flat/Plane.cs
+  uploadId: 655671

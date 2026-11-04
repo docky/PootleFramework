@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 990eb7d9586725a4faa0cdef5619ad2d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/Scripts/Editor/RectRing3DEditor.cs
+  uploadId: 655671

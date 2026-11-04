@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 880348c126a579943812cbdf56344db5
+timeCreated: 1565801601
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152318
+  packageName: Procedural Primitives
+  packageVersion: 2.3
+  assetPath: Assets/Ice Pond/Procedural Primitives/readme.txt
+  uploadId: 655671
