@@ -14,21 +14,23 @@ namespace Pootle
         }
         private void LateUpdate()
         {
-            if (!character || !animator || !animator.isHuman) return;
+            if (!character || !animator || !animator.isActiveAndEnabled || !animator.isHuman) return;
             var pole = character.Mode == PootleMode.PoleClimbing ? character.GetComponent<PootleTraversal>().AttachedPole : null;
             var hook = character.Mode == PootleMode.Dangling ? character.GetComponent<PootleHookRider>().Hook : null;
-            if (!pole && !hook) { weight = 0; return; }
+            var item=character.GetComponent<PootleCarrying>()?.Held;
+            if (!pole && !hook && !item) { weight = 0; return; }
             weight = Mathf.MoveTowards(weight, 1, Time.deltaTime * 10);
-            Arm(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, -1, pole, hook);
-            Arm(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, 1, pole, hook);
+            Arm(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, -1, pole, hook, item);
+            Arm(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, 1, pole, hook, item);
         }
-        private void Arm(HumanBodyBones upperId, HumanBodyBones lowerId, HumanBodyBones handId, float side, PootlePole pole, PootleDangleHook hook)
+        private void Arm(HumanBodyBones upperId, HumanBodyBones lowerId, HumanBodyBones handId, float side, PootlePole pole, PootleDangleHook hook, PootleCarryable item)
         {
             Transform upper = animator.GetBoneTransform(upperId), lower = animator.GetBoneTransform(lowerId), hand = animator.GetBoneTransform(handId);
             if (!upper || !lower || !hand) return;
             Vector3 right = Vector3.Cross(Vector3.up, character.Facing);
             Vector3 target;
-            if (hook) target = hook.GripPoint + right * side * 0.07f;
+            if(item)target=item.Shape.bounds.center+right*side*item.HalfSize.x-character.Facing*item.HalfSize.z*.65f;
+            else if (hook) target = hook.GripPoint + right * side * 0.07f;
             else
             {
                 float h = Mathf.Clamp(Vector3.Dot(hand.position - pole.Bottom, pole.transform.up), 0, pole.length);

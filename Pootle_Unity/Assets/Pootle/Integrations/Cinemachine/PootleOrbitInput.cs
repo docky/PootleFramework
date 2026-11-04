@@ -46,6 +46,8 @@ namespace Pootle
         private float Read(InputAction action, IInputAxisOwner.AxisDescriptor.Hints hint,
             Object context, CinemachineInputAxisController.Reader.ControlValueReader fallback)
         {
+            var styles=GetComponent<PootleCameraStyles>();
+            if(styles && styles.isActiveAndEnabled && !styles.AllowsLook)return 0;
             Vector2 value = action.ReadValue<Vector2>() * stickDegreesPerSecond;
             if (Mouse.current != null && Mouse.current.rightButton.isPressed && mouseLook != null)
                 value += mouseLook.ReadValue<Vector2>() * (mouseDegreesPerPixel / Mathf.Max(Time.deltaTime, 0.00001f));
@@ -53,7 +55,7 @@ namespace Pootle
         }
         private void Update()
         {
-            if (recenter != null && recenter.WasPressedThisFrame() && orbit)
+            if (recenter != null && recenter.WasPressedThisFrame() && orbit && (!GetComponent<PootleCameraStyles>() || GetComponent<PootleCameraStyles>().AllowsLook))
             {
                 Vector3 facing = character ? character.Facing : Vector3.forward;
                 orbit.HorizontalAxis.Value = Mathf.Atan2(facing.x, facing.z) * Mathf.Rad2Deg;

@@ -35,12 +35,13 @@ MonoBehaviour:
   jumpReleaseSpeed: 10
   coyoteTime: 0.15
   jumpBufferTime: 0.15
-  additionalAirJumps: 0
+  additionalAirJumps: 1
   groundSnapSpeed: 15
-  applySlopeSpeed: 0
-  uphillForce: 25
-  downhillForce: 28
-  landingMomentumConversion: 0
+  applySlopeSpeed: 1
+  uphillForce: 10
+  downhillForce: 16
+  slopeMaximumSpeed: 12
+  landingMomentumConversion: 0.2
   requireCentralSupport: 1
   edgeSlipSpeed: 2
   enableSteepSliding: 1
@@ -67,6 +68,14 @@ MonoBehaviour:
   slideLateralRetention: 0.1
   slideLateralDamping: 18
   railLandingRadiusFraction: 0.6
+  automaticGrip: 1
+  detachRegrabDelay: 0.65
+  railMagnetRadius: 1.05
+  railMagnetSpeed: 6
+  railMagnetHeight: 1.8
+  railJunctionApproach: 0.9
+  groundPoundSpeed: 28
+  poundSlideSpeed: 7
   allowGliding: 1
   glidingSpeed: 9
   glidingCruiseSpeed: 3
@@ -75,5 +84,10 @@ MonoBehaviour:
   glidingGravity: 10
   glidingMaximumFallSpeed: 2
   glidingRotationSpeed: 180
+  rollingSpeed: 9
+  rollingControl: 42
+  rollingFriction: 0.8
+  rollingGravity: 38
+  rollingMaximumSpeed: 22
   facingSpeed: 970
   tiltAvatarToGround: 0

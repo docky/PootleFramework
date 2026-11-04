@@ -12,7 +12,7 @@ namespace Pootle
         public void Apply(PootleCharacter c, float dt)
         {
             CarryVelocity = Vector3.zero;
-            if (!Surface || !Surface.isActiveAndEnabled || c.Mode != PootleMode.Grounded) { Surface = null; return; }
+            if (!Surface || !Surface.isActiveAndEnabled || !(c.Mode==PootleMode.Grounded || c.IsRolling && c.IsGrounded)) { Surface = null; return; }
             Vector3 target = Surface.transform.TransformPoint(anchor);
             Vector3 delta = target - transform.position;
             CarryVelocity = Vector3.ClampMagnitude(delta / dt, 30);
@@ -24,7 +24,7 @@ namespace Pootle
         }
         public void Remember(PootleCharacter c)
         {
-            Surface = c.Mode == PootleMode.Grounded && c.Support.walkable && c.Support.collider
+            Surface = (c.Mode==PootleMode.Grounded || c.IsRolling && c.IsGrounded) && c.Support.walkable && c.Support.collider
                 ? c.Support.collider.GetComponentInParent<PootleMovingSurface>() : null;
             if (!Surface) return;
             anchor = Surface.transform.InverseTransformPoint(transform.position);

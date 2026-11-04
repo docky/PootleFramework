@@ -67,6 +67,7 @@ namespace Pootle.Editor
             target.transform.localPosition = Vector3.up * 1.25f;
             character.cameraTarget = target.transform;
             PootleAnimationSetup.Configure(character);
+            PootleNextFeaturesSetup.ConfigureCharacter(character);
             EditorUtility.SetDirty(character);
             return character;
         }
@@ -172,6 +173,7 @@ namespace Pootle.Editor
                 adapter.character = character;
                 adapter.actions = character.input ? character.input.actions : null;
             }
+            PootleNextFeaturesSetup.ConfigureCamera(adapter);
             EditorUtility.SetDirty(character);
             PrefabUtility.RecordPrefabInstancePropertyModifications(character);
             EditorSceneManager.MarkSceneDirty(character.gameObject.scene);

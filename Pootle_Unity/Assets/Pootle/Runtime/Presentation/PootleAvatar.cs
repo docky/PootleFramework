@@ -29,7 +29,7 @@ namespace Pootle
         }
         private void LateUpdate()
         {
-            if (!animator || !character || !animator.runtimeAnimatorController) return;
+            if (!animator || !animator.isActiveAndEnabled || !character || !animator.runtimeAnimatorController) return;
             if (hasSpeed) animator.SetFloat(speed, Vector3.ProjectOnPlane(character.Velocity, Vector3.up).magnitude);
             if (hasVertical) animator.SetFloat(vertical, character.Velocity.y);
             if (hasGrounded) animator.SetBool(grounded, character.IsGrounded);
@@ -37,6 +37,8 @@ namespace Pootle
             string next = character.Mode switch
             {
                 PootleMode.Grounded => "Locomotion",
+                PootleMode.PoleStanding => "Locomotion",
+                PootleMode.GroundPounding => "SeatedSlide",
                 PootleMode.RailWalking => "Locomotion",
                 PootleMode.RailSliding => "SeatedSlide",
                 PootleMode.Sliding => "SeatedSlide",

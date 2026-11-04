@@ -9,7 +9,7 @@ using UnityEngine.InputSystem.LowLevel;
 
 namespace Pootle.Tests
 {
-    public sealed class PootleCharacterTests
+    public sealed partial class PootleCharacterTests
     {
         private readonly List<Object> objects = new List<Object>();
         private readonly Vector3 origin = new Vector3(1000, 0, 1000);
@@ -32,7 +32,8 @@ namespace Pootle.Tests
             go.AddComponent<PootleMotor>();
             character = go.AddComponent<PootleCharacter>();
             profile = ScriptableObject.CreateInstance<PootleProfile>(); objects.Add(profile);
-            character.profile = profile; character.simulateAutomatically = false;
+            profile.additionalAirJumps=0;profile.applySlopeSpeed=false;profile.landingMomentumConversion=0;
+            profile.automaticGrip=false; character.profile = profile; character.simulateAutomatically = false;
             go.SetActive(true);
             Physics.SyncTransforms();
             Step(2);
@@ -385,7 +386,7 @@ namespace Pootle.Tests
             Assert.That(character.Velocity.y, Is.GreaterThan(17));
         }
         [Test]
-        public void RailLandingSnapsFourWaysAndWalkingFacesRailAcrossCorner()
+        public void RailLandingSnapsFourWaysAndCornerRequiresExplicitTurn()
         {
             Rail(new Vector3(0, 2, -5), new Vector3(0, 2, 3), new Vector3(5, 2, 3));
             character.Teleport(origin + new Vector3(0, 4, 0), Quaternion.Euler(0, 80, 0));
@@ -394,7 +395,9 @@ namespace Pootle.Tests
             Assert.That(Vector3.Dot(character.Facing, Vector3.right), Is.GreaterThan(0.99f));
             Step(25, new PootleInputFrame { move = Vector2.up });
             Assert.That(Vector3.Dot(character.Facing, Vector3.forward), Is.GreaterThan(0.99f));
-            Step(40, new PootleInputFrame { move = Vector2.one.normalized });
+            Step(60, new PootleInputFrame { move = Vector2.up });
+            Assert.That(character.transform.position.x-origin.x,Is.Zero.Within(.03f));
+            Step(30,new PootleInputFrame {move=Vector2.right});
             Assert.That(character.transform.position.x - origin.x, Is.GreaterThan(0.2f));
             Assert.That(character.transform.position.z - origin.z, Is.EqualTo(3).Within(0.03f));
             Assert.That(Vector3.Dot(character.Facing, Vector3.right), Is.GreaterThan(0.99f));
@@ -417,7 +420,7 @@ namespace Pootle.Tests
         public void RailOutsideWidthDoesNotCatchAndTeleportClearsAttachment()
         {
             Rail(new Vector3(0, 2, -5), new Vector3(0, 2, 5));
-            ResetAt(new Vector3(1, 5, 0)); Step(90);
+            ResetAt(new Vector3(1.8f, 5, 0)); Step(90);
             Assert.That(character.IsGrounded);
             ResetAt(new Vector3(0, 5, 0));
             for (int i = 0; i < 90 && character.Mode != PootleMode.RailWalking; i++) Step(1);

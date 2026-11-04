@@ -103,3 +103,33 @@ Live visual verification confirmed an advancing player loop (frame count 4142 �
 Tests use disposable scenes and the sample/prefab are authored through the Editor. Source/document whitespace checks pass; Unity itself serializes blank YAML values with trailing spaces. Core compilation has no errors or warnings. Visual fitting remains a basic prototype, and spline carriers are authored static paths rather than runtime-editing or networking systems.
 
 Final macOS build succeeded: **0 errors**, 3 existing URP/TextMeshPro shader warnings; 85,250,768 bytes, 14.20 s. Updated `Builds/Pootle-v0.1/Pootle.app`. The final Console ground-truth check reports no compile or runtime errors. Background overrides and incidental build serialization were restored. The saved playground opens in Edit Mode ready to Play.
+
+## Rail junctions, pole endpoints and automatic grip · 4 November 2026
+
+Reviewed the supplied 9.75-second gameplay recording using decoded frames and the two screenshots. Seated entry now requires actual capsule contact, airborne separation exits the seated mode, and a contacted slope-to-flat join preserves the requested slide momentum. A descending impact no longer contributes artificial rail speed.
+
+Final suites: **68 Edit Mode tests passed, 0 failed; 13 Play Mode tests passed, 0 failed**. Added regressions cover perpendicular rail standing, vertical neutral rail jumps, permissive/distant landing cases, intentional 90-degree corners, separate-rail T-junction transfer, automatic wall/hook grabbing and B detachment with re-grab suppression, inherited hook momentum on drop, fixed short-post landing and post-to-post jumps, pole top-out, elevated open bottoms, capped endpoints, facing limits/ladder lock, narrow-wall rail mounting, shallow slope/rail ground pounds, seated contact/separation, and narrow-gap recovery without ordinary single-wall teleporting. Prior locomotion, stair, slope, moving-platform, glider and spring checks remain passing.
+
+Play Mode uses real Input System virtual gamepad input to verify the helix extrusion and ground-pound slide, sideways rail stance, neutral jump, and short-post position lock/jump. The helix has 339 walking segments and 3,264 mesh vertices; a live clearance sweep found **zero blocked capsule positions** across all 340 walking samples after relocating it away from existing obstacles. The running player loop advanced from frame 2446 to 2468 in the server-side frame-change check. Visual previews of Lily on the helix and the short posts are saved in `Builds/Pootle-v0.1/pootle-helix.png` and `pootle-standing-posts.png`.
+
+The saved course contains the original thin-wall top rails, a new narrow-wall rail, a T-junction, five short posts, open/locked-end elevated poles, facing-limited pole, wall-facing ladder and a two-turn extruded helix, with connected floor extensions. Capsule sweeps continue to govern attachment and movement; recovery teleports only after sustained penetration or opposing-wall trapping. Original source footage is unchanged. Source/document whitespace checks pass.
+
+Final macOS build succeeded: **0 errors**, 3 existing URP/TextMeshPro shader warnings; 85,405,360 bytes, 11.78 s. `Builds/Pootle-v0.1/Pootle.app` was updated. Incidental build serialization and normal background settings were restored.
+
+## Junction, continuous spline and pole-top jump follow-up — 2026-11-04
+
+Final regression run: **76/76 Edit Mode tests and 15/15 Play Mode tests passed**, with no compile errors or warnings. Nearby branch input now approaches the actual intersection along the current rail before transferring. Coverage includes both approach sides, an uphill branch, disconnected nearby rails, and the existing explicit 90-degree corner rule.
+
+Helix movement evaluates Unity spline positions and tangents through an arc-distance table. It no longer treats nearby samples of the same continuous curve as candidate branches. Walking tests check displacement against commanded speed, facing continuity and distance to the actual spline at 30, 60 and 120 Hz, including coarse 1.5 m samples. The live gamepad test checks for position spikes while walking the saved helix.
+
+Neutral pole-top jumps are vertical regardless of facing; tests verify returning to the same post and using air steering to reach the next post at the playground's 2 m spacing. Climbing launches retain their facing-directed behaviour. A live helix check confirmed RailWalking and zero blocked positions across all 340 search samples; the player-loop check advanced from frame 1648 to 1668.
+
+## Double jump, rolling, carrying and cameras — 2026-11-04
+
+Final suites: **89/89 Edit Mode and 19/19 Play Mode tests passed**. New coverage includes one extra jump and landing reset, jumping out of gliding, uphill/downhill speed and idle stability, modal rolling/coasting, full-capsule unroll rejection under a low roof, ball slope response and moving-platform jump inheritance, object pickup obstruction, front/beneath drops, underfoot fallback, fully blocked drop retention, and physics/lifecycle restoration. Live Input System tests exercise number-row 1–6 camera switching, returning to manual orbit, double jump, West ball toggle/blocked unroll, and North pickup/airborne drop.
+
+The full scene run caught the initial rolling tunnel obstructing the existing moving hook route. The tunnel and supports were relocated to x=14, z=-2, clear of that path; all existing hook and rail tests then passed. The low-air drop check uses the current capsule pose directly because the physics broadphase can still contain the previous pose during the same character tick.
+
+Live player-loop verification advanced from frame 7083 to 7104. Eight rendered previews cover carrying, ball mode and all six camera views, saved under `Builds/Pootle-v0.1/features-*.png`. The final console ground-truth check reported no current errors or warnings.
+
+Updated macOS build succeeded with **0 errors**, the same three pre-existing URP/TextMeshPro shader warnings, 85,438,320 bytes and a 12.49 s build time. The Editor was returned to stopped mode with normal background/ticking settings.

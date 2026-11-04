@@ -9,7 +9,7 @@ using UnityEngine.TestTools;
 
 namespace Pootle.Tests
 {
-    public sealed class PootlePlayModeTests
+    public sealed partial class PootlePlayModeTests
     {
         private Gamepad gamepad;
         private PootleCharacter character;
@@ -152,19 +152,19 @@ namespace Pootle.Tests
             Assert.That(Vector3.Distance(start, character.transform.position), Is.GreaterThan(0.2f));
         }
         [UnityTest]
-        public IEnumerator MovingHookCanBeHeldAndReleasedWithGamepad()
+        public IEnumerator MovingHookAttachesAutomaticallyAndBReleasesIt()
         {
             PootleDangleHook hook = null;
             foreach (var candidate in Object.FindObjectsByType<PootleDangleHook>())
                 if (candidate.name.StartsWith("Dangle shuttle")) hook = candidate;
             Assert.That(hook, Is.Not.Null);
             character.Teleport(hook.HangingPosition(character.Facing), Quaternion.identity);
-            InputSystem.QueueStateEvent(gamepad, new GamepadState { leftTrigger = 1 });
+            InputSystem.QueueStateEvent(gamepad, new GamepadState());
             yield return new WaitForSeconds(0.3f);
             Assert.That(character.Mode, Is.EqualTo(PootleMode.Dangling));
             Assert.That(Vector3.Distance(character.transform.position, hook.HangingPosition(character.Facing)), Is.LessThan(0.1f));
             Assert.That(character.GetComponents<PootleHookRider>().Length, Is.EqualTo(1));
-            InputSystem.QueueStateEvent(gamepad, new GamepadState());
+            InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.East));
             yield return new WaitForSeconds(0.1f);
             Assert.That(character.Mode, Is.Not.EqualTo(PootleMode.Dangling));
         }
@@ -188,6 +188,82 @@ namespace Pootle.Tests
             yield return new WaitForSeconds(.3f);
             Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));
             Assert.That(character.transform.position.y,Is.GreaterThan(4));Assert.That(character.Velocity.y,Is.GreaterThan(10));
+        }
+
+        [UnityTest]
+        public IEnumerator RailAllowsSideFacingAndNeutralJumpStaysVertical()
+        {
+            character.outputCamera=null;
+            character.Teleport(new Vector3(-2,3.5f,3),Quaternion.identity);
+            yield return new WaitForSeconds(.5f);Assert.That(character.Mode,Is.EqualTo(PootleMode.RailWalking));
+            Vector3 start=character.transform.position;
+            InputSystem.QueueStateEvent(gamepad,new GamepadState{leftStick=Vector2.up});
+            yield return new WaitForSeconds(.25f);
+            Assert.That(Vector3.Distance(start,character.transform.position),Is.LessThan(.05f));
+            Assert.That(Vector3.Dot(character.Facing,Vector3.forward),Is.GreaterThan(.99f));
+            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.South));
+            yield return new WaitForSeconds(.12f);
+            Assert.That(Vector3.ProjectOnPlane(character.transform.position-start,Vector3.up).magnitude,Is.LessThan(.05f));
+        }
+        [UnityTest]
+        public IEnumerator HelixExtrusionExistsAndGroundPoundSlidesAlongIt()
+        {
+            var spline=Object.FindAnyObjectByType<PootleSplineRail>();Assert.That(spline,Is.Not.Null);
+            var mesh=spline.GetComponent<MeshFilter>().sharedMesh;Assert.That(mesh.vertexCount,Is.GreaterThan(100));
+            var rail=spline.GetComponent<PootleRail>();var point=rail.Point(rail.SegmentCount/2);
+            character.Teleport(point+Vector3.up*2,Quaternion.identity);
+            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.East));
+            yield return new WaitForSeconds(.35f);
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.RailSliding));
+            Assert.That(character.GetComponent<PootleRailRider>().Rail,Is.SameAs(rail));
+            Assert.That(character.transform.position.y,Is.LessThan(point.y));
+        }
+        [UnityTest]
+        public IEnumerator ShortPostHoldsPositionUntilGamepadJump()
+        {
+            PootlePole post=null;foreach(var p in Object.FindObjectsByType<PootlePole>())if(p.name=="Short standing post 1")post=p;
+            Assert.That(post,Is.Not.Null);character.Teleport(post.Top+Vector3.up*1.5f,Quaternion.identity);
+            yield return new WaitForSeconds(.5f);Assert.That(character.Mode,Is.EqualTo(PootleMode.PoleStanding));
+            InputSystem.QueueStateEvent(gamepad,new GamepadState{leftStick=Vector2.right});yield return new WaitForSeconds(.2f);
+            Assert.That(Vector3.Distance(character.transform.position,post.Top),Is.LessThan(.03f));
+            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.South));yield return new WaitForSeconds(.1f);
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));
+            Assert.That(Vector3.ProjectOnPlane(character.transform.position-post.Top,Vector3.up).magnitude,Is.LessThan(.03f));
+        }
+
+        [UnityTest]
+        public IEnumerator GamepadUpApproachesNearbyTJunctionAndTurnsOntoBranch()
+        {
+            character.outputCamera=null;character.Teleport(new Vector3(-.7f,3,3),Quaternion.identity);
+            yield return new WaitForSeconds(.5f);Assert.That(character.Mode,Is.EqualTo(PootleMode.RailWalking));
+            InputSystem.QueueStateEvent(gamepad,new GamepadState{leftStick=Vector2.up});
+            yield return new WaitForSeconds(.65f);
+            Assert.That(character.GetComponent<PootleRailRider>().Rail.name,Does.StartWith("T junction"));
+            Assert.That(character.transform.position.x,Is.Zero.Within(.03f));
+            Assert.That(character.transform.position.z,Is.GreaterThan(4));
+        }
+        [UnityTest]
+        public IEnumerator GamepadHelixWalkingDoesNotHopBetweenNearbySamples()
+        {
+            character.outputCamera=null;
+            var spline=Object.FindAnyObjectByType<PootleSplineRail>();var rail=spline.GetComponent<PootleRail>();
+            character.Teleport(rail.Point(rail.SegmentCount*3/4)+Vector3.up,Quaternion.identity);
+            yield return new WaitForSeconds(.45f);Assert.That(character.Mode,Is.EqualTo(PootleMode.RailWalking));
+            for(int frame=0;frame<80;frame++)
+            {
+                float nearest=float.PositiveInfinity;Vector3 tangent=Vector3.zero;
+                for(int i=0;i<rail.SegmentCount;i++)
+                {
+                    var point=rail.Closest(i,character.transform.position,out float along);
+                    float d=(point-character.transform.position).sqrMagnitude;
+                    if(d<nearest){nearest=d;tangent=rail.Tangent(i,along);}
+                }
+                Vector2 input=new Vector2(-tangent.x,-tangent.z).normalized;
+                var before=character.transform.position;
+                InputSystem.QueueStateEvent(gamepad,new GamepadState{leftStick=input});yield return null;
+                Assert.That(character.GetComponent<PootleRailRider>().Rail,Is.SameAs(rail));
+                Assert.That(Vector3.Distance(before,character.transform.position),Is.LessThan(character.profile.walkSpeed*Mathf.Min(Time.deltaTime,.1f)+.025f));
+            }
         }
 
         [UnityTest]

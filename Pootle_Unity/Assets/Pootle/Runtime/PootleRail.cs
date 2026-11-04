@@ -3,6 +3,15 @@ using UnityEngine;
 
 namespace Pootle
 {
+    // Optional continuous geometry supplied by the Splines integration. Runtime has no package dependency.
+    public interface IPootleRailCurve
+    {
+        float Length(int segment);
+        Vector3 Position(int segment, float along);
+        Vector3 Tangent(int segment, float along);
+        Vector3 Closest(int segment, Vector3 point, out float along);
+    }
+
     [ExecuteAlways, DisallowMultipleComponent, AddComponentMenu("Pootle/One Way Rail")]
     public sealed class PootleRail : MonoBehaviour
     {
@@ -12,11 +21,22 @@ namespace Pootle
         [Min(0.02f)] public float landingHalfWidth = 0.22f;
         private void OnEnable() => Active.Add(this);
         private void OnDisable() => Active.Remove(this);
+        public IPootleRailCurve Curve { get; set; }
+        public bool IsContinuous => Curve != null;
         public int SegmentCount => points == null ? 0 : Mathf.Max(0, points.Length - 1);
         public Vector3 Point(int index) => transform.TransformPoint(points[index]);
-        public float Length(int segment) => Vector3.Distance(Point(segment), Point(segment + 1));
-        public Vector3 Tangent(int segment) => (Point(segment + 1) - Point(segment)).normalized;
+        public float Length(int segment) => Curve != null ? Curve.Length(segment) : Vector3.Distance(Point(segment), Point(segment + 1));
+        public Vector3 Tangent(int segment) => Tangent(segment, 0);
+        public Vector3 Tangent(int segment, float along) => Curve != null ? Curve.Tangent(segment, along) : (Point(segment + 1) - Point(segment)).normalized;
+        public Vector3 Position(int segment, float along) => Curve != null ? Curve.Position(segment, along) : Point(segment) + Tangent(segment) * along;
 
+        public Vector3 Closest(int segment, Vector3 point, out float along)
+        {
+            if (Curve != null) return Curve.Closest(segment, point, out along);
+            Vector3 a=Point(segment), tangent=Tangent(segment);
+            along=Mathf.Clamp(Vector3.Dot(point-a,tangent),0,Length(segment));
+            return a+tangent*along;
+        }
         // Cross the top from above during this displacement. Upward travel cannot attach.
         public bool Landing(Vector3 from, Vector3 to, out int segment, out float along, out float time, float extraWidth = 0)
         {
@@ -39,7 +59,7 @@ namespace Pootle
                 u = Mathf.Clamp01(u);
                 Vector3 crossing = Vector3.Lerp(from, to, t), surface = a + delta * u;
                 if (Vector3.ProjectOnPlane(crossing - surface, Vector3.up).magnitude > width || Mathf.Abs(crossing.y - surface.y) > 0.08f) continue;
-                segment = i; along = u * delta.magnitude; time = t;
+                segment = i; Closest(i, surface, out along); time = t;
             }
             return segment >= 0;
         }

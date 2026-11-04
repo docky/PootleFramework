@@ -71,3 +71,15 @@ The motor now resolves slope-tangent displacement once, filters tangential/separ
 The user's follow-up authorizes moving platforms, spline hooks, gliding and launch springs. Reference `Platform`/`MovingPlatform` informed translation/rotation carry, speed and optional facing; `GlidingPlayerState` informed controlled descent and steering; `Spring` informed upward support activation, full-force launch and jump reset. Pootle adapts these behaviors without the reference entity/state/level framework. Unity Splines 2.9.1 is isolated in `Pootle.Splines`; the core motor depends on neither Splines nor the reference project.
 
 The gliding pose uses the already-copied `Lily|Gliding` clip. A separate `PootleGliderVisual` handles deployment and sounds; `PootleGripPose` places hands on poles/hooks without root motion. Pole attachment is relative to retained facing, rail landing uses capsule-radius assistance, and step height is now 0.6 m for side entry onto the stairs. Seated slope entry removes 90% of lateral velocity and damps the remainder. Hook facing is omnidirectional and camera-relative, as explicitly requested.
+
+## Rail, pole and contact feedback · 4 November 2026
+
+This pass implements the user's explicit follow-up: contact-gated slope sitting, four-way stationary rail facing, intentional sharp-corner and T-junction selection, lateral rail landing assistance, neutral vertical rail jumps, automatic climbing/handle attachment with B/Circle/Q detach, short fixed-point pole tops, open/locked pole endpoints and facing ranges, narrow-wall rail mounting, ground pound and an extruded spline helix. No additional reference assets were copied. The optional Splines adapter samples the installed Unity spline and uses Unity `SplineExtrude` for visualization. Runtime graph junction selection uses nearby coincident rail segments; it does not introduce a level/game framework. Narrow-gap recovery retains verified capsule-clear positions and only intervenes after sustained trapping.
+
+## Double jumps, rolling, carrying and camera styles · 4 November 2026
+
+The requested expansion enables one additional air jump and tuned ordinary slope acceleration/landing momentum in the default profile. Rolling is a persistent toggle with its own spherical capsule and slope gravity. Reference `RollingPlayerState` informed momentum/friction and ground/air handling, but input drives requested velocity without importing crouch or charged-roll states. A blocked standing capsule leaves ball mode active.
+
+Reference `PlayerObjectGrabber`/`Pickable` informed the optional carryable-prop contract. Pootle uses BoxCollider/Rigidbody props with validated volume and transfer paths, deterministic front/beneath placement, safe fallback and restoration of original physics settings. A procedural ball and sample cubes were authored locally; Lily's existing humanoid grip pose supplies carrying hands. No new reference assets or game systems were copied.
+
+Six camera styles use the existing Cinemachine orbit/composition/obstruction pipeline and privately owned Input System actions on number-row keys 1–6. The reference project remains unchanged.

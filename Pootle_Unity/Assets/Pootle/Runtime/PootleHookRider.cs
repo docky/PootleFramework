@@ -9,6 +9,7 @@ namespace Pootle
         private Vector3 lastGrip;
         private float cooldown, blockedTime;
         public void ResetRide() { Hook = null; HookVelocity = Vector3.zero; cooldown = blockedTime = 0; }
+        public void Drop(PootleCharacter c) { if (Hook) Release(c); }
         public bool Tick(PootleCharacter c, float dt, PootleInputFrame frame, out PootleMotionResult result)
         {
             result = default; cooldown = Mathf.Max(0, cooldown - dt);
@@ -25,7 +26,7 @@ namespace Pootle
                     Release(c); c.LaunchTraversal(direction * c.profile.climbJumpSpeed + Vector3.ProjectOnPlane(momentum, Vector3.up), frame.jumpHeld);
                     c.Velocity += Vector3.up * Mathf.Max(0, momentum.y); return false;
                 }
-                if (!frame.grip) { Release(c); return false; }
+                if (!c.profile.automaticGrip && !frame.grip) { Release(c); return false; }
                 Vector3 desired = PootleMovement.CameraDirection(frame.move, c.outputCamera, out float inputMagnitude);
                 if (inputMagnitude > 0.1f)
                     c.Facing = Vector3.RotateTowards(c.Facing, desired, c.profile.facingSpeed * Mathf.Deg2Rad * dt, 0).normalized;
@@ -39,7 +40,7 @@ namespace Pootle
                 if (lag > c.Motor.Radius * 2 || blocked && blockedTime >= Hook.blockedGraceTime) Release(c);
                 return true;
             }
-            if (!frame.grip || cooldown > 0 || c.Mode == PootleMode.LedgeHop) return false;
+            if ((!c.profile.automaticGrip && !frame.grip) || !c.CanGrab || cooldown > 0 || c.Mode == PootleMode.LedgeHop || c.Mode == PootleMode.PoleStanding) return false;
             PootleDangleHook best = null; float nearest = float.PositiveInfinity;
             foreach (var hook in PootleDangleHook.Active)
             {

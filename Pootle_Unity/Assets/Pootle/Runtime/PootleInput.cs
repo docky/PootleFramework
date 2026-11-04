@@ -9,7 +9,7 @@ namespace Pootle
         [Tooltip("A private runtime copy is enabled; this asset is never enabled/disabled globally.")]
         public InputActionAsset actions;
         private InputActionAsset instance;
-        private InputAction move, run, jump, reset, grip, glide;
+        private InputAction move, run, jump, reset, grip, glide, detach, roll, carry;
         private int lastSample = -1;
 
         private void OnEnable()
@@ -19,8 +19,11 @@ namespace Pootle
             move = instance.FindAction("Character/Move", true);
             run = instance.FindAction("Character/Run", true);
             jump = instance.FindAction("Character/Jump", true);
+            detach = instance.FindAction("Character/Detach", true);
             glide = instance.FindAction("Character/Glide", true);
             grip = instance.FindAction("Character/Grip", true);
+            roll = instance.FindAction("Character/Roll");
+            carry = instance.FindAction("Character/Carry");
             reset = instance.FindAction("Character/Reset", true);
             instance.FindActionMap("Character", true).Enable();
             lastSample = -1;
@@ -36,6 +39,9 @@ namespace Pootle
                 move = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1),
                 run = run.IsPressed(), grip = grip.IsPressed(), glide = glide.IsPressed(), jumpHeld = jump.IsPressed(),
                 jumpPressed = first && jump.WasPressedThisFrame(),
+                detachPressed = first && detach.WasPressedThisFrame(),
+                rollPressed = first && roll != null && roll.WasPressedThisFrame(),
+                carryPressed = first && carry != null && carry.WasPressedThisFrame(),
                 resetPressed = first && reset.WasPressedThisFrame()
             };
         }
@@ -44,7 +50,7 @@ namespace Pootle
         {
             if (instance) { instance.Disable(); Destroy(instance); }
             instance = null;
-            move = run = jump = reset = grip = glide = null;
+            move = run = jump = reset = grip = glide = detach = roll = carry = null;
             lastSample = -1;
         }
     }

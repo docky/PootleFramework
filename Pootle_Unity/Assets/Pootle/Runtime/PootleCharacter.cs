@@ -5,8 +5,8 @@ namespace Pootle
 {
     [DisallowMultipleComponent, RequireComponent(typeof(PootleMotor), typeof(PootleTraversal))]
     [RequireComponent(typeof(PootlePlatformRider), typeof(PootleHookRider))]
-    [RequireComponent(typeof(PootleRailRider)), AddComponentMenu("Pootle/Character")]
-    public sealed class PootleCharacter : MonoBehaviour
+    [RequireComponent(typeof(PootleRailRider), typeof(PootleRecovery), typeof(PootleCarrying)), AddComponentMenu("Pootle/Character")]
+    public sealed partial class PootleCharacter : MonoBehaviour
     {
         public PootleProfile profile;
         public PootleInput input;
@@ -19,7 +19,7 @@ namespace Pootle
         public Vector3 Velocity { get; internal set; }
         public Vector3 Facing { get; internal set; } = Vector3.forward;
         public PootleMode Mode { get; private set; } = PootleMode.Airborne;
-        public bool IsGrounded => Mode == PootleMode.Grounded || Mode == PootleMode.RailWalking;
+        public bool IsGrounded => IsRolling ? rollingGrounded : Mode == PootleMode.Grounded || Mode == PootleMode.RailWalking || Mode == PootleMode.PoleStanding;
         public bool IsBraking { get; private set; }
         public bool IsRunning { get; private set; }
         public int AirJumpsUsed { get; private set; }
@@ -41,7 +41,13 @@ namespace Pootle
         private PootleJumpBuffer jumpBuffer;
         private float clock, lastGrounded = float.NegativeInfinity;
         private bool groundJumpUsed, variableJump;
-        private float nextSpringTime;
+        private float nextSpringTime, grabLockUntil;
+        private bool forcedSlopeSlide;
+        public bool CanGrab => !IsRolling && !(carrying && carrying.Held) && clock >= grabLockUntil && Mode != PootleMode.GroundPounding;
+        private PootleCarrying carrying;
+        private bool carryRequested;
+        private PootleRecovery recovery;
+        internal void BlockGrabs() => grabLockUntil = clock + profile.detachRegrabDelay;
         private int tick;
         private Vector3 spawn;
         private Quaternion spawnRotation;
@@ -54,6 +60,7 @@ namespace Pootle
             railRider = GetComponent<PootleRailRider>();
             platformRider = GetComponent<PootlePlatformRider>();
             hookRider = GetComponent<PootleHookRider>();
+            carrying = GetComponent<PootleCarrying>();
             if (!input) input = GetComponent<PootleInput>();
             spawn = transform.position;
             spawnRotation = transform.rotation;
@@ -66,10 +73,11 @@ namespace Pootle
             Mode = PootleMode.Airborne;
             traversal?.ResetTraversal(); railRider?.ResetRide(); platformRider?.ClearRiding(); hookRider?.ResetRide(); SeatedNormal = Vector3.up;
             lastGrounded = float.NegativeInfinity;
-            jumpBuffer.Clear(); groundJumpUsed = variableJump = false; nextSpringTime = 0; AirJumpsUsed = 0;
+            jumpBuffer.Clear(); groundJumpUsed = variableJump = false; grabLockUntil=0; forcedSlopeSlide=false; nextSpringTime = 0; AirJumpsUsed = 0;
         }
         private void OnDisable()
         {
+            ResetRolling();carrying?.ReleaseForReset();
             Velocity = Vector3.zero; Support = default; jumpBuffer.Clear();
             traversal?.ResetTraversal(); railRider?.ResetRide(); platformRider?.ClearRiding(); hookRider?.ResetRide();
             SetMode(PootleMode.Airborne, PootleTransition.Disabled);
@@ -96,6 +104,26 @@ namespace Pootle
 #endif
             Motor.Capture?.Begin();
             Motor.BeginTick();
+            if (!recovery) recovery=GetComponent<PootleRecovery>();
+            recovery?.Check(this,dt,frame);
+            carryRequested=frame.carryPressed;
+            if(frame.rollPressed)ToggleRolling();
+            if (frame.detachPressed && !IsRolling)
+            {
+                bool attached=Mode==PootleMode.Climbing || Mode==PootleMode.PoleClimbing || Mode==PootleMode.LedgeHanging || Mode==PootleMode.LedgeHop || Mode==PootleMode.Dangling;
+                if(attached)
+                {
+                    bool carried=Mode==PootleMode.Dangling;
+                    BlockGrabs(); GetComponent<PootleHookRider>()?.Drop(this); GetComponent<PootleTraversal>()?.Drop(this);
+                    if(!carried)Velocity=Vector3.zero;
+                }
+                else if(!IsGrounded && Mode!=PootleMode.GroundPounding)
+                {
+                    GetComponent<PootleRailRider>()?.ResetRide(); GetComponent<PootleTraversal>()?.ResetTraversal();
+                    jumpBuffer.Clear(); variableJump=false; forcedSlopeSlide=false;
+                    Velocity=Vector3.down*profile.groundPoundSpeed; SetMode(PootleMode.GroundPounding,PootleTransition.SlideStarted);
+                }
+            }
             if (frame.jumpPressed) jumpBuffer.Press(clock, profile.jumpBufferTime);
             Vector3 tickStart = transform.position;
             Vector3 before = Velocity;
@@ -103,6 +131,11 @@ namespace Pootle
             if (!platformRider) platformRider = GetComponent<PootlePlatformRider>();
             if (!hookRider) hookRider = GetComponent<PootleHookRider>();
             platformRider?.Apply(this, dt);
+            if(IsRolling)
+            {
+                TickRolling(dt,frame,out var rollMotion);
+                UpdateVisual();Capture(previousMode,PootleMovement.CameraDirection(frame.move,outputCamera,out _),rollMotion,false);return;
+            }
             if (hookRider && hookRider.Tick(this, dt, frame, out var hookMotion))
             {
                 IsBraking = IsRunning = false;
@@ -123,8 +156,10 @@ namespace Pootle
                 UpdateVisual(); Capture(previousMode, Vector3.zero, traversalMotion, false); return;
             }
             bool springLaunched = TrySpring();
-            bool steep = profile.enableSteepSliding && Support.found && Support.central &&
-                Support.angle > Motor.slopeLimit + 0.05f && Support.angle < 85 && Velocity.y <= 0.1f;
+            bool touching = Support.found && Support.central && Support.distance <= Motor.Skin * 3;
+            if (Mode==PootleMode.GroundPounding && touching && Support.angle>3 && Support.angle<85) StartPoundSlide();
+            bool steep = profile.enableSteepSliding && touching &&
+                Support.angle > (forcedSlopeSlide ? 3 : Motor.slopeLimit + 0.05f) && Support.angle < 85 && Velocity.y <= 0.1f;
             if (Mode == PootleMode.Sliding || steep)
             {
                 if (TickSlide(dt, frame, steep, out var slideMotion))
@@ -147,7 +182,7 @@ namespace Pootle
                 if (TickGlide(dt, frame, tickStart, out var glideMotion))
                 { UpdateVisual(); Capture(previousMode, Vector3.zero, glideMotion, false); return; }
             }
-            Vector3 direction = PootleMovement.CameraDirection(frame.move, outputCamera, out float magnitude);
+            Vector3 direction = PootleMovement.CameraDirection(Mode==PootleMode.GroundPounding ? Vector2.zero : frame.move, outputCamera, out float magnitude);
             Vector3 planar = Vector3.ProjectOnPlane(Velocity, Vector3.up);
             IsRunning = profile.allowRun && frame.run;
             float topSpeed = IsRunning ? profile.runSpeed : profile.walkSpeed;
@@ -168,17 +203,17 @@ namespace Pootle
                     planar = Vector3.MoveTowards(planar, planar.normalized * topSpeed, profile.excessSpeedDeceleration * dt);
             }
             else if (IsGrounded) planar = Vector3.MoveTowards(planar, Vector3.zero, profile.releaseDeceleration * dt);
-            if (IsGrounded && profile.applySlopeSpeed && Support.angle > 20)
+            if (IsGrounded && profile.applySlopeSpeed && magnitude > 0 && Support.angle > 3)
             {
                 Vector3 downhill = Vector3.ProjectOnPlane(Support.normal, Vector3.up);
                 float force = Vector3.Dot(downhill, planar) > 0 ? profile.downhillForce : profile.uphillForce;
-                planar += downhill * force * dt;
+                planar = Vector3.ClampMagnitude(planar + downhill * force * dt, profile.slopeMaximumSpeed);
             }
             Vector3 edgeSlip = !IsGrounded && Support.found && !Support.central && Velocity.y <= 0
                 ? Vector3.ProjectOnPlane(Support.normal, Vector3.up).normalized * profile.edgeSlipSpeed : Vector3.zero;
 
             float vertical = IsGrounded ? 0 : Velocity.y;
-            bool jumped = TryJump(ref vertical, frame.jumpHeld);
+            bool jumped = Mode != PootleMode.GroundPounding && TryJump(ref vertical, frame.jumpHeld);
             if (jumped && platformRider)
             {
                 planar += Vector3.ProjectOnPlane(platformRider.CarryVelocity, Vector3.up);
@@ -204,6 +239,9 @@ namespace Pootle
             }
             displacement += edgeSlip * dt;
             var result = Motor.Move(displacement, IsGrounded && !jumped, IsGrounded && !jumped ? Motor.stepHeight + 0.06f : 0, false, profile.groundSnapSpeed * dt);
+            railRider?.AssistLanding(this,dt);
+            if (traversal && traversal.CatchPoleTop(this,tickStart,transform.position))
+            { UpdateVisual(); Capture(previousMode,direction,result,false); return; }
             if (railRider && railRider.Catch(this, tickStart, transform.position))
             { UpdateVisual(); Capture(previousMode, direction, result, jumped); return; }
             for (int i = 0; i < Motor.ContactCount; i++)
@@ -223,6 +261,8 @@ namespace Pootle
                 Support = Motor.ProbeGround(transform.position, IsGrounded ? Motor.stepHeight + 0.06f : 0.07f, profile.requireCentralSupport);
                 if (TrySpring())
                 { UpdateVisual(); Capture(previousMode, direction, result, true); return; }
+                if (Mode==PootleMode.GroundPounding && Support.central && Support.distance<=Motor.Skin*3 && Support.angle>3 && Support.angle<85)
+                { StartPoundSlide(); TickSlide(dt,frame,true,out result); UpdateVisual(); Capture(previousMode,direction,result,false); return; }
                 if (Support.walkable)
                 {
                     if (!IsGrounded) Land(-Velocity.y);
@@ -243,6 +283,9 @@ namespace Pootle
         private void UpdateVisual()
         {
             platformRider?.Remember(this);
+            if(!carrying)carrying=GetComponent<PootleCarrying>();
+            if(carryRequested){carryRequested=false;carrying?.HandleAction(this);}
+            carrying?.Follow(this);
             if (!visualRoot) return;
             Vector3 up = Mode == PootleMode.Sliding || Mode == PootleMode.RailSliding
                 ? Vector3.Slerp(Vector3.up, SeatedNormal, profile.seatedSlopeNormalBlend)
@@ -254,7 +297,16 @@ namespace Pootle
         private bool TickSlide(float dt, PootleInputFrame frame, bool steep, out PootleMotionResult result)
         {
             result = default;
-            Vector3 normal = Support.found ? Support.normal : Vector3.up;
+            if (!Support.found || !Support.central || Support.distance > 0.08f)
+            {
+                // Resolve this tick before deciding whether the slope joins a flat runout.
+                result=Motor.Move(Velocity*dt,false,0,true);
+                Support=Motor.ProbeGround(transform.position,.07f,profile.requireCentralSupport);
+                if(Support.walkable && Support.distance<=Motor.Skin*3)
+                {Velocity=Vector3.ProjectOnPlane(Velocity,Support.normal);return true;}
+                forcedSlopeSlide=false;SetMode(PootleMode.Airborne,PootleTransition.WalkedOffEdge);return true;
+            }
+            Vector3 normal = Support.normal;
             Vector3 downhill = Vector3.ProjectOnPlane(Vector3.down, normal).normalized;
             Vector3 flatDownhill = Vector3.ProjectOnPlane(downhill, Vector3.up).normalized;
             if (Mode != PootleMode.Sliding)
@@ -299,7 +351,7 @@ namespace Pootle
                 Velocity = Vector3.MoveTowards(tangent, Vector3.zero, profile.slideFlatDeceleration * dt);
                 if (slideTime >= profile.slideMinimumTime && Velocity.magnitude <= profile.slideStopSpeed)
                 {
-                    Velocity = Vector3.zero; SetMode(PootleMode.Grounded, PootleTransition.SlideStopped);
+                    forcedSlopeSlide=false; Velocity = Vector3.zero; SetMode(PootleMode.Grounded, PootleTransition.SlideStopped);
                     return false;
                 }
             }
@@ -314,6 +366,14 @@ namespace Pootle
             return true;
         }
 
+        private void StartPoundSlide()
+        {
+            forcedSlopeSlide=true;
+            var downhill=Vector3.ProjectOnPlane(Vector3.down,Support.normal).normalized;
+            Velocity=downhill*profile.poundSlideSpeed;
+            SetMode(PootleMode.Airborne,PootleTransition.Landed);
+        }
+
         private bool TrySpring()
         {
             if (!Support.walkable || !Support.collider || Velocity.y > 0 || clock < nextSpringTime) return false;
@@ -321,7 +381,7 @@ namespace Pootle
             if (!spring || !spring.isActiveAndEnabled) return false;
             Vector3 direction = spring.Direction;
             Velocity = Vector3.ProjectOnPlane(Velocity, direction) * spring.lateralRetention + direction * spring.launchSpeed;
-            nextSpringTime = clock + spring.cooldown; variableJump = false;
+            nextSpringTime = clock + spring.cooldown; variableJump = false; forcedSlopeSlide=false;
             jumpBuffer.Clear(); groundJumpUsed = true; lastGrounded = float.NegativeInfinity; AirJumpsUsed = 0;
             SetMode(PootleMode.Airborne, PootleTransition.Jumped); spring.Launched(); Jumped?.Invoke();
             return true;
@@ -332,6 +392,9 @@ namespace Pootle
             result = default;
             if (!frame.glide || !profile.allowGliding)
             { SetMode(PootleMode.Airborne, PootleTransition.Released); return false; }
+            float jumpVelocity=Velocity.y;
+            if(TryJump(ref jumpVelocity,frame.jumpHeld))
+            {Velocity=new Vector3(Velocity.x,jumpVelocity,Velocity.z);return false;}
             IsRunning = IsBraking = false;
             if (Mode != PootleMode.Gliding)
             {
@@ -350,6 +413,8 @@ namespace Pootle
             result = Motor.Move(Velocity * dt, false);
             for (int i = 0; i < Motor.ContactCount; i++)
                 if (Vector3.Dot(Velocity, Motor.Contacts[i].normal) < 0) Velocity = Vector3.ProjectOnPlane(Velocity, Motor.Contacts[i].normal);
+            railRider?.AssistLanding(this,dt);
+            if (traversal && traversal.CatchPoleTop(this,tickStart,transform.position)) return true;
             if (railRider && railRider.Catch(this, tickStart, transform.position)) return true;
             Support = Motor.ProbeGround(transform.position, 0.07f, profile.requireCentralSupport);
             if (TrySpring()) return true;
@@ -369,6 +434,7 @@ namespace Pootle
         internal bool ConsumeJump() => jumpBuffer.Consume(clock);
         internal void LaunchTraversal(Vector3 planar, bool held)
         {
+            forcedSlopeSlide=false; BlockGrabs();
             variableJump = true;
             Velocity = planar + Vector3.up * (held ? profile.jumpLaunchSpeed : profile.jumpReleaseSpeed);
             groundJumpUsed = true; lastGrounded = float.NegativeInfinity;
@@ -391,8 +457,11 @@ namespace Pootle
 
         private void Land(float speed)
         {
-            if (profile.landingMomentumConversion > 0 && Support.angle > 20)
-                Velocity += Vector3.ProjectOnPlane(Support.normal, Vector3.up).normalized * speed * profile.landingMomentumConversion;
+            if (profile.landingMomentumConversion > 0 && Support.angle > 3)
+            {
+                Vector3 planar=Vector3.ProjectOnPlane(Velocity,Vector3.up)+Vector3.ProjectOnPlane(Support.normal,Vector3.up).normalized*speed*profile.landingMomentumConversion;
+                Velocity=Vector3.ClampMagnitude(planar,profile.slopeMaximumSpeed)+Vector3.up*Velocity.y;
+            }
             Landed?.Invoke(speed);
         }
         internal void SetMode(PootleMode mode, PootleTransition reason)
@@ -416,13 +485,14 @@ namespace Pootle
         }
         public void Teleport(Vector3 position, Quaternion rotation)
         {
+            ResetRolling();carrying?.ReleaseForReset();carryRequested=false;
             Vector3 delta = position - transform.position;
             transform.SetPositionAndRotation(position, Quaternion.identity);
             Facing = Vector3.ProjectOnPlane(rotation * Vector3.forward, Vector3.up).normalized;
             if (Facing.sqrMagnitude < 0.01f) Facing = Vector3.forward;
             Velocity = Vector3.zero; Support = default; IsBraking = IsRunning = false;
             lastGrounded = float.NegativeInfinity; groundJumpUsed = false; AirJumpsUsed = 0;
-            jumpBuffer.Clear(); variableJump = false; nextSpringTime = 0; Mode = PootleMode.Airborne;
+            jumpBuffer.Clear(); variableJump = false; forcedSlopeSlide=false; grabLockUntil=0; nextSpringTime = 0; Mode = PootleMode.Airborne;
             traversal?.ResetTraversal(); railRider?.ResetRide(); platformRider?.ClearRiding(); hookRider?.ResetRide(); SeatedNormal = Vector3.up;
             DebugSnapshot.frozen = false; DebugSnapshot.Clear(); DebugSnapshot.Transition(PootleTransition.Teleported);
             if (visualRoot) visualRoot.rotation = Quaternion.LookRotation(Facing);

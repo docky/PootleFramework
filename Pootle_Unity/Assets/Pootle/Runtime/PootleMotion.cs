@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Pootle
 {
-    public enum PootleMode { Grounded, Airborne, Sliding, Climbing, LedgeHanging, LedgeHop, PoleClimbing, RailWalking, RailSliding, Dangling, Gliding }
+    public enum PootleMode { Grounded, Airborne, Sliding, Climbing, LedgeHanging, LedgeHop, PoleClimbing, RailWalking, RailSliding, Dangling, Gliding, PoleStanding, GroundPounding, Rolling }
     public enum PootleTransition { None, Supported, WalkedOffEdge, Jumped, AirJumped, Landed, Teleported, Disabled, SlideStarted, SlideStopped, Grabbed, Released, TopOut }
     public enum PootleProbeKind { GroundSphere, CentralSupport, Movement, StepUp, StepForward, StepDown, Overlap, Recovery, Wall, Ledge, Clearance, Pole }
     public enum PootleProbeStatus { NotEvaluated, Miss, Hit, Accepted, Rejected }
@@ -33,7 +33,7 @@ namespace Pootle
     public struct PootleInputFrame
     {
         public Vector2 move;
-        public bool run, grip, glide, jumpPressed, jumpHeld, resetPressed;
+        public bool run, grip, glide, jumpPressed, jumpHeld, resetPressed, detachPressed, rollPressed, carryPressed;
     }
 
     public static class PootleMovement

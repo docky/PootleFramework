@@ -31,13 +31,14 @@ namespace Pootle
         [Min(0)] public float jumpReleaseSpeed = 10f;
         [Range(0, 0.5f)] public float coyoteTime = 0.15f;
         [Range(0, 0.5f)] public float jumpBufferTime = 0.15f;
-        [Range(0, 4)] public int additionalAirJumps;
+        [Range(0, 4)] public int additionalAirJumps = 1;
         [Header("Surfaces")]
         [Min(0)] public float groundSnapSpeed = 15f;
-        public bool applySlopeSpeed;
-        [Min(0)] public float uphillForce = 25f;
-        [Min(0)] public float downhillForce = 28f;
-        [Range(0, 1)] public float landingMomentumConversion;
+        public bool applySlopeSpeed = true;
+        [Min(0)] public float uphillForce = 10f;
+        [Min(0)] public float downhillForce = 16f;
+        [Min(0)] public float slopeMaximumSpeed = 12f;
+        [Range(0, 1)] public float landingMomentumConversion = .2f;
         public bool requireCentralSupport = true;
         [Min(0)] public float edgeSlipSpeed = 2f;
         [Header("Seated slide")]
@@ -67,6 +68,17 @@ namespace Pootle
         [Range(0, 1)] public float slideLateralRetention = 0.1f;
         [Min(0)] public float slideLateralDamping = 18f;
         [Range(0, 1)] public float railLandingRadiusFraction = 0.6f;
+        [Header("Automatic grip and landing assistance")]
+        public bool automaticGrip = true;
+        [Min(0.1f)] public float detachRegrabDelay = 0.65f;
+        [Min(0)] public float railMagnetRadius = 1.05f;
+        [Min(0)] public float railMagnetSpeed = 6;
+        [Min(0)] public float railMagnetHeight = 1.8f;
+        [Tooltip("Press toward a connected branch within this distance to walk to its junction and turn.")]
+        [Min(0)] public float railJunctionApproach = .9f;
+        [Header("Ground pound")]
+        [Min(1)] public float groundPoundSpeed = 28;
+        [Min(0)] public float poundSlideSpeed = 7;
         [Header("Gliding · hold RB / R1 or F in the air")]
         public bool allowGliding = true;
         [Min(0)] public float glidingSpeed = 9f;
@@ -76,6 +88,12 @@ namespace Pootle
         [Min(0)] public float glidingGravity = 10f;
         [Min(0)] public float glidingMaximumFallSpeed = 2f;
         [Min(0)] public float glidingRotationSpeed = 180f;
+        [Header("Rolling · toggle X / gamepad West")]
+        [Min(0)] public float rollingSpeed = 9f;
+        [Min(0)] public float rollingControl = 42f;
+        [Min(0)] public float rollingFriction = .8f;
+        [Min(0)] public float rollingGravity = 38f;
+        [Min(0)] public float rollingMaximumSpeed = 22f;
         [Header("Presentation")]
         [Min(0), Tooltip("Degrees per second.")] public float facingSpeed = 970f;
         public bool tiltAvatarToGround;
