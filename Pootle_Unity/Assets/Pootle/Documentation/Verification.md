@@ -133,3 +133,36 @@ The full scene run caught the initial rolling tunnel obstructing the existing mo
 Live player-loop verification advanced from frame 7083 to 7104. Eight rendered previews cover carrying, ball mode and all six camera views, saved under `Builds/Pootle-v0.1/features-*.png`. The final console ground-truth check reported no current errors or warnings.
 
 Updated macOS build succeeded with **0 errors**, the same three pre-existing URP/TextMeshPro shader warnings, 85,438,320 bytes and a 12.49 s build time. The Editor was returned to stopped mode with normal background/ticking settings.
+
+## Contact smoothing, external forces and conveyors — 2026-11-04
+
+Reviewed all five supplied clips (6.02, 4.89, 9.37, 2.72 and 6.14 seconds) and the wall-corner screenshot. Ramp motion no longer enters the stair-step path; a clear 0.6–1.05 m obstacle can use the short automatic hop. Cylinder attachment follows a continuous circular side in one swept move, and supported camera styles receive the same yaw change. Optional box-corner wrapping follows the capsule-clearance arc and honors the 95-degree maximum. Ground pounds catch valid pole tops; neutral moving-hook jumps have no planar launch.
+
+Final runtime suites: **103/103 Edit Mode tests and 23/23 Play Mode tests passed**. New checks cover monotonic uphill motion on 25/44-degree ramps, short-hop ceiling rejection, ground-pound post landing, neutral hook launches, external-facing retention/release, wind lift and sideways drift, wind resuming after a grip release, conveyor obstruction, delayed crate acceleration and exact rider descent, smooth full cylinder orbits, and disabled/limited corner wrapping. Live gamepad checks verify camera-relative cylinder yaw, the saved wind/bumper objects, both conveyor surfaces, and a pickup–jump–drop–land–jump sequence on a crate before it reaches the ground.
+
+The saved course includes two conveyors with animated directional arrows, two wind volumes, three bumpers, two small-hop blocks and a corner-wrapping wall. All three original carry cubes have the delayed fall component. The existing character remains Lily. Rendered previews are `Builds/Pootle-v0.1/environment-0.png` (course), `environment-1.png` (updraft) and `environment-2.png` (cylinder). The live player loop advanced from frame 2051 to 2069; the console ground-truth snapshot reported no current errors or warnings. Source/document whitespace checks pass; scene serialization uses Unity's normal formatting.
+
+Final macOS build succeeded: **0 errors**, three existing URP/TextMeshPro shader warnings, 85,538,896 bytes, 4.92 s. The initial conveyor mesh warning was resolved by enabling triangle collision pre-baking on both authored mesh assets. Incidental build settings serialization was restored.
+
+## Movement sounds and particles · 4 November 2026
+
+- Compile: zero errors or warnings. Full suites: **108/108 EditMode + 24/24 PlayMode = 132 passing tests**.
+- Added regressions for idle/blocked/rolling/conveyor silence, walking cadence, jump/double-jump bursts, one landing burst per contact, reset cleanup, and rail/pole-top landings. PlayMode checks the borrowed clips play, URP particle material is supported, and particles expire.
+- Live landing preview: 20 frames advanced during capture, 24 particles visible, AudioSource output peak 0.2923 (nonzero, below clipping). Inspected `Builds/Pootle-v0.1/movement-feedback-landing.png`; short smoke puff appears around Lily's feet.
+- Sample prefab and playground saved with feedback. Editor restored to stopped, automatic character simulation enabled, auto-tick and background override disabled. This pass was validated in the Editor; the previously generated standalone app/video has not been rebuilt or uploaded.
+
+## Conveyor turning and spiral slide · 4 November 2026
+
+- Compilation: zero errors/warnings. **108/108 EditMode + 27/27 PlayMode = 135 passing tests.**
+- Verified both conveyors carry Lily and turn her by their curve heading; loose crates travel and rotate along the curved belt and stop at a blocking wall.
+- Verified the new trough carries Lily through more than 420 degrees of turn, reaches the flat runout and permits jumping out. This checks the whole spiral rather than merely falling to a lower turn.
+- Verified the lift carries Lily from ground level to the entry deck, waits at the top, and allows walking onto the deck. Found/fixed recovery checking penetration before moving-platform carry; the recovery check now runs after carry so sustained upward motion is not mistaken for being trapped.
+- Visually inspected `Builds/Pootle-v0.1/spiral-slide-0.png` (expanded course) and `spiral-slide-1.png` (Lily sliding in the trough). Scene saved; Editor stopped, normal automatic simulation restored, auto-tick/background override disabled. This pass was validated in the Editor; no new standalone build or upload was requested.
+
+## Momentum slide and follow camera · 4 November 2026
+
+- Final compilation: zero errors/warnings. **108/108 EditMode + 32/32 PlayMode = 140 passing tests.** The junction integration test now waits for its crossing within a one-second deadline rather than sampling a render frame at the threshold.
+- Slide contacts interpolate the trough's top normals and use consistent capsule support. Physics substeps integrate full gravity and remove only inward normal velocity; banks do not cancel momentum leaving their surface. An ascending rim exit remains airborne through brief lip contact, retaining the seated pose.
+- Normal full-course descent retains over 12 m/s into the runout and exceeds 20 m/s on the course without standing/sitting chatter. Tests compare 30/120 Hz trajectories and exercise overspeed bank launches at 30, 60 and 120 Hz, braking and momentum-preserving jumps.
+- Cinemachine follows travel direction, eases its distance/FOV with speed and honors manual look. Live Input System coverage checks key 7 and return to regular orbit. Deeper banks and a larger landing floor are saved in the playground.
+- Recorded and inspected `Builds/Pootle-v0.1/pootle-slide-ride-validation-11s.mp4`: 330 gameplay frames, 1280×720 at 30 fps, 11 seconds of stereo audio. The first eight seconds show the normal descent/runout; the final three apply an exaggerated outward impulse to demonstrate a clean rim exit and landing. No repeated mount/dismount at the lip. Editor returned to stopped mode with normal simulation and background settings. No standalone rebuild or upload in this pass.

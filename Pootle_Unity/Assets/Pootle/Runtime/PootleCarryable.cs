@@ -23,7 +23,7 @@ namespace Pootle
         {
             Place(center,rotation);Shape.isTrigger=wasTrigger;Body.isKinematic=wasKinematic;Body.useGravity=usedGravity;
             if(!Body.isKinematic){Body.linearVelocity=Vector3.zero;Body.angularVelocity=Vector3.zero;Body.WakeUp();}
-            IsHeld=false;Physics.SyncTransforms();
+            IsHeld=false;GetComponent<PootleFallingCrate>()?.RestartFall();Physics.SyncTransforms();
         }
     }
 }

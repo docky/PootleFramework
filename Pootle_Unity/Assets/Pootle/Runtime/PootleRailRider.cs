@@ -67,6 +67,8 @@ namespace Pootle
             Vector3 tangent=rail.Tangent(section,location),target=rail.Position(section,location);
             if(!c.Motor.CanOccupy(target))return false;
             c.Motor.MoveTo(target);if(Vector3.Distance(transform.position,target)>.05f)return false;
+            if(c.Mode==PootleMode.Airborne || c.Mode==PootleMode.Gliding || c.Mode==PootleMode.GroundPounding)
+                c.ReportLanding(-c.Velocity.y);
             bool pound=c.Mode==PootleMode.GroundPounding;
             Rail=rail;segment=section;along=location;
             // Only genuine horizontal momentum is inherited; a falling impact never kicks along an incline.

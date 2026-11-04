@@ -70,9 +70,9 @@ Above the motor slope limit, rail movement becomes a seated gravity-driven slide
 
 ## Moving platforms and hooks
 
-`PootleMovingSurface` on a solid platform carries the grounded character using translation and rotation around a local anchor. Jumps inherit platform velocity. Capsule sweeps and overlap recovery remain active; a blocked character does not teleport through geometry. The playground has a travelling platform and a vertical lift.
+`PootleMovingSurface` on a solid platform carries the grounded character using translation and rotation around a local anchor. Jumps inherit horizontal and upward platform velocity; descending supports cannot cancel the upward jump. Capsule sweeps and overlap recovery remain active; a blocked character does not teleport through geometry. The playground has a travelling platform and a vertical lift.
 
-`PootleDangleHook` has an authored grip point, reach radius, hanging height/body offset and obstruction tolerance. The offset rotates with facing to keep Lily’s hands at the ring and her head clear. Move within reach to attach automatically and remain attached. Move the left stick/WASD in any camera-relative direction to turn; the hook rotates with Lily. Jump launches in the requested direction, or retained facing when the stick is neutral, with carrier momentum. Press B/Circle or Q to drop. If collision prevents following beyond the distance/grace-time threshold, attachment releases automatically. The playground includes a shuttle and a hook that passes through an obstruction for testing.
+`PootleDangleHook` has an authored grip point, reach radius, hanging height/body offset and obstruction tolerance. The offset rotates with facing to keep Lily’s hands at the ring and her head clear. Move within reach to attach automatically and remain attached. Move the left stick/WASD in any camera-relative direction to turn; the hook rotates with Lily. Jump launches vertically with neutral input, or in the camera-relative direction currently held. Hook travel no longer adds a horizontal kick; dropping still retains carrier momentum. Press B/Circle or Q to drop. If collision prevents following beyond the distance/grace-time threshold, attachment releases automatically. The playground includes a shuttle and a hook that passes through an obstruction for testing.
 
 Add `PootleSplineMover` from the optional `Pootle.Splines` integration to either object and assign a Unity `SplineContainer`. Speed is metres/second, open paths can ping-pong, and closed paths loop. Optional path-facing rotates platforms; leave it off for hooks whose facing the player controls. Rebuild the mover after editing a path at runtime. **Pootle → Add Moving Platforms and Hooks** adds the sample objects.
 
@@ -98,7 +98,7 @@ The default profile enables one extra air jump. Release and press Jump again whi
 
 Press **X on the keyboard / West face button (Xbox X, PlayStation Square)** to toggle ball mode. It remains active through walking, coasting, jumping, falling and spring launches. Stick/WASD input drives velocity toward the requested direction; with no input the ball retains momentum with low friction, and slope gravity accelerates it downhill. Its spherical capsule can fit through the new 1.10 m tunnel. Toggling back checks the full standing capsule immediately: if blocked, the character stays a ball. Exit and toggle again to stand. Moving-platform carry and jump momentum also work in this mode. The sample uses a pink procedural ball with cyan rotation markers; Lily remains the standing avatar.
 
-Press **V / North face button (Xbox Y, PlayStation Triangle)** to pick up a nearby `PootleCarryable` cube or drop the held object. Grounded drops place it ahead. Airborne drops first try below the feet; if the object's full volume or transfer path is blocked, the same front-drop rule is used. If the front placement is also blocked, the object remains held. Released cubes regain their original gravity, collider and Rigidbody settings with no extra throwing impulse. Reset/disable releases held objects. Carrying occupies the hands, so automatic gripping and entering ball mode are unavailable until the object is released. Author carryable props with one BoxCollider and Rigidbody on the component's root.
+Press **V / North face button (Xbox Y, PlayStation Triangle)** to pick up a nearby `PootleCarryable` cube or drop the held object. Grounded drops place it ahead. Airborne drops first try below the feet; if the object's full volume or transfer path is blocked, the same front-drop rule is used. If the front placement is also blocked, the object remains held. Released props restore their collider and physics settings with no throwing impulse. The sample cubes also have `PootleFallingCrate`, which owns their kinematic fall instead of built-in Rigidbody gravity. Reset/disable releases held objects. Carrying occupies the hands, so automatic gripping and entering ball mode are unavailable until the object is released. Author carryable props with one BoxCollider and Rigidbody on the component's root.
 
 **Pootle → Add Rolling Carrying and Camera Styles** upgrades the profile, controls, prefab and sample scene without duplicating the tunnel, cubes or camera component.
 
@@ -116,3 +116,41 @@ Use the keyboard's number row:
 | 6 | Side-on | Fixed side view that follows the player. |
 
 All styles use Cinemachine, keep obstacle handling, and retain camera-relative 3D movement. Styles 1–3 support right-stick/RMB orbit; styles 4–6 hold their viewing angles. Switching interpolates the orbit, distance and field of view. C/R3 still recenters the orbit styles.
+
+
+## Smooth contact and external movement
+
+Ordinary ramps use surface-tangent capsule motion; stair stepping only applies to a face steeper than the walkable slope limit. `smallObstacleHop` fills the gap above the 0.6 m step limit: a clear ledge up to `smallHopHeight` (default 1.05 m) starts a short lift-and-transfer hop. A blocked destination or ceiling keeps the player outside the obstacle.
+
+`PootleClimbSurface` can opt into `allowCornerWrapping`, with `maximumCornerAngle` capped at 95 degrees. Box corners follow the rounded capsule-clearance arc. Enable `cylindrical` on round walls to follow the continuous circular side instead of render-mesh facets; `localCylinderRadius` defaults to the primitive's 0.5 m radius. `rotateCamera` rotates free/close/chase orbit yaw with the climbing normal, preserving the relative view. Fixed camera styles retain their selected viewing angle. Ground pounds can land on eligible pole tops.
+
+Slide exits and bumper impulses hold the avatar's facing for `externalFacingHold` (0.9 s), allowing backward or sideways travel before normal facing resumes. Wind holds facing throughout the volume and for the same brief interval after leaving. Player input still controls movement.
+
+- `PootleBumper` uses a spherical trigger to launch radially outward and upward. Tune launch speed, upward speed and cooldown independently.
+- `PootleWind` is a box trigger with a local target velocity and acceleration. Use positive Y for an updraft, X/Z for sideways wind, or combine them. It affects normal airborne movement, gliding and rolling. Grips and rails retain their constrained attachment.
+- `PootleFallingCrate` adds a brief low-gravity phase (0.32 s), then accelerates at 65 m/s² up to 35 m/s. It sweeps its box against solids and updates before the player. Its moving-surface marker carries a standing player through the descent; jumping launches upward even from a rapidly falling crate. Pickup resets the fall, and a new drop restarts the delay.
+- `PootleConveyor` adds collision-checked surface displacement without rotating the player. A straight belt uses local direction; `PootleSplineConveyor` instead samples the nearest point and tangent on an actual Unity spline. The sample includes a straight gentle incline and a continuous curved, gently sloping mesh. Animated arrows show the flow direction. Conveyor velocity is inherited when jumping.
+
+Use **Pootle → Add Wind Bumpers Conveyors and Falling Crates** to upgrade an older playground. The course extension is east/right of the original obstacles. The original three carryable cubes near spawn gain delayed falling and can be used as in-air stepping stones: jump, drop beneath, land on the cube, and jump again.
+
+### Movement sounds and particles
+
+Lily's sample prefab and playground include `PootleMovementFeedback`. Jump and double-jump voices, alternating footstep puffs and impact-scaled landing smoke reuse the reference project's assets. Hard landings use the reference stomp sound. The component exposes clip arrays, source volumes, step distance, minimum landing speed and particle references; disable it to mute and clear movement feedback. Jump voice and foot contacts use separate AudioSources so their pitch variation does not affect glider/spring audio.
+
+`Pootle > Add Movement Sounds and Particles` reapplies the sample setup to the prefab and scene. Effects use reusable world-space emitters and clear on reset/disable. Landing feedback includes rails and pole tops; walking onto a rail and small support snaps stay quiet.
+
+### Curved conveyors and spiral slide
+
+Conveyors now turn riders and loose `PootleFallingCrate` props with the change in curve heading, preserving their relative orientation. `PootleConveyor.rotateWithCurve` disables that turning when desired. Crate transport sweeps for blockers and checks space before rotating; held crates are excluded. Two arrow-marked test crates start on the curved conveyor.
+
+The eastern floor extends to x=86 and z=-22…42. The coral spiral slide is centered at (66, 0, 12): ride the teal lift on its east side to the entry deck, then walk into the trough. The lift waits two seconds at each end. It descends 18 m over 1¼ turns and ends in a 12 m flat runout. `PootleSlideSurface` makes this gentle trough slippery enough to sit and slide automatically; jump leaves it normally. The trough is a continuous high-resolution collision mesh, independent of the rail system.
+
+`Pootle > Add Spiral Slide and Expand Playground` authors the extension without replacing existing stations.
+
+### Momentum slide ride and follow camera
+
+The coral trough now uses a momentum ride, separate from ordinary steep-slope slides. Banks preserve uphill and sideways speed; gravity and surface contact turn the rider, and excessive speed can carry Lily up and over a rim. Lean with the movement stick/WASD to steer; pull opposite the travel direction to brake. Jump retains forward momentum. A brief ballistic departure keeps the seated pose without repeatedly standing up and sitting down.
+
+The normal orbit/chase cameras automatically follow travel direction during a slide ride, with a short grace period on exit. Press **7** for the dedicated slide-follow style; right stick or RMB+mouse temporarily overrides automatic turning. Other fixed camera styles remain available on 4–6. Disable `automaticallyFollowSlides` on `PootleCameraStyles` to keep the default orbit fully manual.
+
+`PootleSlideSurface` exposes gravity, maximum driving speed, friction, steering, braking and runout deceleration. The spiral's banks are deeper, its support normals continuous, and the eastern landing floor now spans x=20…100 and z=-52…60. `Pootle > Configure Momentum Slide and Follow Camera` reapplies the sample configuration.

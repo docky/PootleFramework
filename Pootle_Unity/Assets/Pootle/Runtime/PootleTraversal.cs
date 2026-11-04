@@ -11,6 +11,7 @@ namespace Pootle
         private Vector3 normal, ledgeDestination, hopStart, poleOffset;
         private PootlePole pole, hopPole;
         private float cooldown, stateTime;
+        private bool automaticHop;
         public Collider AttachedWall => wall;
         public PootlePole AttachedPole => pole;
         public Vector3 SurfaceNormal => normal;
@@ -25,13 +26,13 @@ namespace Pootle
             if (c.Mode == PootleMode.LedgeHop)
             {
                 stateTime += dt;
-                float t = Mathf.Clamp01(stateTime / Mathf.Max(0.15f, p.topOutDuration));
+                float t = Mathf.Clamp01(stateTime / Mathf.Max(0.15f, automaticHop ? p.smallHopDuration : p.topOutDuration));
                 // Smooth lift and transfer phases meet with zero velocity at the lip.
                 float liftPhase = Mathf.SmoothStep(0, 1, Mathf.Clamp01(t / 0.45f));
                 float across = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.45f, 1, t));
                 Vector3 target = Vector3.Lerp(hopStart, ledgeDestination, across);
-                target.y = t < 0.45f ? Mathf.Lerp(hopStart.y, ledgeDestination.y + p.topOutHopHeight, liftPhase)
-                    : Mathf.Lerp(ledgeDestination.y + p.topOutHopHeight, ledgeDestination.y, across);
+                target.y = t < 0.45f ? Mathf.Lerp(hopStart.y, ledgeDestination.y + (automaticHop ? .12f : p.topOutHopHeight), liftPhase)
+                    : Mathf.Lerp(ledgeDestination.y + (automaticHop ? .12f : p.topOutHopHeight), ledgeDestination.y, across);
                 result = c.Motor.Move(target - transform.position, false);
                 c.Velocity = result.displacement / dt;
                 if (t >= 1)
@@ -92,26 +93,28 @@ namespace Pootle
                 if (c.ConsumeJump()) { Jump(c, frame.jumpHeld); return false; }
                 if (FindTop(c, normal, 0.65f, out var destination) && frame.move.y > 0.1f)
                 { ledgeDestination = destination; StartHop(c); return true; }
-                Vector3 inward = -normal;
-                if (!WallRay(c, inward, out var hit) || !hit.collider.GetComponentInParent<PootleClimbSurface>())
-                { Release(c); return false; }
-                wall = hit.collider; normal = Vector3.ProjectOnPlane(hit.normal, Vector3.up).normalized;
-                Vector3 side = Vector3.Cross(normal, Vector3.up);
-                Vector3 delta = Vector3.up * frame.move.y * p.climbSpeed * dt + side * frame.move.x * p.climbSidewaysSpeed * dt;
-                result = c.Motor.Move(delta, false);
-                // Follow curved walls with a second radial observation after the tangential step.
-                if (WallRay(c, -normal, out var curved) && curved.collider == wall)
+                var surface=wall.GetComponentInParent<PootleClimbSurface>();
+                if(!surface){Release(c);return false;}
+                Vector3 oldNormal=normal;
+                Vector3 side=Vector3.Cross(normal,Vector3.up);
+                Vector3 target=transform.position+Vector3.up*frame.move.y*p.climbSpeed*dt+side*frame.move.x*p.climbSidewaysSpeed*dt;
+                if(surface.TryFollow(wall,target+c.Motor.center,normal,c.Motor.Radius+c.Motor.Skin*2,out var attached,out var nextNormal))
                 {
-                    normal = Vector3.ProjectOnPlane(curved.normal, Vector3.up).normalized;
-                    float correction = curved.distance - (c.Motor.Radius + c.Motor.Skin * 2);
-                    var adjust = c.Motor.Move(-normal * Mathf.Clamp(correction, -0.15f, 0.15f), false);
-                    result.displacement += adjust.displacement;
+                    result=c.Motor.MoveTo(attached-c.Motor.center);
+                    // A blocked sweep must not rotate the grip around an unreachable corner.
+                    if(Vector3.Distance(transform.position,attached-c.Motor.center)<.08f)
+                    {
+                        normal=nextNormal;
+                        if(surface.rotateCamera)c.RotateClimbingView(Vector3.SignedAngle(oldNormal,normal,Vector3.up));
+                    }
                 }
-                c.Facing = -normal; c.Velocity = result.displacement / dt;
+                else { c.Velocity=Vector3.zero; return true; }
+                c.Facing=-normal;c.Velocity=result.displacement/dt;
                 if (frame.move.y < 0 && c.Support.walkable) Release(c);
                 return true;
             }
             if (cooldown > 0 || !c.CanGrab || c.Mode == PootleMode.Sliding || c.Mode==PootleMode.RailWalking || c.Mode==PootleMode.RailSliding) return false;
+            if (TrySmallHop(c,frame)) return true;
             if (frame.grip || p.automaticGrip)
             {
                 int count = c.Motor.FindGripPoles(nearby, p.climbReach);
@@ -161,6 +164,19 @@ namespace Pootle
             return false;
         }
 
+        private bool TrySmallHop(PootleCharacter c,PootleInputFrame frame)
+        {
+            if(!c.IsGrounded || !c.profile.smallObstacleHop || frame.move.sqrMagnitude<.1f)return false;
+            var direction=PootleMovement.CameraDirection(frame.move,c.outputCamera,out _);
+            if(!c.Motor.Ray(transform.position+Vector3.up*.25f,direction,c.Motor.Radius+.14f,PootleProbeKind.Wall,out var obstacle)
+                || Mathf.Abs(obstacle.normal.y)>.1f)return false;
+            Vector3 outward=Vector3.ProjectOnPlane(obstacle.normal,Vector3.up).normalized;
+            if(!FindTop(c,outward,c.profile.smallHopHeight,out var top))return false;
+            float rise=top.y-transform.position.y;
+            if(rise<=c.Motor.stepHeight+c.Motor.Skin*3 || !c.Motor.CanOccupy(top))return false;
+            ledgeDestination=top;wall=obstacle.collider;normal=outward;StartHop(c);automaticHop=true;return true;
+        }
+
         private bool WallRay(PootleCharacter c, Vector3 direction, out RaycastHit hit)
         {
             float reach = c.Motor.Radius + c.profile.climbReach;
@@ -189,7 +205,7 @@ namespace Pootle
         }
         public bool CatchPoleTop(PootleCharacter c,Vector3 from,Vector3 to)
         {
-            if(c.Velocity.y>0 || cooldown>0 || c.Mode==PootleMode.GroundPounding || pole)return false;
+            if(c.Velocity.y>0 || cooldown>0 || pole)return false;
             PootlePole best=null;float nearest=float.PositiveInfinity;
             foreach(var candidate in PootlePole.Active)
             {
@@ -204,12 +220,14 @@ namespace Pootle
             }
             if(!best)return false;
             c.Motor.MoveTo(best.Top);if(Vector3.Distance(transform.position,best.Top)>.05f)return false;
+            c.ReportLanding(-c.Velocity.y);
             pole=best;c.Facing=pole.LimitFacing(c.Facing);c.Velocity=Vector3.zero;c.RailSupported();
             c.SetMode(PootleMode.PoleStanding,PootleTransition.Landed);return true;
         }
 
         private void StartHop(PootleCharacter c)
         {
+            automaticHop=false;
             if (!c.Motor.CanOccupy(ledgeDestination))
             {
                 stateTime = 0; c.SetMode(PootleMode.LedgeHanging, PootleTransition.Grabbed); return;

@@ -21,9 +21,9 @@ namespace Pootle
                 if (c.ConsumeJump())
                 {
                     Vector3 direction = PootleMovement.CameraDirection(frame.move, c.outputCamera, out float magnitude);
-                    if (magnitude < 0.1f) direction = c.Facing;
+                    if (magnitude < 0.1f) direction = Vector3.zero;
                     Vector3 momentum = HookVelocity;
-                    Release(c); c.LaunchTraversal(direction * c.profile.climbJumpSpeed + Vector3.ProjectOnPlane(momentum, Vector3.up), frame.jumpHeld);
+                    Release(c); c.LaunchTraversal(direction * (c.profile.climbJumpSpeed * magnitude), frame.jumpHeld);
                     c.Velocity += Vector3.up * Mathf.Max(0, momentum.y); return false;
                 }
                 if (!c.profile.automaticGrip && !frame.grip) { Release(c); return false; }

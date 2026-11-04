@@ -68,6 +68,7 @@ namespace Pootle.Editor
             character.cameraTarget = target.transform;
             PootleAnimationSetup.Configure(character);
             PootleNextFeaturesSetup.ConfigureCharacter(character);
+            PootleMovementFeedbackSetup.Configure(character);
             EditorUtility.SetDirty(character);
             return character;
         }

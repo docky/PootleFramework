@@ -70,7 +70,7 @@ namespace Pootle.Tests
             var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.Held,Is.Not.Null);var item=carry.Held;
             InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.South));yield return new WaitForSeconds(.18f);
             InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.North));yield return new WaitForSeconds(.05f);
-            Assert.That(carry.LastDrop,Is.EqualTo(PootleDropResult.Beneath));Assert.That(item.Body.isKinematic,Is.False);
+            Assert.That(carry.LastDrop,Is.EqualTo(PootleDropResult.Beneath));Assert.That(item.GetComponent<PootleFallingCrate>(),Is.Not.Null);Assert.That(item.GetComponent<PootleFallingCrate>().FallSpeed,Is.GreaterThan(0));
             Assert.That(item.Shape.bounds.max.y,Is.LessThan(character.transform.position.y));
             Assert.That(Vector3.ProjectOnPlane(item.transform.position-character.transform.position,Vector3.up).magnitude,Is.LessThan(.1f));
         }

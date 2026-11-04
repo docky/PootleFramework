@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76ae91d281a83488590252fbfff57a43, type: 3}
   m_Name: PootleDefault
   m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleProfile
+  smallObstacleHop: 1
+  smallHopHeight: 1.05
+  smallHopDuration: 0.3
+  externalFacingHold: 0.9
   walkSpeed: 7.5
   runSpeed: 9
   allowRun: 1

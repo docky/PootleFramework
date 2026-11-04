@@ -50,6 +50,7 @@ namespace Pootle
                 PootleMode.LedgeHop => character.Velocity.y >= 0 ? "Jump" : "Fall",
                 _ => character.Velocity.y > 0 ? "Jump" : "Fall"
             };
+            if(character.SlideRideAirborne)next="SeatedSlide";
             if (next != state && animator.HasState(0, Animator.StringToHash(next)))
             {
                 animator.CrossFadeInFixedTime(next, 0.12f, 0);

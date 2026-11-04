@@ -237,7 +237,9 @@ namespace Pootle.Tests
             character.outputCamera=null;character.Teleport(new Vector3(-.7f,3,3),Quaternion.identity);
             yield return new WaitForSeconds(.5f);Assert.That(character.Mode,Is.EqualTo(PootleMode.RailWalking));
             InputSystem.QueueStateEvent(gamepad,new GamepadState{leftStick=Vector2.up});
-            yield return new WaitForSeconds(.65f);
+            // Wait for the crossing, not a render-frame boundary near z=4.
+            float deadline=Time.time+1f;
+            while(character.transform.position.z<=4.05f && Time.time<deadline) yield return null;
             Assert.That(character.GetComponent<PootleRailRider>().Rail.name,Does.StartWith("T junction"));
             Assert.That(character.transform.position.x,Is.Zero.Within(.03f));
             Assert.That(character.transform.position.z,Is.GreaterThan(4));

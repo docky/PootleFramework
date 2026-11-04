@@ -12,10 +12,21 @@ namespace Pootle
         public void Apply(PootleCharacter c, float dt)
         {
             CarryVelocity = Vector3.zero;
+            if(c.IsGrounded && c.Support.collider)
+            {
+                var belt=c.Support.collider.GetComponentInParent<PootleConveyor>();
+                if(belt && belt.isActiveAndEnabled)
+                {
+                    CarryVelocity=belt.VelocityAt(transform.position);
+                    Vector3 before=transform.position;
+                    c.Motor.Move(CarryVelocity*dt,false,.1f);
+                    c.Facing=belt.RotationBetween(before,transform.position)*c.Facing;
+                }
+            }
             if (!Surface || !Surface.isActiveAndEnabled || !(c.Mode==PootleMode.Grounded || c.IsRolling && c.IsGrounded)) { Surface = null; return; }
             Vector3 target = Surface.transform.TransformPoint(anchor);
             Vector3 delta = target - transform.position;
-            CarryVelocity = Vector3.ClampMagnitude(delta / dt, 30);
+            CarryVelocity += Vector3.ClampMagnitude(delta / dt, 60);
             var change = Surface.transform.rotation * Quaternion.Inverse(rotation);
             Vector3 facing = Vector3.ProjectOnPlane(change * c.Facing, Vector3.up);
             if (facing.sqrMagnitude > 0.001f) c.Facing = facing.normalized;

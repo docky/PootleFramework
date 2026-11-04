@@ -141,6 +141,16 @@ namespace Pootle
                 support.distance = gap;
                 support.angle = Vector3.Angle(Vector3.up, central.normal);
             }
+            // A curved trough supports the capsule at its spherical contact, which can be
+            // beside the centre ray on a bank. Do not alternate between those two planes.
+            var slide= sphereFound && hit.collider ? hit.collider.GetComponentInParent<PootleSlideSurface>() : null;
+            if(slide && slide.isActiveAndEnabled && hit.normal.y>.1f)
+            {
+                support.found=found=true;support.collider=hit.collider;support.point=hit.point;
+                support.normal=slide.NormalAt(hit);support.distance=hit.distance-lift-Skin;
+                support.angle=Vector3.Angle(Vector3.up,support.normal);
+                support.central=support.distance<=reach+Skin*2 && support.distance>=-Skin*6;
+            }
             support.walkable = found && support.angle <= slopeLimit + 0.01f && (!requireCenter || support.central);
             Record(PootleProbeKind.GroundSphere, origin, origin, Radius - Skin, Vector3.down, distance,
                 hit, sphereFound, false, !sphereFound ? PootleProbeStatus.Miss : support.walkable ? PootleProbeStatus.Accepted : PootleProbeStatus.Rejected,
@@ -168,7 +178,7 @@ namespace Pootle
             {
                 float distance = horizontal.magnitude;
                 if (Sweep(position, horizontal / distance, distance + Skin, PootleProbeKind.Movement, out var wall)
-                    && Vector3.Angle(Vector3.up, wall.normal) > 0.1f)
+                    && Vector3.Angle(Vector3.up, wall.normal) > slopeLimit + 0.1f)
                     stepped = TryStep(ref position, horizontal, wall.normal);
             }
             else Capture?.Record(new PootleProbeRecord { kind = PootleProbeKind.StepUp, status = PootleProbeStatus.NotEvaluated });

@@ -33,7 +33,7 @@ namespace Pootle.Tests
             character = go.AddComponent<PootleCharacter>();
             profile = ScriptableObject.CreateInstance<PootleProfile>(); objects.Add(profile);
             profile.additionalAirJumps=0;profile.applySlopeSpeed=false;profile.landingMomentumConversion=0;
-            profile.automaticGrip=false; character.profile = profile; character.simulateAutomatically = false;
+            profile.smallObstacleHop=false;profile.automaticGrip=false; character.profile = profile; character.simulateAutomatically = false;
             go.SetActive(true);
             Physics.SyncTransforms();
             Step(2);
@@ -610,7 +610,7 @@ namespace Pootle.Tests
         }
 
         [Test]
-        public void HookTurnsFreelyWithCameraRelativeInputAndJumpRetainsFacing()
+        public void HookTurnsFreelyWithCameraRelativeInputAndNeutralJumpIsVertical()
         {
             var hook = Hook(new Vector3(0,3,0)); ResetAt(hook.HangingPosition(Vector3.forward)-origin);
             var camera = new GameObject("Hook camera"); objects.Add(camera); camera.transform.rotation = Quaternion.Euler(0,90,0);
@@ -621,7 +621,7 @@ namespace Pootle.Tests
             Assert.That(Vector3.Dot(character.Facing,Vector3.right), Is.GreaterThan(.99f));
             Assert.That(Vector3.Dot(hook.transform.forward,character.Facing), Is.GreaterThan(.99f));
             Step(1,new PootleInputFrame { grip=true,jumpPressed=true,jumpHeld=true });
-            Assert.That(character.Velocity.x,Is.GreaterThan(5));
+            Assert.That(Mathf.Abs(character.Velocity.x),Is.LessThan(.01f));
         }
         [Test]
         public void GliderSlowsDescentSteersAndReleaseRestoresGravity()

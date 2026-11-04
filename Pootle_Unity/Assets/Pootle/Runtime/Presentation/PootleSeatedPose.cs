@@ -20,7 +20,7 @@ namespace Pootle
             if (!character || !character.profile || !animator || !animator.isHuman || !character.visualRoot) return;
             var visual = character.visualRoot;
             visual.localPosition = rest;
-            weight = Mathf.MoveTowards(weight, character.Mode == PootleMode.Sliding || character.Mode == PootleMode.RailSliding ? 1 : 0,
+            weight = Mathf.MoveTowards(weight, character.Mode == PootleMode.Sliding || character.Mode == PootleMode.RailSliding || character.SlideRideAirborne ? 1 : 0,
                 character.profile.seatedPoseSpeed * Time.deltaTime);
             if (weight <= 0) return;
             Vector3 up = visual.up, forward = visual.forward;

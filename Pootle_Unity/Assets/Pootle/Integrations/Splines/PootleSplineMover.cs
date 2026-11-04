@@ -9,13 +9,15 @@ namespace Pootle
         public SplineContainer path;
         [Min(0)] public float speed = 3;
         public bool pingPong = true;
+        [Min(0),Tooltip("Seconds to wait at the ends of an open ping-pong path.")]
+        public float endpointPause;
         public bool rotateToPath;
         [Min(0)] public float turnSpeed = 360;
         public bool simulateAutomatically = true;
         public Vector3 Velocity { get; private set; }
         private readonly float[] distances = new float[257];
-        private float phase, length;
-        private void OnEnable() { phase = 0; Rebuild(); }
+        private float phase, length, pauseRemaining;
+        private void OnEnable() { phase = 0; pauseRemaining=endpointPause; Rebuild(); }
         public void Rebuild()
         {
             length = 0; distances[0] = 0;
@@ -32,7 +34,11 @@ namespace Pootle
         {
             if (dt <= 0 || !path || length <= 0.001f) return;
             bool reverseAtEnds = pingPong && !path.Spline.Closed;
-            phase = Mathf.Repeat(phase + speed * dt, reverseAtEnds ? length * 2 : length);
+            if(reverseAtEnds && pauseRemaining>0){pauseRemaining=Mathf.Max(0,pauseRemaining-dt);Velocity=Vector3.zero;return;}
+            float next=phase+speed*dt;
+            if(reverseAtEnds && endpointPause>0 && phase<length && next>=length){phase=length;pauseRemaining=endpointPause;}
+            else if(reverseAtEnds && endpointPause>0 && next>=length*2){phase=0;pauseRemaining=endpointPause;}
+            else phase = Mathf.Repeat(next, reverseAtEnds ? length * 2 : length);
             float distance = reverseAtEnds ? Mathf.PingPong(phase, length) : phase;
             int low = 0, high = 256;
             while (high - low > 1) { int mid = (low + high) / 2; if (distances[mid] < distance) low = mid; else high = mid; }

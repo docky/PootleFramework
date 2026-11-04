@@ -41,7 +41,7 @@ namespace Pootle
                 c.Driver = new DefaultInputAxisDriver { AccelTime = 0.08f, DecelTime = 0.08f };
             }
             driver.ReadControlValueOverride = Read;
-            if (character) character.Teleported += OnTeleport;
+            if (character) {character.Teleported += OnTeleport;character.ClimbingViewRotated += OnClimbingRotation;}
         }
         private float Read(InputAction action, IInputAxisOwner.AxisDescriptor.Hints hint,
             Object context, CinemachineInputAxisController.Reader.ControlValueReader fallback)
@@ -62,6 +62,11 @@ namespace Pootle
                 orbit.VerticalAxis.Value = orbit.VerticalAxis.Center;
             }
         }
+        private void OnClimbingRotation(float degrees)
+        {
+            var styles=GetComponent<PootleCameraStyles>();
+            if(orbit && (!styles || styles.AllowsLook))orbit.HorizontalAxis.Value+=degrees;
+        }
         private void OnTeleport(Vector3 delta)
         {
             if (cameraRig && character && character.cameraTarget)
@@ -72,7 +77,7 @@ namespace Pootle
         }
         private void OnDisable()
         {
-            if (character) character.Teleported -= OnTeleport;
+            if (character) {character.Teleported -= OnTeleport;character.ClimbingViewRotated -= OnClimbingRotation;}
             if (driver) driver.ReadControlValueOverride = null;
             if (instance) { instance.Disable(); Destroy(instance); }
             if (lookReference) Destroy(lookReference);

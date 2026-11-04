@@ -57,12 +57,12 @@ namespace Pootle
             if(jumped)
             {
                 rollingGrounded=false;
-                if(platformRider){Velocity+=Vector3.ProjectOnPlane(platformRider.CarryVelocity,Vector3.up);vertical+=platformRider.CarryVelocity.y;}
+                if(platformRider){Velocity+=Vector3.ProjectOnPlane(platformRider.CarryVelocity,Vector3.up);vertical+=Mathf.Max(0,platformRider.CarryVelocity.y);}
             }
             Vector3 previous=Velocity;
             if(rollingGrounded)
             {
-                Vector3 velocity=Vector3.ProjectOnPlane(Velocity,Support.normal);
+                Vector3 velocity=Vector3.ProjectOnPlane(Velocity-externalPlanar,Support.normal);
                 if(magnitude>.001f)
                 {
                     Vector3 target=Vector3.ProjectOnPlane(direction,Support.normal).normalized*profile.rollingSpeed*magnitude;
@@ -70,22 +70,25 @@ namespace Pootle
                 }
                 else velocity=Vector3.MoveTowards(velocity,Vector3.zero,profile.rollingFriction*dt);
                 velocity+=Vector3.ProjectOnPlane(Vector3.down*profile.rollingGravity,Support.normal)*dt;
-                Velocity=Vector3.ClampMagnitude(velocity,profile.rollingMaximumSpeed);
+                Velocity=Vector3.ClampMagnitude(velocity,profile.rollingMaximumSpeed)+externalPlanar;
                 previous=Vector3.ProjectOnPlane(previous,Support.normal);
             }
             else
             {
-                Vector3 planar=Vector3.ProjectOnPlane(Velocity,Vector3.up);
+                Vector3 planar=Vector3.ProjectOnPlane(Velocity,Vector3.up)-externalPlanar;
                 if(magnitude>.001f)planar=Vector3.MoveTowards(planar,direction*profile.rollingSpeed*magnitude,profile.rollingControl*dt);
                 if(variableJump && !frame.jumpHeld)vertical=Mathf.Min(vertical,profile.jumpReleaseSpeed);
                 if(jumped)previous=new Vector3(previous.x,vertical,previous.z);
                 vertical=Mathf.Max(-profile.maximumFallSpeed,vertical-(vertical>0?profile.risingGravity:profile.fallingGravity)*dt);
-                Velocity=planar+Vector3.up*vertical;
+                Velocity=planar+externalPlanar+Vector3.up*vertical;
             }
+            float windY=WindVertical(previous.y,Velocity.y,dt);
+            if(windY>0 && windAcceleration>0 && windVelocity.y>0)rollingGrounded=false;
+            Velocity=new Vector3(Velocity.x,windY,Velocity.z);
             result=Motor.Move((previous+Velocity)*.5f*dt,rollingGrounded,rollingGrounded?Motor.stepHeight+.06f:0,true,profile.groundSnapSpeed*dt);
             for(int i=0;i<Motor.ContactCount;i++)
                 if(Vector3.Dot(Velocity,Motor.Contacts[i].normal)<0)Velocity=Vector3.ProjectOnPlane(Velocity,Motor.Contacts[i].normal);
-            if(direction.sqrMagnitude>.001f)Facing=direction;
+            if(direction.sqrMagnitude>.001f && !HoldingExternalFacing)Facing=direction;
             // The toggle remains active through jumps, falls, landings and spring launches.
             SetMode(PootleMode.Rolling,PootleTransition.Supported);
         }

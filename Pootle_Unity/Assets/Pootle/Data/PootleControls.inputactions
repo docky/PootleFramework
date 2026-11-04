@@ -435,6 +435,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Style7",
+                    "type": "Button",
+                    "id": "61f1a1de-cd20-4703-93d0-e3f055c55b11",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -600,6 +610,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Style6",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4f78d182-8ef7-4e93-97d4-60e17eb0d0fd",
+                    "path": "<Keyboard>/7",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Style7",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

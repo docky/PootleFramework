@@ -83,3 +83,21 @@ The requested expansion enables one additional air jump and tuned ordinary slope
 Reference `PlayerObjectGrabber`/`Pickable` informed the optional carryable-prop contract. Pootle uses BoxCollider/Rigidbody props with validated volume and transfer paths, deterministic front/beneath placement, safe fallback and restoration of original physics settings. A procedural ball and sample cubes were authored locally; Lily's existing humanoid grip pose supplies carrying hands. No new reference assets or game systems were copied.
 
 Six camera styles use the existing Cinemachine orbit/composition/obstruction pipeline and privately owned Input System actions on number-row keys 1–6. The reference project remains unchanged.
+
+## Movement audio and particles · 4 November 2026
+
+At the user's request, copied the reference project's five `jump_*.wav` clips, three `footstep_regular_*.wav` clips and `stomp.wav`, plus `Dust.prefab`, `Landing Smoke.prefab`, their Smoke material and smoke texture. Assets retain their GUIDs in the separate destination project. The copied Smoke material is adapted to URP Particles/Unlit; particle instances are tuned for small, short-lived world-space contact puffs. The reference project remains unchanged.
+
+`PootleMovementFeedback` is optional presentation: randomized jump voices, distance-based steps, and impact-scaled landings use the existing character events. Reference PlayerFootsteps/PlayerParticles informed the spacing and effect timing; no reference runtime scripts or entity dependencies were copied. Rail, pole-top and steep-slope contacts now publish landing events without changing movement. Idle carriers, blocked walking, rolling and traversal do not emit walking footsteps.
+
+## Conveyor turning and spiral slide · 4 November 2026
+
+The requested conveyor change applies the curve's yaw delta to Lily and loose falling-crate props, preserving orientation relative to the belt and leaving straight belts unchanged. Props use swept translation and checked rotation. No additional reference assets were copied.
+
+The expanded eastern course and coral spiral trough are procedural. The trough has a continuous mesh collider, raised curved sides, a flat runout and a dedicated slippery-surface marker; it uses ordinary slope-normal slide motion rather than rail attachment or scripted path movement. The access lift reuses the existing spline platform mover with an optional endpoint pause (default zero for existing movers).
+
+## Momentum slide ride · 4 November 2026
+
+The user's requested penguin-style ride is implemented on marked slide surfaces with substepped, unilateral contact, interpolated mesh support normals, retained lateral/uphill momentum, steering/braking and ballistic rim exits. Legacy unmarked steep slopes keep their earlier downhill/lateral-retention behavior. The bank mesh and landing area are expanded procedurally; no new external assets or reference game code were imported.
+
+Cinemachine gains a seventh slide-follow style and automatic slide following for the free/chase styles. Camera heading follows velocity rather than rotating with each local downhill normal. The existing independent look input, obstruction handling and camera rig remain in use.

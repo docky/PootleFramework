@@ -5,6 +5,13 @@ namespace Pootle
     [CreateAssetMenu(menuName = "Pootle/Movement Profile", fileName = "PootleProfile")]
     public sealed class PootleProfile : ScriptableObject
     {
+        [Header("Small obstacle hop")]
+        public bool smallObstacleHop=true;
+        [Range(.6f,1.4f)] public float smallHopHeight=1.05f;
+        [Range(.2f,.6f)] public float smallHopDuration=.3f;
+        [Header("External momentum")]
+        [Min(0)] public float externalFacingHold=.9f;
+
         [Header("Ground movement · m/s, m/s²")]
         [Min(0)] public float walkSpeed = 7.5f;
         [Min(0)] public float runSpeed = 9f;
