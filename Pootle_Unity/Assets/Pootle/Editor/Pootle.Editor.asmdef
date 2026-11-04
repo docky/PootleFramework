@@ -1,0 +1,6 @@
+{
+  "name": "Pootle.Editor",
+  "rootNamespace": "Pootle.Editor",
+  "references": ["Pootle.Runtime", "Pootle.Cinemachine", "Unity.InputSystem", "Unity.Cinemachine"],
+  "includePlatforms": ["Editor"]
+}

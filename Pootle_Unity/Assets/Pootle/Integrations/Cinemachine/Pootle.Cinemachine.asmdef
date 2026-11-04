@@ -1,0 +1,5 @@
+{
+  "name": "Pootle.Cinemachine",
+  "rootNamespace": "Pootle",
+  "references": ["Pootle.Runtime", "Unity.Cinemachine", "Unity.InputSystem"]
+}

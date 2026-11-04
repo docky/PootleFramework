@@ -1,0 +1,6 @@
+{
+  "name": "Pootle.Tests.Editor",
+  "references": ["Pootle.Runtime", "Pootle.Editor", "Pootle.Cinemachine", "Unity.InputSystem", "Unity.Cinemachine"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}
