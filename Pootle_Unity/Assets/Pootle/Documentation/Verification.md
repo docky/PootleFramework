@@ -272,6 +272,15 @@ Live visual inspection confirmed the white awareness dot, mint ready circle, and
 - Restored Lily to the reported wall, then verified an actual North-face-button drop and pickup through the Input System. Live result: drop succeeded, Carry cube 2 held again, grounded, pivot 0.4, saved scene clean, original keyboard-focus policy restored. Inspected `Builds/Pootle-v0.1/carry-wall-restored.png`.
 - Left the game running with the cube in Lily's hands. Removed the temporary gamepad/player-loop hook and restored background/auto-tick settings. No current console errors; no standalone build or video requested in this pass.
 
+## Non-blocking held boxes and safe release · 5 November 2026
+
+- Removed the held-box sweep from the motor, box-volume restrictions from carry turns, and blocked-pose freezing from following. Held boxes remain kinematic triggers, always follow Lily, and do not obstruct jumping, landing or one-way passage. The adjustable forward turning pivot still checks Lily's capsule. Picking up the current support clears platform attachment so the held box cannot lift its owner.
+- Release validates the entire box volume and reachability from Lily instead of sweeping from a possibly embedded held pose. Airborne release prefers beneath the feet; front placement is the fallback. A blocked standing front drop searches backward steps up to the configurable **0.6-unit Maximum Drop Backstep**, requiring clear capsule travel and central walkable footing. Beneath is the last fallback; no safe position leaves the item held.
+- One-way release checks permit passage from below but prevent dropping down through their top. Standing slope placement accounts for the full projected box extent, including the uphill corner. Reset/disable tries safe local placement, then a previously safe carry/pickup pose; it does not activate physics at an embedded carry pose. Grip targets use the live box transform rather than stale broadphase bounds during a jump.
+- Compilation: zero errors/warnings. Final suites: **152/152 EditMode + 61/61 PlayMode = 213 passing tests**. New regressions cover box-only overhangs, matching loaded/unloaded jump heights through a one-way platform, own-support pickup, safe backsteps, blocked backsteps, embedded air drops, wall/floor rejection, thin one-way release and whole-box slope clearance. Existing carry obstruction cases were updated to the requested non-blocking behavior.
+- Live gamepad check picked up Carry cube 1, jumped through the authored mint platform and landed on it with the box held throughout. Peak player height: **3.713 m**; measured box-follow error: **0 m**. The temporary virtual device was allowed to initialize before its first button press. Inspected `Builds/Pootle-v0.1/nonblocking-carry-one-way.png`; current console has no errors/warnings.
+- Restored the initially stopped Editor and clean saved scene, with normal automatic character simulation. Temporary gamepad/player-loop hooks were removed; auto-tick is off and the background override is cleared, preserving the project's enabled background setting. No build or video requested in this pass.
+
 
 ## Revised gamepad layout (2026-11-05)
 

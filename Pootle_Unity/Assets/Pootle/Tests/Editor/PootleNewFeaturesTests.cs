@@ -84,14 +84,14 @@ namespace Pootle.Tests
             Assert.That(character.GetComponent<PootlePlatformRider>().Surface,Is.Null);
         }
         [Test]
-        public void Features_CarryWallBlocksMovementWithoutDroppingAndAllowsRepickup()
+        public void Features_CarriedBoxOverlapsWallWithoutBlockingFollowAndAllowsRepickup()
         {
             var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
             var carry=character.GetComponent<PootleCarrying>();
             var wall=Box("Carry wall",new Vector3(0,1.5f,3),new Vector3(5,3,.3f));
             Step(180,new PootleInputFrame{move=Vector2.up});
             Assert.That(carry.Held,Is.SameAs(item));Assert.That(item.IsHeld);Assert.That(item.Shape.isTrigger);
-            Assert.That(item.Shape.bounds.max.z,Is.LessThanOrEqualTo(wall.GetComponent<Collider>().bounds.min.z+.01f));
+            Assert.That(item.Shape.bounds.max.z,Is.GreaterThan(wall.GetComponent<Collider>().bounds.min.z),"Held box is allowed to overlap obstacles");
             Vector3 expected=character.transform.position+Vector3.up*character.Motor.Height*.65f+character.Facing*(character.Motor.Radius+item.HalfSize.z+.12f);
             Assert.That(Vector3.Distance(item.Shape.bounds.center,expected),Is.LessThan(.025f),"Box stays attached to the hands at the wall");
             Step(30,new PootleInputFrame{move=Vector2.down});Step(25);
@@ -111,17 +111,18 @@ namespace Pootle.Tests
             Assert.That(Vector3.Dot(character.Facing,Vector3.right),Is.GreaterThan(.999f));Assert.That(carry.Held,Is.SameAs(item));
         }
         [Test]
-        public void Features_CarryTurnStopsAtObstructionWithoutDropping()
+        public void Features_CarryTurnIgnoresBoxObstructionsButKeepsPlayerClear()
         {
             var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
             var carry=character.GetComponent<PootleCarrying>();
             var wall=Box("Carry turn wall",new Vector3(.9f,1.5f,1),new Vector3(.2f,3,3));Physics.SyncTransforms();
-            Assert.That(carry.Turn(character,Vector3.right),Is.False);
+            Assert.That(carry.Turn(character,Vector3.right),Is.True);
             Assert.That(carry.Held,Is.SameAs(item));Assert.That(item.IsHeld);
-            Assert.That(Vector3.Angle(character.Facing,Vector3.forward),Is.LessThan(85));
+            Assert.That(Vector3.Dot(character.Facing,Vector3.right),Is.GreaterThan(.999f));
             bool overlap=Physics.ComputePenetration(item.Shape,item.transform.position,item.transform.rotation,
                 wall.GetComponent<Collider>(),wall.transform.position,wall.transform.rotation,out _,out float depth);
-            Assert.That(!overlap || depth<.01f,Is.True,"The rotation arc cannot pass the crate through a wall");
+            Assert.That(overlap && depth>.01f,Is.True,"Held geometry is non-blocking");
+            Assert.That(character.Motor.CanOccupy(character.transform.position),"The player still respects obstacles");
         }
         [Test]
         public void Features_CarryCubeTouchingWallCanBeLiftedAwayAndPickedUpAgain()
@@ -133,6 +134,104 @@ namespace Pootle.Tests
             Step(20,new PootleInputFrame{move=Vector2.down});Step(25);
             Step(1,new PootleInputFrame{carryPressed=true});Assert.That(carry.Held,Is.Null);
             Step(1,new PootleInputFrame{carryPressed=true});Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [Test]
+        public void Features_CarryJumpDoesNotCatchBoxOnOverhangingObstacle()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            Box("Box-only overhang",new Vector3(0,2.3f,1.4f),new Vector3(3,.3f,1.2f));
+            Step(1,new PootleInputFrame{jumpPressed=true,jumpHeld=true});Step(25,new PootleInputFrame{jumpHeld=true});
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.Held,Is.SameAs(item));
+            Assert.That(character.transform.position.y-origin.y,Is.GreaterThan(3),"The box cannot act as a jump ceiling");
+            Assert.That(item.transform.TransformPoint(item.Shape.center).y-character.transform.position.y,Is.EqualTo(character.Motor.Height*.65f).Within(.01f));
+            Step(120);Assert.That(character.IsGrounded);Assert.That(character.transform.position.y-origin.y,Is.LessThan(.1f));
+            Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [Test]
+        public void Features_CarryJumpThroughOneWayMatchesUnladenJumpAndBoxFollows()
+        {
+            var platform=Box("Carry one way",new Vector3(0,1.5f,0),new Vector3(4,.2f,4));platform.AddComponent<PootleOneWayPlatform>();
+            Step(1,new PootleInputFrame{jumpPressed=true,jumpHeld=true});float barePeak=0;
+            for(int i=0;i<100;i++){Step(1,new PootleInputFrame{jumpHeld=true});barePeak=Mathf.Max(barePeak,character.transform.position.y-origin.y);}
+            ResetAt(new Vector3(0,.02f,0));var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.Held,Is.SameAs(item));
+            Step(1,new PootleInputFrame{jumpPressed=true,jumpHeld=true});float carriedPeak=0;
+            for(int i=0;i<100;i++)
+            {
+                Step(1,new PootleInputFrame{jumpHeld=true});carriedPeak=Mathf.Max(carriedPeak,character.transform.position.y-origin.y);
+                Assert.That(item.transform.TransformPoint(item.Shape.center).y-character.transform.position.y,Is.EqualTo(character.Motor.Height*.65f).Within(.01f));
+            }
+            Assert.That(carriedPeak,Is.EqualTo(barePeak).Within(.03f));Assert.That(character.IsGrounded);Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [Test]
+        public void Features_DropBackstepsToMakeRoomThenRestoresSolidBox()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var wall=Box("Drop wall",new Vector3(0,1.5f,1.3f),new Vector3(4,3,.2f));Physics.SyncTransforms();
+            var carry=character.GetComponent<PootleCarrying>();Vector3 before=character.transform.position;
+            Assert.That(carry.TryDrop(character));Assert.That(carry.LastDrop,Is.EqualTo(PootleDropResult.InFront));
+            Assert.That(before.z-character.transform.position.z,Is.InRange(.2f,.601f));Assert.That(item.Shape.isTrigger,Is.False);Assert.That(item.IsHeld,Is.False);
+            Assert.That(item.Shape.bounds.max.z,Is.LessThan(wall.GetComponent<Collider>().bounds.min.z+.005f));
+            Assert.That(character.Motor.CanOccupy(character.transform.position));
+        }
+        [Test]
+        public void Features_DropWithNoRoomBehindKeepsGhostBoxHeld()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            Box("Drop front wall",new Vector3(0,1.5f,1.3f),new Vector3(4,3,.2f));
+            Box("Drop rear wall",new Vector3(0,1.5f,-.7f),new Vector3(4,3,.2f));Physics.SyncTransforms();
+            var carry=character.GetComponent<PootleCarrying>();Vector3 before=character.transform.position;
+            Assert.That(carry.TryDrop(character),Is.False);Assert.That(carry.Held,Is.SameAs(item));Assert.That(item.Shape.isTrigger);
+            Assert.That(character.transform.position,Is.EqualTo(before));
+        }
+        [Test]
+        public void Features_AirDropEscapesEmbeddedHeldPoseWithoutCrossingWall()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            character.Motor.Move(Vector3.up*3,false);character.GetComponent<PootleCarrying>().Follow(character);Step(1);
+            Box("Embedded held wall",new Vector3(0,3,1.2f),new Vector3(4,6,.3f));Physics.SyncTransforms();
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.TryDrop(character));Assert.That(carry.LastDrop,Is.EqualTo(PootleDropResult.Beneath));
+            Assert.That(item.Shape.bounds.max.y,Is.LessThanOrEqualTo(character.transform.position.y-.03f));Assert.That(item.IsHeld,Is.False);
+        }
+        [Test]
+        public void Features_DropCannotTeleportGhostBoxThroughSolidWallOrFloor()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            Box("Between player and drop",new Vector3(0,1.5f,.7f),new Vector3(4,3,.2f));Physics.SyncTransforms();
+            var carry=character.GetComponent<PootleCarrying>();carry.maximumDropBackstep=0;
+            Assert.That(carry.TryDrop(character),Is.False);Assert.That(carry.Held,Is.SameAs(item));Assert.That(item.Shape.isTrigger);
+        }
+        [Test]
+        public void Features_PickingUpOwnSupportCannotCarryPlayerWithGhostBox()
+        {
+            var item=CarryCube(new Vector3(0,.4f,0));item.gameObject.AddComponent<PootleMovingSurface>();
+            ResetAt(new Vector3(0,.82f,0));Step(3);Assert.That(character.Support.collider,Is.SameAs(item.Shape));
+            Step(1,new PootleInputFrame{carryPressed=true});float height=character.transform.position.y;
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.Held,Is.SameAs(item));
+            Step(1);Assert.That(character.transform.position.y,Is.LessThan(height+.05f),"Held box cannot carry its owner upwards");
+            Step(90);Assert.That(character.IsGrounded);Assert.That(character.transform.position.y-origin.y,Is.LessThan(.1f));
+        }
+        [Test]
+        public void Features_BlockedDropCannotPassDownThroughThinOneWayFloor()
+        {
+            var platform=Box("Thin release floor",new Vector3(0,1.6f,0),new Vector3(4,.02f,4));platform.AddComponent<PootleOneWayPlatform>();
+            ResetAt(new Vector3(0,1.63f,0));Step(3);
+            var item=CarryCube(new Vector3(0,2.03f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.Held,Is.SameAs(item));carry.maximumDropBackstep=0;
+            Box("Release front wall",new Vector3(0,2.5f,1.3f),new Vector3(4,3,.2f));Physics.SyncTransforms();
+            Assert.That(carry.TryDrop(character),Is.False);Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [Test]
+        public void Features_FrontDropOnSlopeClearsTheWholeBox()
+        {
+            floor.SetActive(false);
+            var ramp=Box("Carry drop ramp",new Vector3(0,-.5f,0),new Vector3(20,1,20));ramp.transform.rotation=Quaternion.Euler(30,0,0);
+            character.Teleport(origin+Vector3.up,Quaternion.Euler(0,180,0));Step(90);Assert.That(character.IsGrounded);
+            var item=CarryCube(new Vector3(0,1.5f,-1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.Held,Is.SameAs(item));
+            Assert.That(carry.TryDrop(character));Assert.That(carry.LastDrop,Is.EqualTo(PootleDropResult.InFront));
+            bool overlap=Physics.ComputePenetration(item.Shape,item.transform.position,item.transform.rotation,ramp.GetComponent<Collider>(),ramp.transform.position,ramp.transform.rotation,out _,out float depth);
+            Assert.That(!overlap || depth<.005f,Is.True,"Slope placement accounts for the uphill bottom corner");
         }
         [Test]
         public void Features_CarryStandingDropPlacesInFrontAndRestoresPhysics()
@@ -165,6 +264,7 @@ namespace Pootle.Tests
         public void Features_BlockedFrontDropKeepsObjectHeldAndResetReleasesIt()
         {
             var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            character.GetComponent<PootleCarrying>().maximumDropBackstep=0;
             Box("Blocked front",new Vector3(0,1,1.6f),new Vector3(3,2,.35f));
             Step(1,new PootleInputFrame{carryPressed=true});var carry=character.GetComponent<PootleCarrying>();
             Assert.That(carry.LastDrop,Is.EqualTo(PootleDropResult.Blocked));Assert.That(carry.Held,Is.SameAs(item));

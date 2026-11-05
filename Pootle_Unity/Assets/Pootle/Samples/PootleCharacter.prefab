@@ -1444,6 +1444,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleCarrying
   pickupReach: 2
   rotationPivotForward: 0.4
+  maximumDropBackstep: 0.6
 --- !u!114 &6796442733694619680
 MonoBehaviour:
   m_ObjectHideFlags: 0

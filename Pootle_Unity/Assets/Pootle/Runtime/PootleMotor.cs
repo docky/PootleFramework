@@ -30,7 +30,6 @@ namespace Pootle
         private readonly RaycastHit[] hits = new RaycastHit[32];
         private readonly Collider[] overlaps = new Collider[32];
         private CapsuleCollider capsule;
-        private PootleCarrying carrying;
         private float tickDeltaTime=1f/60;
         private readonly System.Collections.Generic.HashSet<Rigidbody> pushedBodies = new System.Collections.Generic.HashSet<Rigidbody>();
 
@@ -260,8 +259,6 @@ namespace Pootle
         {
             Vector3 start = transform.position;
             Vector3 position = Recover(start);
-            if(!carrying)carrying=GetComponent<PootleCarrying>();
-            if(carrying)motion=carrying.ConstrainMotion(this,motion);
             Vector3 horizontal = new Vector3(motion.x, 0, motion.z);
             bool stepped = false;
             if (allowSteps && horizontal.sqrMagnitude > 0.0000001f)

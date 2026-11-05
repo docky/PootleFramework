@@ -190,9 +190,9 @@ MonoBehaviour:
   m_FontFeatureTable:
     m_MultipleSubstitutionRecords: []
     m_LigatureSubstitutionRecords:
-    - m_ComponentGlyphIDs: 6e0000007a000000
+    - m_ComponentGlyphIDs: 6e0000007a000000u
       m_LigatureGlyphID: 227
-    - m_ComponentGlyphIDs: 6e00000081000000
+    - m_ComponentGlyphIDs: 6e00000081000000u
       m_LigatureGlyphID: 228
     m_GlyphPairAdjustmentRecords:
     - m_FirstAdjustmentRecord:
@@ -20125,7 +20125,7 @@ Texture2D:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
   m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
+  serializedVersion: 4
   m_Width: 1
   m_Height: 1
   m_CompleteImageSize: 1

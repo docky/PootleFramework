@@ -29,7 +29,7 @@ namespace Pootle
             if (!upper || !lower || !hand) return;
             Vector3 right = Vector3.Cross(Vector3.up, character.Facing);
             Vector3 target;
-            if(item)target=item.Shape.bounds.center+right*side*item.HalfSize.x-character.Facing*item.HalfSize.z*.65f;
+            if(item)target=item.transform.TransformPoint(item.Shape.center)+right*side*item.HalfSize.x-character.Facing*item.HalfSize.z*.65f;
             else if (hook) target = hook.GripPoint + right * side * 0.07f;
             else
             {
