@@ -9,7 +9,7 @@ namespace Pootle
         [Tooltip("A private runtime copy is enabled; this asset is never enabled/disabled globally.")]
         public InputActionAsset actions;
         private InputActionAsset instance;
-        private InputAction move, run, jump, reset, grip, glide, detach, roll, carry, interact;
+        private InputAction move, run, jump, reset, glide, detach, roll, carry, interact;
         private int lastSample = -1;
 
         private void OnEnable()
@@ -22,7 +22,6 @@ namespace Pootle
             jump = instance.FindAction("Character/Jump", true);
             detach = instance.FindAction("Character/Detach", true);
             glide = instance.FindAction("Character/Glide", true);
-            grip = instance.FindAction("Character/Grip", true);
             roll = instance.FindAction("Character/Roll");
             carry = instance.FindAction("Character/Carry");
             interact = instance.FindAction("Character/Interact");
@@ -39,7 +38,7 @@ namespace Pootle
             return new PootleInputFrame
             {
                 move = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1),
-                run = run.IsPressed(), grip = grip.IsPressed(), glide = glide.IsPressed(), jumpHeld = jump.IsPressed(),
+                run = run.IsPressed(), glide = glide.IsPressed(), jumpHeld = jump.IsPressed(),
                 jumpPressed = first && jump.WasPressedThisFrame(),
                 detachPressed = first && detach.WasPressedThisFrame(),
                 rollPressed = first && roll != null && roll.WasPressedThisFrame(),
@@ -53,7 +52,7 @@ namespace Pootle
         {
             if (instance) { instance.Disable(); Destroy(instance); }
             instance = null;
-            move = run = jump = reset = grip = glide = detach = roll = carry = interact = null;
+            move = run = jump = reset = glide = detach = roll = carry = interact = null;
             lastSample = -1;
         }
     }

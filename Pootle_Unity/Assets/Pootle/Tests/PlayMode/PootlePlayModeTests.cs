@@ -116,7 +116,7 @@ namespace Pootle.Tests
             Assert.That(animator.GetCurrentAnimatorStateInfo(0).IsName("Jump"));
             InputSystem.QueueStateEvent(gamepad, new GamepadState());
             character.Teleport(new Vector3(-11, 0.03f, 24.45f), Quaternion.identity);
-            InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.up, leftTrigger = 1 });
+            InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.up });
             yield return new WaitForSeconds(0.25f);
             Assert.That(character.Mode, Is.EqualTo(PootleMode.Climbing));
             Assert.That(animator.GetCurrentAnimatorStateInfo(0).IsName("Climb"));
@@ -170,7 +170,7 @@ namespace Pootle.Tests
             Assert.That(character.Mode, Is.EqualTo(PootleMode.Dangling));
             Assert.That(Vector3.Distance(character.transform.position, hook.HangingPosition(character.Facing)), Is.LessThan(0.1f));
             Assert.That(character.GetComponents<PootleHookRider>().Length, Is.EqualTo(1));
-            InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.East));
+            InputSystem.QueueStateEvent(gamepad, new GamepadState { rightTrigger = 1 });
             yield return new WaitForSeconds(0.1f);
             Assert.That(character.Mode, Is.Not.EqualTo(PootleMode.Dangling));
         }
@@ -218,7 +218,7 @@ namespace Pootle.Tests
             var mesh=spline.GetComponent<MeshFilter>().sharedMesh;Assert.That(mesh.vertexCount,Is.GreaterThan(100));
             var rail=spline.GetComponent<PootleRail>();var point=rail.Point(rail.SegmentCount/2);
             character.Teleport(point+Vector3.up*2,Quaternion.identity);
-            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.East));
+            InputSystem.QueueStateEvent(gamepad,new GamepadState { rightTrigger = 1 });
             yield return new WaitForSeconds(.35f);
             Assert.That(character.Mode,Is.EqualTo(PootleMode.RailSliding));
             Assert.That(character.GetComponent<PootleRailRider>().Rail,Is.SameAs(rail));

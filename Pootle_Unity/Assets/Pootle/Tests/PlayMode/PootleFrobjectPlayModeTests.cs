@@ -10,7 +10,7 @@ namespace Pootle.Tests
     public sealed partial class PootlePlayModeTests
     {
         [UnityTest]
-        public IEnumerator Frobject_GamepadAInteractsOnceWithoutJumpAndFallsBackToJump()
+        public IEnumerator Frobject_GamepadXInteractsOnceAndARemainsJump()
         {
             var button = Object.FindAnyObjectByType<PootleFrobjectButton>();
             Assert.That(button, Is.Not.Null);
@@ -18,14 +18,13 @@ namespace Pootle.Tests
             yield return null; yield return null;
             var sensor = character.GetComponent<PootleFrobjectSensor>(); Assert.That(sensor.CanInteract);
             var indicator = button.GetComponent<PootleFrobjectIndicator>(); Assert.That(indicator.State, Is.EqualTo(PootleFrobjectState.Ready));
-            InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South));
+            InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.West));
             yield return null; yield return null;
             Assert.That(button.Value); Assert.That(character.IsGrounded);
-            yield return new WaitForSeconds(.35f); Assert.That(button.Value, Is.True, "Holding A must not retrigger"); Assert.That(character.IsGrounded);
+            yield return new WaitForSeconds(.35f); Assert.That(button.Value, Is.True, "Holding X must not retrigger"); Assert.That(character.IsGrounded);
             InputSystem.QueueStateEvent(gamepad, new GamepadState()); yield return null;
-            button.GetComponent<PootleFrobject>().interactable = false;
             InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South)); yield return null; yield return null;
-            Assert.That(character.IsGrounded, Is.False, "No ready target leaves A available for jumping");
+            Assert.That(character.IsGrounded, Is.False, "A jumps even beside a ready interactable");
         }
 
         [UnityTest]

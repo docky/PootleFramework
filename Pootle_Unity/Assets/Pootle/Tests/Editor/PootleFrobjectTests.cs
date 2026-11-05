@@ -74,12 +74,12 @@ namespace Pootle.Tests
             sensor.enabled = false; Lifecycle(sensor, "OnDisable"); Assert.That(sensor.Focused, Is.Null); Assert.That(sensor.GetState(target), Is.EqualTo(PootleFrobjectState.Hidden));
         }
         [Test]
-        public void Frobject_SharedJumpPressInteractsWithoutJumpOrBufferedJump()
+        public void Frobject_InteractionAndJumpHaveIndependentPresses()
         {
             Sensor(); var target = Frobject(new Vector3(0, 0, 2)); int calls = 0; target.onInteract.AddListener(() => calls++);
-            Step(1, new PootleInputFrame { interactPressed = true, jumpPressed = true, jumpHeld = true });
+            Step(1, new PootleInputFrame { interactPressed = true });
             Assert.That(calls, Is.EqualTo(1)); Assert.That(character.IsGrounded); Step(10, new PootleInputFrame { jumpHeld = true }); Assert.That(character.IsGrounded);
-            target.gameObject.SetActive(false);
+            target.interactable = true; target.cooldown = 0;
             Step(1, new PootleInputFrame { interactPressed = true, jumpPressed = true, jumpHeld = true }); Assert.That(character.IsGrounded, Is.False);
         }
         [Test]

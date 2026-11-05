@@ -35,7 +35,7 @@ namespace Pootle.Editor
                 var lift = Box("Spline lift · step aboard", new Vector3(8,.3f,25), new Vector3(3,.6f,3), material, root.transform);
                 lift.AddComponent<PootleMovingSurface>(); var liftBody = lift.AddComponent<Rigidbody>(); liftBody.isKinematic = true; liftBody.useGravity = false;
                 Move(lift, root.transform, new[] {new Vector3(8,.3f,25),new Vector3(8,4,25)}, 1.3f, false);
-                var hook = Hook("Dangle shuttle · hold LT or E; jump or release to drop", new Vector3(0,2.8f,-8), root.transform, accent);
+                var hook = Hook("Dangle shuttle · auto grab; RT / R2 or Q to drop", new Vector3(0,2.8f,-8), root.transform, accent);
                 Move(hook, root.transform, new[] {new Vector3(0,2.8f,-8),new Vector3(-3,4,-9),new Vector3(-6,3.4f,-8)}, 1.5f, false);
                 var blocked = Hook("Obstruction hook · auto release", new Vector3(12,2.8f,-9), root.transform, accent);
                 Move(blocked, root.transform, new[] {new Vector3(12,2.8f,-9),new Vector3(16,2.8f,-9)}, 1.2f, false);

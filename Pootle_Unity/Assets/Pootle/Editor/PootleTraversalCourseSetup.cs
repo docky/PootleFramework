@@ -64,7 +64,7 @@ namespace Pootle.Editor
             }
             foreach(var label in Object.FindObjectsByType<TextMesh>())
                 if(label.text.StartsWith("LEFT STICK"))
-                {label.text="LEFT STICK  Move    RIGHT STICK  Orbit\nA / CROSS  Jump    LB / L1  Run    RB / R1  Glide\nAUTO GRAB    B / CIRCLE  Detach or ground pound\nWASD  Move    RMB + MOUSE  Orbit    SPACE  Jump\nSHIFT  Run    F  Glide    Q  Detach / pound    R  Reset";EditorUtility.SetDirty(label);}
+                {label.text=PootleControlsSetup.MainPrompt;EditorUtility.SetDirty(label);}
             foreach(var pole in Object.FindObjectsByType<PootlePole>())
             {Markers(pole,AssetDatabase.LoadAssetAtPath<Material>("Assets/Pootle/Samples/Materials/Accent.mat"));EditorUtility.SetDirty(pole);}
             EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();

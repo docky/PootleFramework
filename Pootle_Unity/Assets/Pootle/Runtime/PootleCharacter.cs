@@ -133,8 +133,6 @@ namespace Pootle
                 var sensor = GetComponent<PootleFrobjectSensor>();
                 if (sensor && sensor.TryInteract())
                 {
-                    frame.jumpPressed = frame.jumpHeld = false;
-                    jumpBuffer.Clear();
                     // Interactions may deactivate or remove the player (e.g. scene transitions).
                     if (!this || !isActiveAndEnabled) return;
                 }

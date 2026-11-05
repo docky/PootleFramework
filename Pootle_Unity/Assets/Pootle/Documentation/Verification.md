@@ -271,3 +271,10 @@ Live visual inspection confirmed the white awareness dot, mint ready circle, and
 - Final suites: **143/143 EditMode + 59/59 PlayMode = 202 passing tests**. The first live suite exposed three keyboard tests depending on Game-view focus; their fixture now temporarily routes synthetic keyboard/mouse events to the game and restores the user's input setting in teardown. The final full live suite passes.
 - Restored Lily to the reported wall, then verified an actual North-face-button drop and pickup through the Input System. Live result: drop succeeded, Carry cube 2 held again, grounded, pivot 0.4, saved scene clean, original keyboard-focus policy restored. Inspected `Builds/Pootle-v0.1/carry-wall-restored.png`.
 - Left the game running with the cube in Lily's hands. Removed the temporary gamepad/player-loop hook and restored background/auto-tick settings. No current console errors; no standalone build or video requested in this pass.
+
+
+## Revised gamepad layout (2026-11-05)
+
+B/Circle and LB/L1 hold Run; LT/L2 toggles ball mode; X/Square interacts; Y/Triangle carries/drops; RT/R2 detaches or ground-pounds; RB/R1 holds Glide. A/Cross remains Jump, including beside ready Frobjects. The Grip action and its bindings were removed from the input asset and input adapter; traversal continues to attach automatically. Keyboard interaction is now E, freeing F exclusively for glide. Playground boards, sample object names, NPC dialogue, setup tools and GettingStarted reflect the layout.
+
+Unity compilation passed without errors or warnings. All **143 EditMode tests** passed. The first complete PlayMode run passed 58/61: two existing rail tests and the keyboard backup test failed, then passed on targeted reruns (9/9 gamepad tests and 1/1 keyboard test). A final complete PlayMode run passed **61/61** in 93.29 seconds. New checks cover independent B/LB holds, B in the air versus RT ground-pound, LT hold/release/repress, and non-overlapping E interaction/F glide. Updated existing tests cover RT detachment, LT blocked unroll, Y carry/drop, RB glide and X interaction with independent A jump.

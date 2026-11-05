@@ -56,12 +56,12 @@ namespace Pootle.Tests
             finally{InputSystem.RemoveDevice(keyboard);}
         }
         [UnityTest]
-        public IEnumerator Features_WestTogglesBallAndBlockedUnrollKeepsItInsideTunnel()
+        public IEnumerator Features_LeftTriggerTogglesBallAndBlockedUnrollKeepsItInsideTunnel()
         {
             character.outputCamera=null;character.Teleport(new Vector3(14,.03f,-4.8f),Quaternion.identity);yield return new WaitForSeconds(.1f);
-            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.West));yield return new WaitForSeconds(.08f);
+            InputSystem.QueueStateEvent(gamepad,new GamepadState { leftTrigger = 1 });yield return new WaitForSeconds(.08f);
             InputSystem.QueueStateEvent(gamepad,new GamepadState{leftStick=Vector2.up});yield return new WaitForSeconds(.32f);
-            InputSystem.QueueStateEvent(gamepad,new GamepadState().WithButton(GamepadButton.West));yield return new WaitForSeconds(.08f);
+            InputSystem.QueueStateEvent(gamepad,new GamepadState { leftTrigger = 1 });yield return new WaitForSeconds(.08f);
             Assert.That(character.IsRolling);Assert.That(character.LastUnrollBlocked);Assert.That(character.Motor.CanOccupy(character.transform.position));
             Assert.That(character.GetComponent<PootleBallVisual>().ball.gameObject.activeSelf);Assert.That(character.visualRoot.gameObject.activeSelf,Is.False);
             character.Teleport(new Vector3(0,.03f,-4),Quaternion.identity);yield return null;

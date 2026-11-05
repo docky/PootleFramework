@@ -1099,7 +1099,7 @@ GameObject:
   - component: {fileID: 46423061}
   - component: {fileID: 46423060}
   m_Layer: 0
-  m_Name: "Push button \xB7 A or F"
+  m_Name: "Push button \xB7 X / Square or E"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3555,7 +3555,7 @@ GameObject:
   - component: {fileID: 169098211}
   - component: {fileID: 169098210}
   m_Layer: 0
-  m_Name: "Climb wall \xB7 hold LT or E"
+  m_Name: "Climb wall \xB7 auto grab"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8741,7 +8741,7 @@ TextMesh:
 
     Dot: nearby   Circle: ready
 
-    Face + stop, then A / F'
+    Face + stop, then X / SQUARE or E'
   m_OffsetZ: 0
   m_CharacterSize: 0.025
   m_LineSpacing: 1
@@ -8845,7 +8845,9 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 296395858}
-  m_Text: 'X / WEST  Toggle ball    V / NORTH  Pick up or drop
+  m_Text: 'LT / L2  Toggle ball    Y / TRIANGLE  Carry / drop
+
+    Keyboard X  Ball    V  Carry / drop
 
     Jump twice for double jump    Ball fits under tunnel
 
@@ -14431,7 +14433,7 @@ GameObject:
   - component: {fileID: 488074167}
   - component: {fileID: 488074168}
   m_Layer: 0
-  m_Name: "Dangle shuttle \xB7 hold LT or E; jump or release to drop \xB7 spline"
+  m_Name: "Dangle shuttle \xB7 auto grab; RT / R2 or Q to drop \xB7 spline"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25000,7 +25002,7 @@ GameObject:
   - component: {fileID: 989195017}
   - component: {fileID: 989195016}
   m_Layer: 0
-  m_Name: "Neighbour \xB7 A or F to talk"
+  m_Name: "Neighbour \xB7 X / Square or E to talk"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25043,7 +25045,7 @@ MonoBehaviour:
     I''m ready to chat.'
   - 'Try the button beside me.
 
-    Press A again for more!'
+    Press X / Square again for more!'
   - See you around!
   secondsVisible: 5
   worldOffset: {x: 0, y: 1.1, z: 0}
@@ -26237,7 +26239,7 @@ GameObject:
   - component: {fileID: 1063469069}
   - component: {fileID: 1063469071}
   m_Layer: 0
-  m_Name: "Dangle shuttle \xB7 hold LT or E; jump or release to drop"
+  m_Name: "Dangle shuttle \xB7 auto grab; RT / R2 or Q to drop"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28184,13 +28186,19 @@ TextMesh:
   m_GameObject: {fileID: 1167827738}
   m_Text: 'LEFT STICK  Move    RIGHT STICK  Orbit
 
-    A / CROSS  Jump    LB / L1  Run    RB / R1  Glide
+    A / CROSS  Jump    HOLD B / CIRCLE or LB / L1  Run
 
-    AUTO GRAB    B / CIRCLE  Detach or ground pound
+    LT / L2  Toggle ball    X / SQUARE  Interact
 
-    WASD  Move    RMB + MOUSE  Orbit    SPACE  Jump
+    Y / TRIANGLE  Carry / drop    RB / R1  Glide
 
-    SHIFT  Run    F  Glide    Q  Detach / pound    R  Reset'
+    RT / R2  Detach / ground pound    AUTO GRAB
+
+    WASD  Move    SPACE  Jump    SHIFT  Run
+
+    X  Ball    E  Interact    V  Carry    F  Glide
+
+    Q  Detach / pound    C  Recenter    R  Reset'
   m_OffsetZ: 0
   m_CharacterSize: 0.024
   m_LineSpacing: 1
@@ -40723,13 +40731,13 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1834551239}
-  m_Text: 'BLUE  Hold LT / E to climb
+  m_Text: 'BLUE  Approach to climb automatically
 
     Move up/down and around cylinders
 
-    YELLOW  Grip poles / ropes; turn with left stick
+    YELLOW  Auto grab poles / ropes; turn with left stick
 
-    Jump follows facing; release grip to drop'
+    Jump follows facing; RT / R2 or Q to detach'
   m_OffsetZ: 0
   m_CharacterSize: 0.022
   m_LineSpacing: 1
@@ -50442,11 +50450,11 @@ MonoBehaviour:
   localOrigin: {x: 0, y: 1, z: 0}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
   requireLineOfSight: 1
   obstructionLayers:
     serializedVersion: 2
-    m_Bits: 4294967291
+    m_Bits: 51
   interactionEnabled: 1
   maximumReadySpeed: 1
 --- !u!1001 &4361065713665680933

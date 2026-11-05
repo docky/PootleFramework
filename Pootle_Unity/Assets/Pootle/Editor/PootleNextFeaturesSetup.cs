@@ -21,8 +21,7 @@ namespace Pootle.Editor
                 var m=input.FindActionMap(map,true);var action=m.FindAction(name)??m.AddAction(name,InputActionType.Button);
                 foreach(string binding in bindings)if(!action.bindings.Any(b=>b.path==binding))action.AddBinding(binding);
             }
-            Button("Character","Roll","<Keyboard>/x","<Gamepad>/buttonWest");
-            Button("Character","Carry","<Keyboard>/v","<Gamepad>/buttonNorth");
+            PootleControlsSetup.ConfigureBindings(input);
             for(int i=1;i<=6;i++)
             {
                 var action=input.FindAction("Camera/Style"+i);
@@ -58,7 +57,7 @@ namespace Pootle.Editor
                 Box("Tunnel right",new Vector3(16.2f,.65f,-2),new Vector3(.4f,1.3f,4),root,tunnel);
                 var label=new GameObject("New controls");label.transform.SetParent(root);label.transform.SetPositionAndRotation(new Vector3(10,.04f,-4.7f),Quaternion.Euler(90,0,0));
                 var text=label.AddComponent<TextMesh>();text.fontSize=64;text.characterSize=.022f;text.color=Color.white;
-                text.text="X / WEST  Toggle ball    V / NORTH  Pick up or drop\nJump twice for double jump    Ball fits under tunnel\n1 Orbit   2 Close   3 Chase   4 Angled   5 Overhead   6 Side";
+                text.text=PootleControlsSetup.RollingPrompt;
             }
             // Keep the rolling course clear of the moving hook's hanging-body sweep.
             GameObject.Find("Ball tunnel · 1.10 m clearance").transform.position=new Vector3(14,1.25f,-2);

@@ -244,7 +244,7 @@ namespace Pootle.Editor
             Box("Edge island", new Vector3(0, 1, 26), new Vector3(6, 2, 4), steps);
             Label("POOTLE", new Vector3(-5, 4, 23), 1.3f, Quaternion.identity);
             Label("CHARACTER PLAYGROUND  /  v0.1", new Vector3(-5, 2.9f, 23), 0.25f, Quaternion.identity);
-            Label("LEFT STICK  Move    RIGHT STICK  Orbit\nA / CROSS  Jump    LB / L1  Run    R3  Recenter\nWASD  Move    RMB + MOUSE / ARROWS  Orbit\nSPACE  Jump    SHIFT  Run    LT / E  Grip    C  Recenter    R  Reset", new Vector3(-5.5f, 0.05f, -2), 0.24f, Quaternion.Euler(90, 0, 0));
+            Label(PootleControlsSetup.MainPrompt, new Vector3(-5.5f, 0.05f, -2), 0.24f, Quaternion.Euler(90, 0, 0));
             var character = CreateCharacter();
             character.transform.position = new Vector3(0, 0.03f, -4);
             // Scene-only camera references are assigned after saving the reusable character prefab.
@@ -275,14 +275,14 @@ namespace Pootle.Editor
             foreach (var cameraInput in Object.FindObjectsByType<PootleOrbitInput>())
             { cameraInput.invertY = true; EditorUtility.SetDirty(cameraInput); }
             foreach (var label in Object.FindObjectsByType<TextMesh>())
-                if (label.text.Contains("LEFT STICK"))
-                    label.text = "LEFT STICK  Move    RIGHT STICK  Orbit\nA / CROSS  Jump    LB / L1  Run    LT / L2  Grip\nWASD  Move    RMB + MOUSE / ARROWS  Orbit\nSPACE  Jump    SHIFT  Run    E  Grip    C  Recenter    R  Reset";
+                if (label.text.StartsWith("LEFT STICK"))
+                    label.text = PootleControlsSetup.MainPrompt;
             if (!GameObject.Find("Traversal course"))
             {
                 var group = new GameObject("Traversal course");
                 var wallMat = Material("Climbable", "73A8BD");
                 var poleMat = Material("Grip Poles", "EFCB78");
-                var wall = Box("Climb wall · hold LT or E", new Vector3(-11, 2.5f, 26), new Vector3(5, 5, 2), wallMat);
+                var wall = Box("Climb wall · auto grab", new Vector3(-11, 2.5f, 26), new Vector3(5, 5, 2), wallMat);
                 wall.AddComponent<PootleClimbSurface>(); wall.transform.SetParent(group.transform);
                 var cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 cylinder.name = "Climb cylinder · move sideways around surface";
@@ -305,7 +305,7 @@ namespace Pootle.Editor
                     art.GetComponent<Renderer>().sharedMaterial = poleMat; Object.DestroyImmediate(art.GetComponent<Collider>());
                     pole.transform.SetParent(group.transform);
                 }
-                Label("BLUE  Hold LT / E to climb\nMove up/down and around cylinders\nYELLOW  Grip poles / ropes; turn with left stick\nJump follows facing; release grip to drop", new Vector3(1, 0.05f, -10), 0.22f, Quaternion.Euler(90, 0, 0));
+                Label(PootleControlsSetup.TraversalPrompt, new Vector3(1, 0.05f, -10), 0.22f, Quaternion.Euler(90, 0, 0));
             }
             PrefabUtility.RecordPrefabInstancePropertyModifications(character);
             EditorSceneManager.MarkSceneDirty(scene);
