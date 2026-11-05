@@ -88,7 +88,7 @@ namespace Pootle.Tests
             Step(90, new PootleInputFrame { move = Vector2.up });
             Assert.That(character.Velocity.z, Is.EqualTo(7.5f).Within(0.05f));
             Step(30, new PootleInputFrame { move = Vector2.up, run = true });
-            Assert.That(character.Velocity.z, Is.EqualTo(9).Within(0.05f));
+            Assert.That(character.Velocity.z, Is.EqualTo(12).Within(0.05f));
             Step(1, new PootleInputFrame { move = Vector2.down });
             Assert.That(character.IsBraking); Assert.That(character.Velocity.z, Is.GreaterThan(0));
             Step(90, new PootleInputFrame { move = Vector2.down });

@@ -107,7 +107,7 @@ namespace Pootle
             Motor.Capture = Debug.isDebugBuild && captureDiagnostics ? DebugSnapshot : null;
 #endif
             Motor.Capture?.Begin();
-            Motor.BeginTick();
+            Motor.BeginTick(dt);
             if (!recovery) recovery=GetComponent<PootleRecovery>();
             carryRequested=frame.carryPressed;
             if(frame.rollPressed)ToggleRolling();

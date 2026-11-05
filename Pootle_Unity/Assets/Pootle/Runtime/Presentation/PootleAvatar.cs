@@ -7,8 +7,11 @@ namespace Pootle
     {
         public PootleCharacter character;
         public Animator animator;
+        [Min(.1f)] public float joggingAnimationRate = 2;
+        [Min(.1f)] public float runningAnimationRate = 3;
         private int speed, vertical, grounded, mode;
-        private bool hasSpeed, hasVertical, hasGrounded, hasMode;
+        private bool hasSpeed, hasVertical, hasGrounded, hasMode, hasLocomotionRate;
+        private static readonly int LocomotionRate = Animator.StringToHash("LocomotionRate");
         private string state;
         private void OnEnable() => state = null;
         private void Awake()
@@ -25,6 +28,7 @@ namespace Pootle
                 hasVertical |= p.nameHash == vertical && p.type == AnimatorControllerParameterType.Float;
                 hasGrounded |= p.nameHash == grounded && p.type == AnimatorControllerParameterType.Bool;
                 hasMode |= p.nameHash == mode && p.type == AnimatorControllerParameterType.Int;
+                hasLocomotionRate |= p.nameHash == LocomotionRate && p.type == AnimatorControllerParameterType.Float;
             }
         }
         private void LateUpdate()
@@ -51,6 +55,8 @@ namespace Pootle
                 _ => character.Velocity.y > 0 ? "Jump" : "Fall"
             };
             if(character.SlideRideAirborne)next="SeatedSlide";
+            if(hasLocomotionRate)animator.SetFloat(LocomotionRate,next=="Locomotion" && Vector3.ProjectOnPlane(character.Velocity,Vector3.up).sqrMagnitude>.01f
+                ? character.IsRunning ? runningAnimationRate : joggingAnimationRate : 1);
             if (next != state && animator.HasState(0, Animator.StringToHash(next)))
             {
                 animator.CrossFadeInFixedTime(next, 0.12f, 0);

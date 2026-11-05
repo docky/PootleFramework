@@ -40,6 +40,10 @@ namespace Pootle.Tests
                     Assert.That(Vector3.Dot(character.outputCamera.forward,(character.cameraTarget.position-character.outputCamera.position).normalized),Is.GreaterThan(.8f));
                 }
                 Assert.That(Vector3.Distance(original,character.outputCamera.position),Is.GreaterThan(5));
+                // Measure input lock after the eased side-view transition settles.
+                float settleDeadline=Time.time+1;
+                while(Mathf.Abs(Mathf.DeltaAngle(orbit.HorizontalAxis.Value,90))>.05f && Time.time<settleDeadline)yield return null;
+                Assert.That(Mathf.Abs(Mathf.DeltaAngle(orbit.HorizontalAxis.Value,90)),Is.LessThanOrEqualTo(.05f));
                 float lockedYaw=orbit.HorizontalAxis.Value;
                 InputSystem.QueueStateEvent(gamepad,new GamepadState{rightStick=Vector2.right});yield return new WaitForSeconds(.3f);
                 Assert.That(Mathf.Abs(Mathf.DeltaAngle(lockedYaw,orbit.HorizontalAxis.Value)),Is.LessThan(.2f));

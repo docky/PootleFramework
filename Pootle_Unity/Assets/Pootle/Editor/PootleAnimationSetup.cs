@@ -37,6 +37,11 @@ namespace Pootle.Editor
                 EditorUtility.SetDirty(controller);
             }
             var states = controller.layers[0].stateMachine;
+            if(!controller.parameters.Any(p=>p.name=="LocomotionRate"))
+                controller.AddParameter(new AnimatorControllerParameter{name="LocomotionRate",type=AnimatorControllerParameterType.Float,defaultFloat=1});
+            var locomotion=states.states.First(s=>s.state.name=="Locomotion").state;
+            locomotion.speedParameter="LocomotionRate";locomotion.speedParameterActive=true;
+            EditorUtility.SetDirty(locomotion);EditorUtility.SetDirty(controller);
             if (!states.states.Any(s => s.state.name == "Glide"))
             { states.AddState("Glide").motion = Clip("Gliding"); EditorUtility.SetDirty(controller); }
             foreach (var a in character.GetComponentsInChildren<Animator>(true))

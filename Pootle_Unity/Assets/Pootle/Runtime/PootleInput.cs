@@ -18,6 +18,7 @@ namespace Pootle
             instance = Instantiate(actions);
             move = instance.FindAction("Character/Move", true);
             run = instance.FindAction("Character/Run", true);
+            run.wantsInitialStateCheck = true;
             jump = instance.FindAction("Character/Jump", true);
             detach = instance.FindAction("Character/Detach", true);
             glide = instance.FindAction("Character/Glide", true);

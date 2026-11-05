@@ -21,6 +21,8 @@ namespace Pootle
         private readonly RaycastHit[] hits = new RaycastHit[32];
         private readonly Collider[] overlaps = new Collider[32];
         private CapsuleCollider capsule;
+        private float tickDeltaTime=1f/60;
+        private readonly System.Collections.Generic.HashSet<TurnstileGateHinge> pushedGates = new System.Collections.Generic.HashSet<TurnstileGateHinge>();
 
         public float Radius => Mathf.Max(0.05f, radius);
         public float Height => Mathf.Max(height, 2 * Radius);
@@ -44,7 +46,7 @@ namespace Pootle
             if (body) { body.isKinematic = true; body.useGravity = false; }
         }
 
-        public void BeginTick() { ContactCount = 0; QueryCount = 0; }
+        public void BeginTick(float dt=1f/60) { ContactCount = 0; QueryCount = 0; tickDeltaTime=Mathf.Max(.0001f,dt);pushedGates.Clear(); }
 
         public void Endpoints(Vector3 position, out Vector3 a, out Vector3 b)
         {
@@ -57,7 +59,7 @@ namespace Pootle
 
         private bool IsSelf(Collider other) => other == capsule || other.transform.IsChildOf(transform);
 
-        private bool Nearest(int count, out RaycastHit hit)
+        private bool Nearest(int count, out RaycastHit hit,Vector3 position,Vector3 direction)
         {
             hit = default;
             float nearest = float.PositiveInfinity;
@@ -65,6 +67,8 @@ namespace Pootle
             for (int i = 0; i < count; i++)
             {
                 if (!hits[i].collider || IsSelf(hits[i].collider) || hits[i].distance >= nearest) continue;
+                var oneWay=hits[i].collider.GetComponentInParent<PootleOneWayPlatform>();
+                if(oneWay && oneWay.isActiveAndEnabled && !oneWay.Accepts(this,position,direction,hits[i].normal))continue;
                 nearest = hits[i].distance;
                 hit = hits[i];
             }
@@ -97,7 +101,7 @@ namespace Pootle
             // A resting contact must not consume a tangential or separating sweep.
             for (int i = 0; i < count; i++)
                 if (Vector3.Dot(direction, hits[i].normal) >= -0.0001f) hits[i] = default;
-            bool found = Nearest(count, out hit);
+            bool found = Nearest(count, out hit,position,direction);
             Record(kind, a, b, castRadius, direction, distance, hit, found, true);
             return found;
         }
@@ -111,7 +115,7 @@ namespace Pootle
             QueryCount++;
             int count = Physics.SphereCastNonAlloc(origin, Radius - Skin, Vector3.down, hits,
                 distance, collisionMask, QueryTriggerInteraction.Ignore);
-            bool found = Nearest(count, out var hit);
+            bool found = Nearest(count, out var hit,position,Vector3.down);
             bool sphereFound = found;
             var support = new PootleSupport
             {
@@ -126,7 +130,7 @@ namespace Pootle
             QueryCount++;
             int centralCount = Physics.RaycastNonAlloc(centralOrigin, Vector3.down, hits, centralDistance,
                 collisionMask, QueryTriggerInteraction.Ignore);
-            bool centralHit = Nearest(centralCount, out var central);
+            bool centralHit = Nearest(centralCount, out var central,position,Vector3.down);
             float upDot = centralHit ? Vector3.Dot(central.normal, Vector3.up) : 0;
             float gap = upDot > 0.1f
                 ? (Vector3.Dot(bottom - central.point, central.normal) - (Radius - Skin)) / upDot
@@ -228,6 +232,9 @@ namespace Pootle
                 Vector3 advance = direction * safe;
                 position += advance;
                 AddContact(hit);
+                var gate=hit.collider.GetComponentInParent<TurnstileGateHinge>();
+                if(gate && pushedGates.Add(gate))
+                    gate.PushAt(hit.point,-hit.normal,Mathf.Max(0,-Vector3.Dot(motion,hit.normal))/tickDeltaTime,tickDeltaTime);
                 Vector3 remainder = motion - advance;
                 Vector3 projected = Vector3.ProjectOnPlane(remainder, hit.normal);
                 float angle = Vector3.Angle(Vector3.up, hit.normal);
@@ -246,7 +253,7 @@ namespace Pootle
         {
             QueryCount++;
             int count = Physics.RaycastNonAlloc(origin, direction, hits, distance, collisionMask, QueryTriggerInteraction.Ignore);
-            bool found = Nearest(count, out hit);
+            bool found = Nearest(count, out hit,transform.position,direction);
             Record(kind, origin, origin, 0, direction, distance, hit, found, false);
             return found;
         }
@@ -257,7 +264,12 @@ namespace Pootle
             QueryCount++;
             int count = Physics.OverlapCapsuleNonAlloc(a, b, Radius - Skin * 2, overlaps, collisionMask, QueryTriggerInteraction.Ignore);
             bool blocked = false;
-            for (int i = 0; i < count; i++) if (!IsSelf(overlaps[i])) { blocked = true; break; }
+            for (int i = 0; i < count; i++) if (!IsSelf(overlaps[i]))
+            {
+                var oneWay=overlaps[i].GetComponentInParent<PootleOneWayPlatform>();
+                if(oneWay && oneWay.isActiveAndEnabled)continue;
+                blocked = true; break;
+            }
             Capture?.Record(new PootleProbeRecord { kind = PootleProbeKind.Clearance, a = a, b = b,
                 radius = Radius - Skin * 2, capsule = true, mask = collisionMask,
                 status = blocked ? PootleProbeStatus.Rejected : PootleProbeStatus.Accepted });
@@ -301,6 +313,8 @@ namespace Pootle
                 {
                     var other = overlaps[i];
                     if (IsSelf(other)) continue;
+                    var oneWay=other.GetComponentInParent<PootleOneWayPlatform>();
+                    if(oneWay && oneWay.isActiveAndEnabled && !oneWay.IsAbove(this,position))continue;
                     QueryCount++;
                     // position is the root, NOT the centre: ComputePenetration includes collider.center.
                     if (!Physics.ComputePenetration(capsule, position, Quaternion.identity, other,

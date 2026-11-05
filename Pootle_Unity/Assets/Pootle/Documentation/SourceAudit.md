@@ -107,3 +107,31 @@ Cinemachine gains a seventh slide-follow style and automatic slide following for
 Automatic unmarked ledge catches now validate a shallow top and the actual lip on the same collider, rather than treating every walkable top as a hanging ledge. Marked climbing-wall top-outs retain the motor's slope limit. Successful top-outs directly transfer support; disabled grip surfaces release, cross-handle re-grabs respect the shared delay, and a hook cannot steal an existing wall/pole attachment. Ballistic slide motion now participates in rail landing, and B releases ride state before ground pounding.
 
 The separate 413 m mountain slide, its two open jumps, banks, runout, supports and travel pads are procedural Pootle playground content. No new reference assets, game code or external art were copied. The contact motor and existing Cinemachine slide-follow style drive the ride; the authored centerline is used only to generate its mesh, not to constrain character movement.
+
+## Body blob shadow and gamepad run · 5 November 2026
+
+Added an optional bone-driven shadow inspired by the user's example: overlapping soft circles for head, torso, upper/lower limbs, hands and feet form a CPU-painted mask copied to a RenderTexture. A transparent URP projection mesh samples collision surfaces below the character, rejects large height discontinuities and ignores the character's own colliders. It does not require a renderer decal feature or new external art. Original model shadow settings are restored when disabled.
+
+The existing LB/L1 binding was correct. Run now performs an initial button-state check on enable, covering a shoulder button already held; the regular run speed increases from 9 to 12 m/s to distinguish it clearly from 7.5 m/s walking. DualSense HID input is tested while other gamepad devices are present, including enable while L1 is held and release back to walking. The physical controller report was not captured while the user held L1, so a hardware-specific fault has not been established.
+
+## Depth-projected body and ball shadows · 5 November 2026
+
+Replaced the raycast receiving grid with a decal-style depth projection volume. The shader reconstructs opaque scene geometry per pixel, clips it to the downward volume, rejects nearly vertical faces and samples the 256×256 body mask. This removes grid-sized ledge/step gaps and supports visual-only rail meshes. Both sample URP pipeline assets enable Depth Texture. No external art or decal package was added; the existing blob material uses the new projection shader.
+
+Rolling uses one circle sized from the motor radius. Shadow suppression now includes all character child renderers, including inactive or newly created ball details, and restores their original settings on disable. Transparent receivers remain outside this depth-based technique; custom scenes must supply a URP depth texture.
+
+## Configurable prop shadows · 5 November 2026
+
+Added a standalone prop component with cached procedural circle/ellipse/rounded-rectangle masks or a user-supplied alpha texture. It reuses the body depth shader or uses a new transparent-quad shader with one downward receiver raycast. Both modes follow moving props; yaw following and cast-shadow replacement are optional. The playground's 11 poles and two moving hooks are configured, including a flat-ground shuttle example using the simple technique. No reference assets or external textures were added. A selection menu assigns the two shared material assets for reuse on other props.
+
+## Slope shadow cutoff, locomotion cadence and Soap pickups · 5 November 2026
+
+The character projection volume now extends above foot height to contain the uphill footprint, with a shader cutoff parallel to the actual support plane to reject avatar geometry above it. Prop projection retains its volume-only behavior. Lily's Locomotion state receives an independent speed parameter: 2× jogging and 3× running, without increasing jump/climb/idle playback.
+
+Copied `coin.fbx`, `Star.fbx` and `heart.fbx` from the reference project's `Assets/PLAYER TWO/Platformer Project/Examples/Models`, plus `Textures/Models/coin.png`. Created URP Lit materials and new Pootle collectible prefabs; did not import the reference inventory, collectible profiles, persistence, UI or collection scripts. The existing Soap installation supplies three `IntVariable` assets directly incremented on player trigger contact. Each activation can collect once. The 20-item sample trail uses circle and rotating rectangular prop shadows; no external art was downloaded and the reference project was not modified.
+
+## Spring turnstiles and one-way floors · 5 November 2026
+
+Adapted the user's supplied TurnstileGateHinge/TurnstileGateBuilder concepts: real HingeJoint springs, half-step detents, signed click events, procedural arms and optional end capsules. Joint-relative unwrapped angles replace local Euler extraction; arm layout follows the selected X/Y/Z axis, and omitted slots preserve the full gate's spacing. Geometry rebuilds are explicit editor actions rather than recursive OnValidate mutations. Pootle's query-based motor transfers attempted contact motion into a bounded impulse once per gate per tick, because its trigger capsule does not produce ordinary rigidbody collision impulses. No new art was imported.
+
+One-way floors are marked BoxColliders with per-character top-side filtering in the existing motor. Sweeps/probes ignore upward travel and underside/side hits; clearance and recovery permit passage from below. This does not alter the global collision matrix or free-rigidbody collision behavior.

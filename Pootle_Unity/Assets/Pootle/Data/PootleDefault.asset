@@ -17,7 +17,7 @@ MonoBehaviour:
   smallHopDuration: 0.3
   externalFacingHold: 0.9
   walkSpeed: 7.5
-  runSpeed: 9
+  runSpeed: 12
   allowRun: 1
   minimumAnalogueSpeed: 2
   groundAcceleration: 16
@@ -64,6 +64,7 @@ MonoBehaviour:
   regrabDelay: 0.3
   ledgeHandHeight: 1.65
   ledgeCatchReach: 0.4
+  ledgeMaximumTopAngle: 20
   topOutDuration: 0.5
   topOutHopHeight: 0.4
   poleTurnSpeed: 180

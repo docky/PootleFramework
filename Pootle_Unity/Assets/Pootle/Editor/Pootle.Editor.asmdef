@@ -8,7 +8,8 @@
     "Unity.Cinemachine",
     "Pootle.Splines",
     "Unity.Splines",
-    "Unity.Mathematics"
+    "Unity.Mathematics",
+    "Obvious.Soap"
   ],
   "includePlatforms": [
     "Editor"

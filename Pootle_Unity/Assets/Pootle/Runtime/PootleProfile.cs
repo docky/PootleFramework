@@ -14,7 +14,7 @@ namespace Pootle
 
         [Header("Ground movement · m/s, m/s²")]
         [Min(0)] public float walkSpeed = 7.5f;
-        [Min(0)] public float runSpeed = 9f;
+        [Min(0)] public float runSpeed = 12f;
         public bool allowRun = true;
         [Min(0)] public float minimumAnalogueSpeed = 2f;
         [Min(0)] public float groundAcceleration = 16f;

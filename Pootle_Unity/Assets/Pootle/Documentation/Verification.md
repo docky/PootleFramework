@@ -175,3 +175,42 @@ Final macOS build succeeded: **0 errors**, three existing URP/TextMeshPro shader
 - New 413 m mountain trough descends about 59 m through four banked bends and two open gaps. Complete neutral-input rides reach the finish at 30, 60 and 120 Hz, cross both gaps in ballistic flight, exceed 26 m/s and retain more than 15 m/s at the finish. Collider rays verify the gaps are open and landing troughs exceed 12 m wide. Live tests verify the access and return pads.
 - Inspected the actual Cinemachine ride in `Builds/Pootle-v0.1/pootle-mountain-slide-validation-22s.mp4`: 660 frames at 1280×720/30 fps, H.264, stereo audio. The capture shows both jumps, banked bends and runout. Unity's offline recorder reported an FMOD output-resume error after capture; resetting the audio configuration restored normal playback, confirmed by listener output peak 0.0477. No runtime controller exception was observed.
 - Scene saved; Editor returned to stopped mode with automatic simulation/access pads enabled and background override/auto-tick disabled. No standalone rebuild or upload in this pass.
+
+## Body blob shadow and run · 5 November 2026
+
+- Compilation: zero errors/warnings. Final suites: **115/115 EditMode + 39/39 PlayMode = 154 passing tests**.
+- DualSense HID test exercises L1 held before input enable, confirms 12 m/s movement and release to 7.5 m/s with other gamepads present. The previous 9 m/s tuning assertion was updated to the intended new run speed.
+- Shadow checks verify 15 bones, a populated transparent RenderTexture mask, receiving geometry, rejection beyond projection range and restoration of model shadow settings on disable.
+- Live rendered previews inspected: `Builds/Pootle-v0.1/body-blob-shadow-air.png` (airborne body/limb blobs) and `body-blob-shadow.png` (44° ramp). Shader supported, 778 receiving triangles in the airborne view, advancing player loop, no current console errors. Saved scene and prefab; stopped Editor and restored background/auto-tick settings. No standalone rebuild in this pass.
+
+## Depth-projected shadows and ball correction · 5 November 2026
+
+- Compilation: zero errors/warnings. Final suites: **115/115 EditMode + 41/41 PlayMode = 156 passing tests**.
+- Replaced the receiver raycast grid with a scene-depth projector and a 256×256 animated circle mask. Rendered-pixel tests verify shadows on thin straight and curved rails without colliders, coverage right up to a platform edge, and rejection beyond projection range.
+- Ball mode uses one circular stamp and suppresses the ball renderer's regular cast shadow as well as Lily's. Tests verify switching back restores the body mask and disabling the component restores renderer shadow settings.
+- The camera shortcut regression now waits for the side view to settle before checking its input lock, avoiding a timing-dependent failure during the camera transition. Shadow pixel comparisons wait for the updated mask to render before reading back.
+- Visually inspected the ball, steps and narrow wall-top rail in the live scene. Saved previews: `Builds/Pootle-v0.1/depth-blob-ball.png` and `depth-blob-rail.png`. The projector receives on opaque geometry; transparent receivers are unsupported.
+- Editor returned to stopped mode; scene clean, automatic character simulation enabled, background override and auto-tick disabled. No standalone rebuild or upload in this pass.
+
+## Configurable prop shadows · 5 November 2026
+
+- Compilation: zero errors/warnings. Final suites: **115/115 EditMode + 43/43 PlayMode = 158 passing tests**.
+- Rendered-pixel regressions verify both depth projection and transparent quads on a receiver. Additional checks cover ignoring a prop's own colliders, alignment to tilted ground, hiding over missing ground, circle/ellipse proportions, rounded-rectangle masks, yaw following, custom textures, missing custom textures and restoration of normal cast shadows on disable.
+- Saved circular blobs on 11 poles and two hooks. The moving shuttle uses the simple transparent technique; the other hook and poles use depth projection. Live checks confirmed all 13 projections active and the shuttle's projection tracking its movement. Inspected `Builds/Pootle-v0.1/pole-blob-shadow.png` and `hook-blob-shadow.png`; the hook was temporarily held over unobstructed floor for its close-up, with its saved path unchanged.
+- Editor restored to stopped mode with a clean scene, normal automatic simulation, background override off and auto-tick off. No standalone rebuild or upload in this pass.
+
+## Slope shadow coverage, animation cadence and collectibles · 5 November 2026
+
+- Final compilation: zero errors/warnings. **115/115 EditMode + 46/46 PlayMode = 161 passing tests**.
+- New rendered-pixel regression checks both +44° and −44° slopes, requiring shadow coverage on uphill geometry above the former horizontal cutoff. The isolated test ramp sits above the playground floor to avoid intersecting receivers. Existing rail, edge, prop and ball shadow tests still pass.
+- Live animation regression checks the LocomotionRate parameter is 2 while jogging, 3 while running and 1 after jumping; the Animator's global speed remains 1. Scene and prefab use the updated controller.
+- Pickup regression checks all 20 authored objects, three distinct Soap counters, floating/spinning motion, rotating rectangular coin shadows, actual player trigger collection, exactly one increment, other counters unchanged, non-player rejection and immediate shadow removal. All 20 live projections were active during visual inspection.
+- Inspected `Builds/Pootle-v0.1/collectible-trail.png` and `slope-shadow-fixed.png` in the running scene. The temporary isolated slope and preview camera changes were confined to Play mode. Editor restored to stopped mode, with normal automatic simulation and background/auto-tick settings. No standalone rebuild or upload in this pass.
+
+## Spring turnstiles and one-way floors · 5 November 2026
+
+- Compilation: zero errors/warnings. Final suites: **121/121 EditMode + 50/50 PlayMode = 171 passing tests**.
+- One-way tests cover jumping through and landing at 30/60/120 Hz, insufficient-height jumps, underside/side clearance, high-speed ground pounds, walking off and restoring solid collision when the marker is disabled. A live gamepad jump verifies the authored mint platforms.
+- Turnstile tests exercise real PhysX springs on all three axes with rotated parents, passing ±180°, CW/CCW commands and events, player pushes in both directions, settling and anchored position. The omitted-arm gate preserves quarter spacing and allows entry through its gap.
+- Scene-reload testing found that a newly loaded HingeJoint can briefly report a NaN angle before its first simulation step. Initialization now waits for a finite angle instead of propagating it into the spring target. Rotating arms use speculative CCD. The western floor extends beneath all three gates.
+- Visually inspected live rendered previews `Builds/Pootle-v0.1/spring-turnstiles.png` and `one-way-platforms.png`; all three gates remained stationary and anchored at rest. Saved three gates and six mint floors. Editor returned to stopped mode, clean scene, normal automatic simulation, background override off and auto-tick off. No standalone rebuild or upload in this pass.
