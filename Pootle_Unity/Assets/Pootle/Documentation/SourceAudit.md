@@ -101,3 +101,9 @@ The expanded eastern course and coral spiral trough are procedural. The trough h
 The user's requested penguin-style ride is implemented on marked slide surfaces with substepped, unilateral contact, interpolated mesh support normals, retained lateral/uphill momentum, steering/braking and ballistic rim exits. Legacy unmarked steep slopes keep their earlier downhill/lateral-retention behavior. The bank mesh and landing area are expanded procedurally; no new external assets or reference game code were imported.
 
 Cinemachine gains a seventh slide-follow style and automatic slide following for the free/chase styles. Camera heading follows velocity rather than rotating with each local downhill normal. The existing independent look input, obstruction handling and camera rig remain in use.
+
+## Ledge rules, transitions and mountain slide · 4 November 2026
+
+Automatic unmarked ledge catches now validate a shallow top and the actual lip on the same collider, rather than treating every walkable top as a hanging ledge. Marked climbing-wall top-outs retain the motor's slope limit. Successful top-outs directly transfer support; disabled grip surfaces release, cross-handle re-grabs respect the shared delay, and a hook cannot steal an existing wall/pole attachment. Ballistic slide motion now participates in rail landing, and B releases ride state before ground pounding.
+
+The separate 413 m mountain slide, its two open jumps, banks, runout, supports and travel pads are procedural Pootle playground content. No new reference assets, game code or external art were copied. The contact motor and existing Cinemachine slide-follow style drive the ride; the authored centerline is used only to generate its mesh, not to constrain character movement.

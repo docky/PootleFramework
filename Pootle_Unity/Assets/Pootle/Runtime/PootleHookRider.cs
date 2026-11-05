@@ -40,7 +40,9 @@ namespace Pootle
                 if (lag > c.Motor.Radius * 2 || blocked && blockedTime >= Hook.blockedGraceTime) Release(c);
                 return true;
             }
-            if ((!c.profile.automaticGrip && !frame.grip) || !c.CanGrab || cooldown > 0 || c.Mode == PootleMode.LedgeHop || c.Mode == PootleMode.PoleStanding) return false;
+            if ((!c.profile.automaticGrip && !frame.grip) || !c.CanGrab || cooldown > 0 ||
+                c.Mode == PootleMode.LedgeHop || c.Mode == PootleMode.LedgeHanging || c.Mode == PootleMode.Climbing ||
+                c.Mode == PootleMode.PoleClimbing || c.Mode == PootleMode.PoleStanding) return false;
             PootleDangleHook best = null; float nearest = float.PositiveInfinity;
             foreach (var hook in PootleDangleHook.Active)
             {
@@ -63,6 +65,7 @@ namespace Pootle
         private void Release(PootleCharacter c)
         {
             Hook = null; cooldown = c.profile.regrabDelay; blockedTime = 0;
+            c.BlockGrabs();
             c.Velocity = HookVelocity;
             c.SetMode(PootleMode.Airborne, PootleTransition.Released);
         }

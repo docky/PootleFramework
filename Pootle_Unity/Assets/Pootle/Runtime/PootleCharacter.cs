@@ -46,7 +46,7 @@ namespace Pootle
         private bool groundJumpUsed, variableJump;
         private float nextSpringTime, grabLockUntil;
         private bool forcedSlopeSlide;
-        public bool CanGrab => !IsRolling && !(carrying && carrying.Held) && clock >= grabLockUntil && Mode != PootleMode.GroundPounding;
+        public bool CanGrab => !IsRolling && !SlideRideActive && !(carrying && carrying.Held) && clock >= grabLockUntil && Mode != PootleMode.GroundPounding;
         private PootleCarrying carrying;
         private bool carryRequested;
         private PootleRecovery recovery;
@@ -122,6 +122,7 @@ namespace Pootle
                 }
                 else if(!IsGrounded && Mode!=PootleMode.GroundPounding)
                 {
+                    ResetSlideRide();
                     GetComponent<PootleRailRider>()?.ResetRide(); GetComponent<PootleTraversal>()?.ResetTraversal();
                     jumpBuffer.Clear(); variableJump=false; forcedSlopeSlide=false;
                     Velocity=Vector3.down*profile.groundPoundSpeed; SetMode(PootleMode.GroundPounding,PootleTransition.SlideStarted);
@@ -158,7 +159,10 @@ namespace Pootle
             float reach = IsGrounded ? Motor.stepHeight + 0.06f : 0.07f;
             Support = Motor.ProbeGround(transform.position, reach, profile.requireCentralSupport);
             if(TickSlideRide(dt,frame,out var rideMotion))
-            {UpdateVisual();Capture(previousMode,Vector3.zero,rideMotion,false);return;}
+            {
+                railRider?.Catch(this,tickStart,transform.position);
+                UpdateVisual();Capture(previousMode,Vector3.zero,rideMotion,false);return;
+            }
             if (!traversal) traversal = GetComponent<PootleTraversal>();
             if (traversal && traversal.Tick(this, dt, frame, out var traversalMotion))
             {
@@ -448,6 +452,13 @@ namespace Pootle
         }
 
         internal void RailSupported() { lastGrounded = clock; groundJumpUsed = false; AirJumpsUsed = 0; }
+        internal bool FinishTraversalTopOut()
+        {
+            Support=Motor.ProbeGround(transform.position,.1f,profile.requireCentralSupport);
+            if(Support.walkable && Support.distance<=Motor.Skin*4)
+            {Velocity=Vector3.zero;RailSupported();SetMode(PootleMode.Grounded,PootleTransition.TopOut);return true;}
+            return false;
+        }
 
         internal bool ConsumeJump() => jumpBuffer.Consume(clock);
         internal void LaunchTraversal(Vector3 planar, bool held)
@@ -485,6 +496,9 @@ namespace Pootle
         internal void SetMode(PootleMode mode, PootleTransition reason)
         {
             if (Mode == mode) return;
+            if(mode==PootleMode.RailWalking || mode==PootleMode.RailSliding || mode==PootleMode.Climbing ||
+                mode==PootleMode.PoleClimbing || mode==PootleMode.PoleStanding || mode==PootleMode.Dangling ||
+                mode==PootleMode.LedgeHanging || mode==PootleMode.LedgeHop)ResetSlideRide();
             if(Mode==PootleMode.Sliding || Mode==PootleMode.RailSliding)PreserveExternalFacing();
             Mode = mode;
             Motor?.Capture?.Transition(reason);

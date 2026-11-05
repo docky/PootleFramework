@@ -67,6 +67,8 @@ namespace Pootle
         [Min(0)] public float regrabDelay = 0.3f;
         [Min(0)] public float ledgeHandHeight = 1.65f;
         [Min(0)] public float ledgeCatchReach = 0.4f;
+        [Range(0,45),Tooltip("Maximum top slope for automatic ledge catches. Marked climbing walls use the motor slope limit.")]
+        public float ledgeMaximumTopAngle = 20;
         [Min(0)] public float topOutDuration = 0.5f;
         [Min(0)] public float topOutHopHeight = 0.4f;
         [Min(0)] public float poleTurnSpeed = 180f;

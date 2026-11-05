@@ -154,3 +154,13 @@ The coral trough now uses a momentum ride, separate from ordinary steep-slope sl
 The normal orbit/chase cameras automatically follow travel direction during a slide ride, with a short grace period on exit. Press **7** for the dedicated slide-follow style; right stick or RMB+mouse temporarily overrides automatic turning. Other fixed camera styles remain available on 4–6. Disable `automaticallyFollowSlides` on `PootleCameraStyles` to keep the default orbit fully manual.
 
 `PootleSlideSurface` exposes gravity, maximum driving speed, friction, steering, braking and runout deceleration. The spiral's banks are deeper, its support normals continuous, and the eastern landing floor now spans x=20…100 and z=-52…60. `Pootle > Configure Momentum Slide and Follow Camera` reapplies the sample configuration.
+
+### Ledges, handoffs and the mountain course
+
+Automatic ledge catches require a vertical lip on the same collider as the top, a hand-width of support, and a top slope no steeper than `ledgeMaximumTopAngle` (20° by default). Walking still uses the motor's 45° limit. Marked climbing walls can top out onto walkable slopes. A blocked flat ledge can still hold Lily until its destination clears. Disabled walls release their grip; release/jump cooldowns also prevent immediate attachment to a nearby different handle. Hooks do not take over an existing wall/pole grip.
+
+Top-outs transfer directly to supported ground or a nearby rail; no transient airborne state is emitted on a successful handoff. Ballistic slide rides can land on rails and clear the slide camera/pose state. B/Q over a slide jump starts the normal ground pound.
+
+Step onto the **pink pad near spawn** at (-3, 0, -8) to enter the new mountain slide; another access pad is beside the spiral at (92, 0, 3). The separate ice-blue course descends about 59 m over 413 m, with four banked bends, two open jump gaps, wider landing troughs and a 40 m easing runout. Momentum carries a normal descent across the gaps; steering and braking let you change the line. Press **7** for slide follow, use the stick/WASD to lean and pull back to brake. A pink pad past the finish returns to the playground. R still resets to the original spawn.
+
+`Pootle > Add Mountain Slide Course` rebuilds this procedural extension. It does not replace the coral spiral or other playground stations. The course uses normal swept contact and gravity, with no path attachment or scripted jump launches.
