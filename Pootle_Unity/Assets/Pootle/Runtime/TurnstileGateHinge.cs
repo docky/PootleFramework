@@ -14,7 +14,6 @@ namespace Pootle
         [Min(0)] public float settleEpsilon=.5f;
         public bool useHalfStepClickLogic=true;
         [Min(0)] public float spring=100,damper=15;
-        [Min(0)] public float pushForce=300;
         [Min(.1f)] public float maximumAngularSpeed=3;
         public int rotationClicks;
         [SerializeField] float currentAngle,targetAngle;
@@ -85,16 +84,6 @@ namespace Pootle
             else if(!useHalfStepClickLogic && !forcedTarget)targetAngle=Quantize(currentAngle);
             if(Mathf.Abs(currentAngle-targetAngle)<=settleEpsilon)targetAngle=Quantize(targetAngle);
             SetupHingeFromSettings();
-        }
-        public void PushAt(Vector3 point,Vector3 direction,float attemptedSpeed,float dt)
-        {
-            if(!isActiveAndEnabled || !hinge || attemptedSpeed<=0 || dt<=0)return;
-            if(!body)body=hinge.GetComponent<Rigidbody>();if(!body || body.isKinematic)return;
-            var worldAxis=pivot.TransformDirection(AxisVector(axis));
-            // The swept motor removes blocked velocity each frame; fresh acceleration
-            // at contact is enough to sustain a push against the detent spring.
-            var force=Vector3.ProjectOnPlane(direction,worldAxis).normalized*pushForce*Mathf.Clamp01(attemptedSpeed/.5f);
-            body.WakeUp();body.AddForceAtPosition(force*dt,point,ForceMode.Impulse);
         }
     }
 }

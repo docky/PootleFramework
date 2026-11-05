@@ -313,7 +313,8 @@ namespace Pootle.Tests
             for (int i = 0; i < 120 && character.Mode != PootleMode.LedgeHop; i++)
                 Step(1, new PootleInputFrame { grip = true, move = Vector2.up });
             Assert.That(character.Mode, Is.EqualTo(PootleMode.LedgeHop));
-            Step(40);
+            for(int i=0;i<60 && character.Mode==PootleMode.LedgeHop;i++)Step(1);
+            Assert.That(character.Mode,Is.EqualTo(PootleMode.Grounded));
             Assert.That(character.transform.position.y, Is.GreaterThan(2.95f));
             Assert.That(character.transform.position.z - origin.z, Is.GreaterThan(0.9f));
         }

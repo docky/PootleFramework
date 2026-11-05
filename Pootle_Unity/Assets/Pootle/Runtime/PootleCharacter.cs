@@ -128,16 +128,28 @@ namespace Pootle
                     Velocity=Vector3.down*profile.groundPoundSpeed; SetMode(PootleMode.GroundPounding,PootleTransition.SlideStarted);
                 }
             }
+            if (frame.interactPressed)
+            {
+                var sensor = GetComponent<PootleFrobjectSensor>();
+                if (sensor && sensor.TryInteract())
+                {
+                    frame.jumpPressed = frame.jumpHeld = false;
+                    jumpBuffer.Clear();
+                    // Interactions may deactivate or remove the player (e.g. scene transitions).
+                    if (!this || !isActiveAndEnabled) return;
+                }
+            }
             if (frame.jumpPressed) jumpBuffer.Press(clock, profile.jumpBufferTime);
             TickEnvironment(dt);
             Vector3 tickStart = transform.position;
-            Vector3 before = Velocity;
             var previousMode = Mode;
             if (!platformRider) platformRider = GetComponent<PootlePlatformRider>();
             if (!hookRider) hookRider = GetComponent<PootleHookRider>();
             platformRider?.Apply(this, dt);
             // A rising support has already moved into last frame's capsule. Carry first;
             // only unresolved overlap after that motion should count as being trapped.
+            Motor.ReceiveBodyMotion(this);
+            Vector3 before = Velocity;
             recovery?.Check(this,dt,frame);
             if(IsRolling)
             {
@@ -294,13 +306,17 @@ namespace Pootle
                 else if (IsGrounded) SetMode(PootleMode.Airborne, PootleTransition.WalkedOffEdge);
             }
             if (planar.sqrMagnitude > 0.002f && !IsBraking && !HoldingExternalFacing)
-                Facing = Vector3.RotateTowards(Facing, planar.normalized, profile.facingSpeed * Mathf.Deg2Rad * dt, 0).normalized;
+            {
+                Vector3 wanted=Vector3.RotateTowards(Facing,planar.normalized,profile.facingSpeed*Mathf.Deg2Rad*dt,0).normalized;
+                if(carrying && carrying.Held)carrying.Turn(this,wanted);else Facing=wanted;
+            }
             UpdateVisual();
             Capture(previousMode, direction, result, jumped);
         }
 
         private void UpdateVisual()
         {
+            Motor.ApplyStandingForce(Support,IsGrounded);
             platformRider?.Remember(this);
             if(!carrying)carrying=GetComponent<PootleCarrying>();
             if(carryRequested){carryRequested=false;carrying?.HandleAction(this);}

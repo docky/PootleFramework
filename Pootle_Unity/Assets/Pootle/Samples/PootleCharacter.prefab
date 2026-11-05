@@ -1067,6 +1067,7 @@ GameObject:
   - component: {fileID: 6796442733694619680}
   - component: {fileID: 8329212011711427313}
   - component: {fileID: 602218493461672290}
+  - component: {fileID: 2293701813132591268}
   m_Layer: 0
   m_Name: PootleCharacter
   m_TagString: Untagged
@@ -1112,7 +1113,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.49
+  m_Radius: 0.33
   m_Height: 1.98
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
@@ -1155,7 +1156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 668e362519a274965ac70bb95379ed33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleMotor
-  radius: 0.5
+  radius: 0.34
   height: 2
   center: {x: 0, y: 1, z: 0}
   skin: 0.01
@@ -1164,6 +1165,14 @@ MonoBehaviour:
   collisionMask:
     serializedVersion: 2
     m_Bits: 4294967291
+  enablePhysicsInteraction: 1
+  characterMass: 60
+  pushForceScale: 2
+  maximumPushForce: 1200
+  maximumIncomingSpeed: 10
+  incomingReactionScale: 0.12
+  applyStandingDownwardForce: 1
+  standingDownwardForceScale: 1
 --- !u!114 &1354384346760031089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1434,6 +1443,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleCarrying
   pickupReach: 2
+  rotationPivotForward: 0.4
 --- !u!114 &6796442733694619680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1502,6 +1512,31 @@ MonoBehaviour:
   projectionWidth: 5
   maximumDrop: 18
   replaceModelShadow: 1
+--- !u!114 &2293701813132591268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9174771242963346828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9385253c21eec4eb8834cb86dfdae411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleFrobjectSensor
+  awarenessDistance: 8
+  focusDistance: 2.5
+  focusHalfAngle: 45
+  localOrigin: {x: 0, y: 1, z: 0}
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  requireLineOfSight: 1
+  obstructionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  interactionEnabled: 1
+  maximumReadySpeed: 1
 --- !u!1001 &1265718481573786698
 PrefabInstance:
   m_ObjectHideFlags: 0

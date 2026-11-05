@@ -26,7 +26,12 @@ namespace Pootle
             if (c.Mode == PootleMode.LedgeHop)
             {
                 stateTime += dt;
-                float t = Mathf.Clamp01(stateTime / Mathf.Max(0.15f, automaticHop ? p.smallHopDuration : p.topOutDuration));
+                float hopHeight=automaticHop?.12f:p.topOutHopHeight;
+                // Higher catches start at hand height, so a fixed short duration would
+                // launch the visual upward. Bound the peak lift speed of SmoothStep.
+                float duration=Mathf.Max(.15f,automaticHop?p.smallHopDuration:p.topOutDuration);
+                duration=Mathf.Max(duration,(Mathf.Max(0,ledgeDestination.y-hopStart.y)+hopHeight)*1.5f/(.45f*Mathf.Max(.1f,p.topOutLiftSpeed)));
+                float t = Mathf.Clamp01(stateTime / duration);
                 // Smooth lift and transfer phases meet with zero velocity at the lip.
                 float liftPhase = Mathf.SmoothStep(0, 1, Mathf.Clamp01(t / 0.45f));
                 float across = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.45f, 1, t));
@@ -98,8 +103,7 @@ namespace Pootle
                 if (c.ConsumeJump()) { Jump(c, frame.jumpHeld); return false; }
                 var surface=wall.GetComponentInParent<PootleClimbSurface>();
                 if(!surface || !surface.isActiveAndEnabled){Release(c);return false;}
-                if (FindTop(c, normal, 0.65f, out var destination) && frame.move.y > 0.1f)
-                { ledgeDestination = destination; StartHop(c); return true; }
+                if (ResolveWallTop(c))return true;
                 Vector3 oldNormal=normal;
                 Vector3 side=Vector3.Cross(normal,Vector3.up);
                 Vector3 target=transform.position+Vector3.up*frame.move.y*p.climbSpeed*dt+side*frame.move.x*p.climbSidewaysSpeed*dt;
@@ -115,6 +119,7 @@ namespace Pootle
                 }
                 else { c.Velocity=Vector3.zero; return true; }
                 c.Facing=-normal;c.Velocity=result.displacement/dt;
+                if(ResolveWallTop(c))return true;
                 if (frame.move.y < 0 && c.Support.walkable) Release(c);
                 return true;
             }
@@ -152,11 +157,19 @@ namespace Pootle
                 if ((frame.grip || p.automaticGrip) && climbSurface && climbSurface.isActiveAndEnabled)
                 {
                     wall = front.collider; c.Velocity = Vector3.zero; c.Facing = -normal;
-                    c.SetMode(PootleMode.Climbing, PootleTransition.Grabbed); return true;
+                    c.SetMode(PootleMode.Climbing, PootleTransition.Grabbed);
+                    ResolveWallTop(c);return true;
                 }
-                if (!c.IsGrounded && c.Velocity.y <= 0 && FindTop(c, normal, p.ledgeHandHeight + 0.25f, out var top,front.collider,p.ledgeMaximumTopAngle)
-                    && top.y - transform.position.y >= p.ledgeHandHeight - p.ledgeCatchReach)
+                // An unmarked physics prop is a push contact, not a stable ledge.
+                // Otherwise an approaching paddle can interrupt a nudge with a top-out.
+                if(front.rigidbody && !front.rigidbody.isKinematic)return false;
+                if (!c.IsGrounded && c.Velocity.y <= 0 && FindTop(c, normal, p.ledgeHandHeight + 0.25f, out var top,front.collider,p.ledgeMaximumTopAngle))
                 {
+                    wall=front.collider;ledgeDestination=top;
+                    // A high edge landing already overlaps the lip: resolve upward,
+                    // rather than leaving a torso-high wall grip or snapping down first.
+                    if(top.y-transform.position.y<p.ledgeHandHeight && c.Motor.CanOccupy(top))
+                    {StartHop(c);automaticHop=true;return true;}
                     Vector3 hang = transform.position; hang.y = top.y - p.ledgeHandHeight;
                     if (c.Motor.CanOccupy(hang))
                     {
@@ -170,12 +183,27 @@ namespace Pootle
             return false;
         }
 
+        private bool ResolveWallTop(PootleCharacter c)
+        {
+            if(!FindTop(c,normal,c.profile.ledgeHandHeight,out var top,wall,c.Motor.slopeLimit))return false;
+            ledgeDestination=top;
+            if(!c.Motor.CanOccupy(top))
+            {
+                // A blocked destination keeps the head at the lip, never the torso above it.
+                Vector3 hang=transform.position;hang.y=Mathf.Min(hang.y,top.y-c.profile.ledgeHandHeight);
+                c.Motor.MoveTo(hang);c.Velocity=Vector3.zero;stateTime=0;
+                c.SetMode(PootleMode.LedgeHanging,PootleTransition.Grabbed);return true;
+            }
+            StartHop(c);automaticHop=true;return true;
+        }
+
         private bool TrySmallHop(PootleCharacter c,PootleInputFrame frame)
         {
             if(!c.IsGrounded || !c.profile.smallObstacleHop || frame.move.sqrMagnitude<.1f)return false;
             var direction=PootleMovement.CameraDirection(frame.move,c.outputCamera,out _);
             if(!c.Motor.Ray(transform.position+Vector3.up*.25f,direction,c.Motor.Radius+.14f,PootleProbeKind.Wall,out var obstacle)
                 || Mathf.Abs(obstacle.normal.y)>.1f)return false;
+            if(obstacle.rigidbody && !obstacle.rigidbody.isKinematic)return false;
             Vector3 outward=Vector3.ProjectOnPlane(obstacle.normal,Vector3.up).normalized;
             if(!FindTop(c,outward,c.profile.smallHopHeight,out var top))return false;
             float rise=top.y-transform.position.y;
@@ -188,7 +216,7 @@ namespace Pootle
             float reach = c.Motor.Radius + c.profile.climbReach;
             if (c.Motor.Ray(transform.position + Vector3.up * 1.1f, direction, reach, PootleProbeKind.Wall, out hit)
                 && Mathf.Abs(hit.normal.y) < 0.35f) return true;
-            return c.Motor.Ray(transform.position + Vector3.up * 0.3f, direction, reach, PootleProbeKind.Wall, out hit)
+            return c.Motor.Ray(transform.position + Vector3.up * 0.05f, direction, reach, PootleProbeKind.Wall, out hit)
                 && Mathf.Abs(hit.normal.y) < 0.35f;
         }
 

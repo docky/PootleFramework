@@ -51,7 +51,7 @@ namespace Pootle
             float travelled = Vector3.Distance(previousPosition, transform.position);
             previousPosition = transform.position;
             bool walking = character.Mode == PootleMode.Grounded || character.Mode == PootleMode.RailWalking;
-            float speed = character.Velocity.magnitude;
+            float speed = character.LocomotionSpeed;
             // Carrying/teleporting the capsule is not a step. A blocked walk also has no travel.
             if (!walking || speed < .5f || travelled > Mathf.Max(2, speed * dt * 3))
             { distance = 0; return; }

@@ -14,6 +14,7 @@ namespace Pootle
         [Min(1)] public float armLength=1.8f;
         [Min(.01f)] public float armWidth=.18f,armHeight=1.1f;
         [Min(0)] public float armBottom=.15f;
+        [Min(0)] public float armVerticalOffset=.008f;
         public bool useArmHook=true;
         [Min(.01f)] public float hookRadius=.15f;
         public float defaultSpring=100,defaultDamper=15;
@@ -47,7 +48,7 @@ namespace Pootle
             for(int i=0;i<slots;i++)
             {
                 if(i==missingArm)continue;
-                var arm=new GameObject($"Arm_{i:00}").transform;arm.SetParent(arms,false);arm.localRotation=Quaternion.Euler(0,i*360f/slots,0);
+                var arm=new GameObject($"Arm_{i:00}").transform;arm.SetParent(arms,false);arm.localRotation=Quaternion.Euler(0,i*360f/slots,0);arm.localPosition=Vector3.up*((i+1)*armVerticalOffset);
                 Primitive(PrimitiveType.Cube,"Arm Mesh",arm,new Vector3(armLength*.5f,armBottom+armHeight*.5f,0),new Vector3(armLength,armHeight,armWidth),armMeshMaterial);
                 if(useArmHook)Primitive(PrimitiveType.Capsule,"Arm Hook",arm,new Vector3(armLength,armBottom+armHeight*.5f,0),new Vector3(hookRadius*2,Mathf.Max(hookRadius,armHeight*.5f),hookRadius*2),hubMaterial);
             }

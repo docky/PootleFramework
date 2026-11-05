@@ -42,7 +42,7 @@ namespace Pootle.Tests
         public IEnumerator Turnstile_PlayerPushesBothDirectionsAndSpringSettles()
         {
             character.simulateAutomatically=false;character.outputCamera=null;
-            var gates=Object.FindObjectsByType<TurnstileGateHinge>().Where(g=>g.GetComponent<TurnstileGateBuilder>().missingArm<0).OrderBy(g=>g.name).ToArray();
+            var gates=Object.FindObjectsByType<TurnstileGateHinge>().Where(g=>g.name=="Turnstile · four arms" || g.name=="Turnstile · soft four arms").OrderBy(g=>g.name).ToArray();
             Assert.That(gates.Length,Is.EqualTo(2));
             for(int k=0;k<2;k++)
             {
@@ -54,7 +54,7 @@ namespace Pootle.Tests
                 {
                     character.Tick(Time.deltaTime,new PootleInputFrame{move=new Vector2(0,direction)});yield return null;
                 }
-                Assert.That((character.transform.position.z-gate.transform.position.z)*direction,Is.GreaterThan(1.4f),"Player should push through arm: "+gate.name+" angle="+gate.CurrentAngle+" target="+gate.TargetAngle+" clicks="+gate.rotationClicks);
+                Assert.That((character.transform.position.z-gate.transform.position.z)*direction,Is.GreaterThan(1.4f),"Player should push through arm: "+gate.name+" angle="+gate.CurrentAngle+" target="+gate.TargetAngle+" clicks="+gate.rotationClicks+" mode="+character.Mode+" pos="+character.transform.position+" force="+character.Motor.pushForceScale+" contacts="+string.Join(";",character.Motor.Contacts.Take(character.Motor.ContactCount).Select(h=>h.collider.name+":"+h.normal)));
                 Assert.That(Mathf.Abs(gate.rotationClicks),Is.GreaterThanOrEqualTo(1),gate.name+" angle="+gate.CurrentAngle+" target="+gate.TargetAngle);
                 Assert.That(gate.rotationClicks,Is.EqualTo(cw-ccw),"Click events match signed count");
                 Assert.That(k==0?ccw:cw,Is.GreaterThan(0),"Both push directions should work");

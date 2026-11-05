@@ -33,7 +33,7 @@ namespace Pootle
     public struct PootleInputFrame
     {
         public Vector2 move;
-        public bool run, grip, glide, jumpPressed, jumpHeld, resetPressed, detachPressed, rollPressed, carryPressed;
+        public bool run, grip, glide, jumpPressed, jumpHeld, resetPressed, detachPressed, rollPressed, carryPressed, interactPressed;
     }
 
     public static class PootleMovement

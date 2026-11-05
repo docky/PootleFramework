@@ -14,6 +14,15 @@ namespace Pootle
         [Range(0, 0.6f)] public float stepHeight = 0.6f;
         [Range(0, 80)] public float slopeLimit = 45f;
         public LayerMask collisionMask = Physics.DefaultRaycastLayers;
+        [Header("Physics interaction")]
+        public bool enablePhysicsInteraction=true;
+        [Min(1)] public float characterMass=60;
+        [Min(0)] public float pushForceScale=2;
+        [Min(0)] public float maximumPushForce=1200;
+        [Min(0)] public float maximumIncomingSpeed=10;
+        [Range(0,1)] public float incomingReactionScale=.12f;
+        public bool applyStandingDownwardForce=true;
+        [Min(0)] public float standingDownwardForceScale=1;
         public readonly PootleContact[] Contacts = new PootleContact[24];
         public int ContactCount { get; private set; }
         public int QueryCount { get; private set; }
@@ -21,8 +30,9 @@ namespace Pootle
         private readonly RaycastHit[] hits = new RaycastHit[32];
         private readonly Collider[] overlaps = new Collider[32];
         private CapsuleCollider capsule;
+        private PootleCarrying carrying;
         private float tickDeltaTime=1f/60;
-        private readonly System.Collections.Generic.HashSet<TurnstileGateHinge> pushedGates = new System.Collections.Generic.HashSet<TurnstileGateHinge>();
+        private readonly System.Collections.Generic.HashSet<Rigidbody> pushedBodies = new System.Collections.Generic.HashSet<Rigidbody>();
 
         public float Radius => Mathf.Max(0.05f, radius);
         public float Height => Mathf.Max(height, 2 * Radius);
@@ -46,7 +56,62 @@ namespace Pootle
             if (body) { body.isKinematic = true; body.useGravity = false; }
         }
 
-        public void BeginTick(float dt=1f/60) { ContactCount = 0; QueryCount = 0; tickDeltaTime=Mathf.Max(.0001f,dt);pushedGates.Clear(); }
+        public void BeginTick(float dt=1f/60) { ContactCount = 0; QueryCount = 0; tickDeltaTime=Mathf.Max(.0001f,dt);pushedBodies.Clear(); }
+
+        private void PushDynamicBody(RaycastHit hit,Vector3 attemptedVelocity)
+        {
+            var other=hit.rigidbody;
+            if(!enablePhysicsInteraction || !other || other.isKinematic || other.transform.IsChildOf(transform)
+                || Vector3.Angle(hit.normal,Vector3.up)<=slopeLimit || !pushedBodies.Add(other))return;
+            // Relative normal speed and reduced mass: moving-away bodies receive no
+            // extra push, heavier bodies respond less, and off-centre contact creates torque.
+            float closing=Mathf.Max(0,-Vector3.Dot(attemptedVelocity-other.GetPointVelocity(hit.point),hit.normal));
+            float mass=Mathf.Max(1,characterMass),reducedMass=mass*other.mass/(mass+other.mass);
+            float impulse=Mathf.Min(closing*reducedMass*pushForceScale,maximumPushForce*tickDeltaTime);
+            if(impulse>0)other.AddForceAtPosition(-hit.normal*impulse,hit.point,ForceMode.Impulse);
+        }
+        public void ReceiveBodyMotion(PootleCharacter character)
+        {
+            if(!enablePhysicsInteraction || !(character.IsGrounded || character.IsRolling || character.Mode==PootleMode.Airborne || character.Mode==PootleMode.Gliding))return;
+            Endpoints(transform.position,out var a,out var b);
+            // A fixed contact skin, never a velocity-scaled influence radius.
+            // Fast props must reach the capsule before transferring momentum.
+            float contactMargin=Mathf.Min(.015f,Skin*1.5f);
+            int count=Physics.OverlapCapsuleNonAlloc(a,b,Radius+contactMargin,overlaps,collisionMask,QueryTriggerInteraction.Ignore);
+            for(int i=0;i<count;i++)
+            {
+                var shape=overlaps[i];var other=shape.attachedRigidbody;
+                if(IsSelf(shape) || !other || other.isKinematic || pushedBodies.Contains(other))continue;
+                var oneWay=shape.GetComponentInParent<PootleOneWayPlatform>();if(oneWay && oneWay.isActiveAndEnabled)continue;
+                Vector3 point=shape.ClosestPoint(transform.position+center);
+                Vector3 normal=transform.position+center-point;
+                ColliderPose(shape,out var shapePosition,out var shapeRotation);
+                if(Physics.ComputePenetration(capsule,transform.position,Quaternion.identity,shape,shapePosition,shapeRotation,out var outward,out _))normal=outward;
+                if(normal.sqrMagnitude<.00001f || Mathf.Abs(normal.normalized.y)>.55f)continue;
+                normal=Vector3.ProjectOnPlane(normal,Vector3.up).normalized;
+                float incoming=Vector3.Dot(other.GetPointVelocity(point),normal);
+                if(incoming<.1f)continue;
+                Vector3 axisPoint=a+Vector3.up*Mathf.Clamp(point.y-a.y,0,b.y-a.y);
+                if(Vector3.Distance(point,axisPoint)>Radius+contactMargin)continue;
+                float change=Mathf.Clamp(incoming-Vector3.Dot(character.Velocity,normal),0,maximumIncomingSpeed);
+                if(change<=.01f)continue;
+                pushedBodies.Add(other);
+                character.ReceivePhysicsPush(normal*change);
+                float impulse=Mathf.Min(change*characterMass*incomingReactionScale,maximumPushForce*tickDeltaTime);
+                other.AddForceAtPosition(-normal*impulse,point,ForceMode.Impulse);
+            }
+        }
+
+        public void ApplyStandingForce(PootleSupport support,bool standing)
+        {
+            if(!enablePhysicsInteraction || !applyStandingDownwardForce || !standing || !support.central
+                || !support.collider || support.distance>Skin*3)return;
+            var other=support.collider.attachedRigidbody;
+            if(!other || other.isKinematic || other.transform.IsChildOf(transform))return;
+            // Integrate in Update's dt, not once per render frame with ForceMode.Force.
+            other.AddForceAtPosition(Physics.gravity*characterMass*standingDownwardForceScale*tickDeltaTime,
+                support.point,ForceMode.Impulse);
+        }
 
         public void Endpoints(Vector3 position, out Vector3 a, out Vector3 b)
         {
@@ -58,6 +123,19 @@ namespace Pootle
         }
 
         private bool IsSelf(Collider other) => other == capsule || other.transform.IsChildOf(transform);
+
+        // Queries use the simulated collider pose. An interpolated body's Transform
+        // is one physics step behind it: recovering against that rendered pose leaves
+        // us inside the query collider and produces false zero-distance sweep hits.
+        private static void ColliderPose(Collider shape,out Vector3 position,out Quaternion rotation)
+        {
+            var body=shape.attachedRigidbody;
+            position=shape.transform.position;rotation=shape.transform.rotation;
+            if(!body || body.isKinematic || body.interpolation==RigidbodyInterpolation.None)return;
+            var change=body.rotation*Quaternion.Inverse(body.transform.rotation);
+            position=body.position+change*(position-body.transform.position);
+            rotation=change*rotation;
+        }
 
         private bool Nearest(int count, out RaycastHit hit,Vector3 position,Vector3 direction)
         {
@@ -172,10 +250,18 @@ namespace Pootle
             return Move(target - recovered, false);
         }
 
+        public bool CanMoveTo(Vector3 target)
+        {
+            Vector3 delta=target-transform.position;float distance=delta.magnitude;
+            return distance<.000001f || !Sweep(transform.position,delta/distance,distance+Skin,PootleProbeKind.Clearance,out _);
+        }
+
         public PootleMotionResult Move(Vector3 motion, bool allowSteps, float snapDistance = 0, bool steepSlide = false, float maximumSnap = float.PositiveInfinity)
         {
             Vector3 start = transform.position;
             Vector3 position = Recover(start);
+            if(!carrying)carrying=GetComponent<PootleCarrying>();
+            if(carrying)motion=carrying.ConstrainMotion(this,motion);
             Vector3 horizontal = new Vector3(motion.x, 0, motion.z);
             bool stepped = false;
             if (allowSteps && horizontal.sqrMagnitude > 0.0000001f)
@@ -232,9 +318,7 @@ namespace Pootle
                 Vector3 advance = direction * safe;
                 position += advance;
                 AddContact(hit);
-                var gate=hit.collider.GetComponentInParent<TurnstileGateHinge>();
-                if(gate && pushedGates.Add(gate))
-                    gate.PushAt(hit.point,-hit.normal,Mathf.Max(0,-Vector3.Dot(motion,hit.normal))/tickDeltaTime,tickDeltaTime);
+                PushDynamicBody(hit,motion/tickDeltaTime);
                 Vector3 remainder = motion - advance;
                 Vector3 projected = Vector3.ProjectOnPlane(remainder, hit.normal);
                 float angle = Vector3.Angle(Vector3.up, hit.normal);
@@ -317,8 +401,9 @@ namespace Pootle
                     if(oneWay && oneWay.isActiveAndEnabled && !oneWay.IsAbove(this,position))continue;
                     QueryCount++;
                     // position is the root, NOT the centre: ComputePenetration includes collider.center.
+                    ColliderPose(other,out var otherPosition,out var otherRotation);
                     if (!Physics.ComputePenetration(capsule, position, Quaternion.identity, other,
-                        other.transform.position, other.transform.rotation, out var direction, out float depth)) continue;
+                        otherPosition, otherRotation, out var direction, out float depth)) continue;
                     Vector3 correction = direction * (depth + Skin);
                     Capture?.Record(new PootleProbeRecord { kind = PootleProbeKind.Recovery, a = position,
                         b = position + correction, direction = direction, distance = correction.magnitude,

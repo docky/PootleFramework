@@ -37,6 +37,7 @@ namespace Pootle.Editor
             var root = new GameObject("Pootle · Lily");
             Undo.RegisterCreatedObjectUndo(root, "Create Pootle character");
             var motor = Undo.AddComponent<PootleMotor>(root);
+            motor.radius=.34f; // Lily's torso/feet, rather than the outstretched import pose.
             motor.Configure();
             var input = Undo.AddComponent<PootleInput>(root);
             input.actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(Root + "/Data/PootleControls.inputactions");
@@ -69,6 +70,7 @@ namespace Pootle.Editor
             PootleAnimationSetup.Configure(character);
             PootleNextFeaturesSetup.ConfigureCharacter(character);
             PootleMovementFeedbackSetup.Configure(character);
+            Undo.AddComponent<PootleFrobjectSensor>(root);
             EditorUtility.SetDirty(character);
             return character;
         }

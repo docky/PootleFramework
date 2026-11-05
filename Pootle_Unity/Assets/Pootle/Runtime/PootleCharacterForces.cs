@@ -4,11 +4,22 @@ namespace Pootle
     public sealed partial class PootleCharacter
     {
         private Vector3 externalPlanar,windVelocity;
+        private bool physicsFacingMomentum;
         private float facingHoldUntil,bumperUntil,windAcceleration;
         public bool HoldingExternalFacing=>clock<facingHoldUntil;
+        // A passive shove/wind drift must not repeatedly start the walk cycle.
+        public float LocomotionSpeed=>Vector3.ProjectOnPlane(Velocity-externalPlanar,Vector3.up).magnitude;
+        public bool HasPhysicsMomentum=>physicsFacingMomentum;
         public void PreserveExternalFacing()=>facingHoldUntil=clock+profile.externalFacingHold;
+        internal void ReceivePhysicsPush(Vector3 change)
+        {
+            physicsFacingMomentum=true;
+            Velocity+=change;externalPlanar+=Vector3.ProjectOnPlane(change,Vector3.up);
+            PreserveExternalFacing();
+        }
         public void ApplyImpulse(Vector3 velocity)
         {
+            physicsFacingMomentum=false;
             ResetSlideRide();
             traversal?.ResetTraversal();railRider?.ResetRide();hookRider?.ResetRide();platformRider?.ClearRiding();
             BlockGrabs();variableJump=false;forcedSlopeSlide=false;
@@ -28,7 +39,8 @@ namespace Pootle
             externalPlanar=Vector3.MoveTowards(externalPlanar,Vector3.ProjectOnPlane(windVelocity,Vector3.up),
                 (windAcceleration>0?windAcceleration:IsGrounded?8:1.5f)*dt);
             Velocity+=externalPlanar-previous;
-            if(windAcceleration>0)PreserveExternalFacing();
+            if(windAcceleration>0 || physicsFacingMomentum && externalPlanar.sqrMagnitude>.04f)PreserveExternalFacing();
+            if(externalPlanar.sqrMagnitude<=.04f)physicsFacingMomentum=false;
             if(clock>=bumperUntil)
                 foreach(var bumper in PootleBumper.Active)
                     if(bumper && bumper.isActiveAndEnabled && bumper.Touches(this))
@@ -41,6 +53,6 @@ namespace Pootle
             if(result>0 && IsGrounded)SetMode(PootleMode.Airborne,PootleTransition.Released);
             return result;
         }
-        private void ResetForces(){externalPlanar=windVelocity=Vector3.zero;facingHoldUntil=bumperUntil=windAcceleration=0;}
+        private void ResetForces(){physicsFacingMomentum=false;externalPlanar=windVelocity=Vector3.zero;facingHoldUntil=bumperUntil=windAcceleration=0;}
     }
 }

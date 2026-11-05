@@ -135,3 +135,15 @@ Copied `coin.fbx`, `Star.fbx` and `heart.fbx` from the reference project's `Asse
 Adapted the user's supplied TurnstileGateHinge/TurnstileGateBuilder concepts: real HingeJoint springs, half-step detents, signed click events, procedural arms and optional end capsules. Joint-relative unwrapped angles replace local Euler extraction; arm layout follows the selected X/Y/Z axis, and omitted slots preserve the full gate's spacing. Geometry rebuilds are explicit editor actions rather than recursive OnValidate mutations. Pootle's query-based motor transfers attempted contact motion into a bounded impulse once per gate per tick, because its trigger capsule does not produce ordinary rigidbody collision impulses. No new art was imported.
 
 One-way floors are marked BoxColliders with per-character top-side filtering in the existing motor. Sweeps/probes ignore upward travel and underside/side hits; clearance and recovery permit passage from below. This does not alter the global collision matrix or free-rigidbody collision behavior.
+
+## Edge boundary, rail pressure and general physics · 5 November 2026
+
+Inspected the user-supplied ECM2 `CharacterMovement.ComputeDynamicCollisionResponse` / `ResolveDynamicCollisions` and `Character.ApplyDownwardsForce` in the LostKeyMaze reference. Adopted the principles of relative normal velocity, character/body mass sharing, off-centre impulses and mass × gravity standing force. Implemented these directly in Pootle's existing motor with per-body/per-tick deduplication and a force cap; removed the turnstile-only push path. No ECM2 package or runtime dependency was imported, and the reference files were not changed.
+
+Dynamic rigidbody supports reuse the platform rider's position/yaw carry. Top boundary resolution and deliberate rail side dismounts extend Pootle's existing traversal states. Procedural turnstile variants, staggered arm heights, ordinary rigidbody boxes and a hinged seesaw were authored through Unity APIs.
+
+## Driven physics movers and incoming contact · 5 November 2026
+
+Added two small original spring/damper drivers for actual dynamic rigidbodies: a continuous/oscillating hinge torque controller and a translational shuttle. The rotor measures quaternion twist from its authored local pose so a sleeping free hinge's initially undefined native angle cannot prevent startup after scene loading. New incoming-body contact handling transfers relative side velocity into external player momentum and applies a bounded reaction impulse. It shares the existing per-body/per-tick deduplication with outgoing pushes, and keeps player facing held while external momentum persists. No external physics package or art was added.
+
+Contact transfer now uses a fixed, at-most-1.5-cm contact skin, replacing velocity-scaled anticipation. Lily's scene/prefab capsule was fitted to a 0.34-m body radius through Unity authoring APIs. The optional avatar component smooths the visible root briefly after actual physics momentum arrives; it does not enlarge collision reach or delay ordinary movement. No new dependency or borrowed asset was required.

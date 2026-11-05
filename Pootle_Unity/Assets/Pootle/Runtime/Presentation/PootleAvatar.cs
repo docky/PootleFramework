@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Pootle
 {
-    [DisallowMultipleComponent, AddComponentMenu("Pootle/Optional Avatar Animator")]
+    [DisallowMultipleComponent, DefaultExecutionOrder(140), AddComponentMenu("Pootle/Optional Avatar Animator")]
     public sealed class PootleAvatar : MonoBehaviour
     {
         public PootleCharacter character;
@@ -13,7 +13,49 @@ namespace Pootle
         private bool hasSpeed, hasVertical, hasGrounded, hasMode, hasLocomotionRate;
         private static readonly int LocomotionRate = Animator.StringToHash("LocomotionRate");
         private string state;
-        private void OnEnable() => state = null;
+        private Vector3 displayedRoot,displayVelocity,displayOffset;
+        private float displayUntil;
+        public Vector3 RenderedRootPosition=>displayedRoot;
+        private void OnEnable()
+        {
+            state=null;
+            if(!character)character=GetComponentInParent<PootleCharacter>();
+            if(character)character.Teleported+=ResetPhysicsPresentation;
+            ResetPhysicsPresentation(Vector3.zero);
+        }
+        private void OnDisable()
+        {
+            if(character)character.Teleported-=ResetPhysicsPresentation;
+            RemoveDisplayOffset();
+        }
+        private void ResetPhysicsPresentation(Vector3 unused)
+        {
+            RemoveDisplayOffset();
+            displayedRoot=character?character.transform.position:transform.position;
+            displayVelocity=Vector3.zero;displayUntil=float.NegativeInfinity;
+        }
+        private void RemoveDisplayOffset()
+        {
+            if(character && character.visualRoot)character.visualRoot.position-=displayOffset;
+            displayOffset=Vector3.zero;
+        }
+        private void Update()=>RemoveDisplayOffset();
+        private void PresentPhysicsMotion()
+        {
+            if(!character || !character.visualRoot)return;
+            Vector3 root=character.transform.position;
+            if(character.HasPhysicsMomentum)displayUntil=Time.time+.08f;
+            bool free=character.Mode==PootleMode.Grounded || character.Mode==PootleMode.Airborne || character.Mode==PootleMode.Gliding;
+            if(!free || Time.time>=displayUntil || (root-displayedRoot).sqrMagnitude>1)
+            {displayedRoot=root;displayVelocity=Vector3.zero;return;}
+            // Interpolate the visible avatar after an actual shove, rather than
+            // pushing its collider early to hide fixed-step contact corrections.
+            float smoothing=.025f*Mathf.Clamp01((displayUntil-Time.time)/.08f);
+            displayedRoot=Vector3.SmoothDamp(displayedRoot,root,ref displayVelocity,smoothing,float.PositiveInfinity,Time.deltaTime);
+            displayOffset=Vector3.ClampMagnitude(displayedRoot-root,.12f);
+            displayedRoot=root+displayOffset;
+            character.visualRoot.position+=displayOffset;
+        }
         private void Awake()
         {
             if (!character) character = GetComponentInParent<PootleCharacter>();
@@ -33,8 +75,10 @@ namespace Pootle
         }
         private void LateUpdate()
         {
+            PresentPhysicsMotion();
             if (!animator || !animator.isActiveAndEnabled || !character || !animator.runtimeAnimatorController) return;
-            if (hasSpeed) animator.SetFloat(speed, Vector3.ProjectOnPlane(character.Velocity, Vector3.up).magnitude);
+            float locomotionSpeed=character.LocomotionSpeed;
+            if (hasSpeed) animator.SetFloat(speed,locomotionSpeed,.12f,Time.deltaTime);
             if (hasVertical) animator.SetFloat(vertical, character.Velocity.y);
             if (hasGrounded) animator.SetBool(grounded, character.IsGrounded);
             if (hasMode) animator.SetInteger(mode, (int)character.Mode);
@@ -55,7 +99,7 @@ namespace Pootle
                 _ => character.Velocity.y > 0 ? "Jump" : "Fall"
             };
             if(character.SlideRideAirborne)next="SeatedSlide";
-            if(hasLocomotionRate)animator.SetFloat(LocomotionRate,next=="Locomotion" && Vector3.ProjectOnPlane(character.Velocity,Vector3.up).sqrMagnitude>.01f
+            if(hasLocomotionRate)animator.SetFloat(LocomotionRate,next=="Locomotion" && locomotionSpeed>.1f
                 ? character.IsRunning ? runningAnimationRate : joggingAnimationRate : 1);
             if (next != state && animator.HasState(0, Animator.StringToHash(next)))
             {

@@ -18,7 +18,7 @@ namespace Pootle.Tests
         {
             Rail(new Vector3(0,2,-5),new Vector3(0,2,5));ResetAt(new Vector3(0,4,0));
             for(int i=0;i<90&&character.Mode!=PootleMode.RailWalking;i++)Step(1);
-            Vector3 start=character.transform.position;Step(45,new PootleInputFrame{move=Vector2.right});
+            Vector3 start=character.transform.position;Step(12,new PootleInputFrame{move=Vector2.right});
             Assert.That(Vector3.Distance(start,character.transform.position),Is.LessThan(.03f));
             Assert.That(Vector3.Dot(character.Facing,Vector3.right),Is.GreaterThan(.99f));
             Step(1,new PootleInputFrame{jumpPressed=true,jumpHeld=true});
@@ -75,7 +75,7 @@ namespace Pootle.Tests
             var main=Rail(new Vector3(-4,2,0),new Vector3(4,2,0));
             Rail(new Vector3(0,2,.4f),new Vector3(0,2,6));
             ResetAt(new Vector3(-.5f,4,0));Step(50);var start=character.transform.position;
-            Step(60,new PootleInputFrame{move=Vector2.up});
+            Step(12,new PootleInputFrame{move=Vector2.up});
             Assert.That(character.GetComponent<PootleRailRider>().Rail,Is.SameAs(main));
             Assert.That(Vector3.Distance(start,character.transform.position),Is.LessThan(.01f));
         }

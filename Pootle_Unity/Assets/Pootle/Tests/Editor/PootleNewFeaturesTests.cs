@@ -84,6 +84,57 @@ namespace Pootle.Tests
             Assert.That(character.GetComponent<PootlePlatformRider>().Surface,Is.Null);
         }
         [Test]
+        public void Features_CarryWallBlocksMovementWithoutDroppingAndAllowsRepickup()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var carry=character.GetComponent<PootleCarrying>();
+            var wall=Box("Carry wall",new Vector3(0,1.5f,3),new Vector3(5,3,.3f));
+            Step(180,new PootleInputFrame{move=Vector2.up});
+            Assert.That(carry.Held,Is.SameAs(item));Assert.That(item.IsHeld);Assert.That(item.Shape.isTrigger);
+            Assert.That(item.Shape.bounds.max.z,Is.LessThanOrEqualTo(wall.GetComponent<Collider>().bounds.min.z+.01f));
+            Vector3 expected=character.transform.position+Vector3.up*character.Motor.Height*.65f+character.Facing*(character.Motor.Radius+item.HalfSize.z+.12f);
+            Assert.That(Vector3.Distance(item.Shape.bounds.center,expected),Is.LessThan(.025f),"Box stays attached to the hands at the wall");
+            Step(30,new PootleInputFrame{move=Vector2.down});Step(25);
+            Step(1,new PootleInputFrame{carryPressed=true});Assert.That(carry.Held,Is.Null);
+            Step(1,new PootleInputFrame{carryPressed=true});Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [TestCase(0f)]
+        [TestCase(.4f)]
+        [TestCase(.8f)]
+        public void Features_CarryTurnsAroundAdjustableForwardPivot(float offset)
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var carry=character.GetComponent<PootleCarrying>();Assert.That(carry.rotationPivotForward,Is.EqualTo(.4f));
+            carry.rotationPivotForward=offset;Vector3 pivot=character.transform.position+character.Facing*offset;
+            Assert.That(carry.Turn(character,Vector3.right));
+            Assert.That(Vector3.Distance(pivot,character.transform.position+character.Facing*offset),Is.LessThan(.002f));
+            Assert.That(Vector3.Dot(character.Facing,Vector3.right),Is.GreaterThan(.999f));Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [Test]
+        public void Features_CarryTurnStopsAtObstructionWithoutDropping()
+        {
+            var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});
+            var carry=character.GetComponent<PootleCarrying>();
+            var wall=Box("Carry turn wall",new Vector3(.9f,1.5f,1),new Vector3(.2f,3,3));Physics.SyncTransforms();
+            Assert.That(carry.Turn(character,Vector3.right),Is.False);
+            Assert.That(carry.Held,Is.SameAs(item));Assert.That(item.IsHeld);
+            Assert.That(Vector3.Angle(character.Facing,Vector3.forward),Is.LessThan(85));
+            bool overlap=Physics.ComputePenetration(item.Shape,item.transform.position,item.transform.rotation,
+                wall.GetComponent<Collider>(),wall.transform.position,wall.transform.rotation,out _,out float depth);
+            Assert.That(!overlap || depth<.01f,Is.True,"The rotation arc cannot pass the crate through a wall");
+        }
+        [Test]
+        public void Features_CarryCubeTouchingWallCanBeLiftedAwayAndPickedUpAgain()
+        {
+            var item=CarryCube(new Vector3(0,.4f,1.1f));
+            Box("Flush pickup wall",new Vector3(0,1.5f,1.6f),new Vector3(4,3,.2f));Physics.SyncTransforms();
+            Step(1,new PootleInputFrame{carryPressed=true});var carry=character.GetComponent<PootleCarrying>();
+            Assert.That(carry.Held,Is.SameAs(item));
+            Step(20,new PootleInputFrame{move=Vector2.down});Step(25);
+            Step(1,new PootleInputFrame{carryPressed=true});Assert.That(carry.Held,Is.Null);
+            Step(1,new PootleInputFrame{carryPressed=true});Assert.That(carry.Held,Is.SameAs(item));
+        }
+        [Test]
         public void Features_CarryStandingDropPlacesInFrontAndRestoresPhysics()
         {
             var item=CarryCube(new Vector3(0,.42f,1.2f));Step(1,new PootleInputFrame{carryPressed=true});

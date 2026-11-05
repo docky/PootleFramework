@@ -71,6 +71,7 @@ namespace Pootle
         public float ledgeMaximumTopAngle = 20;
         [Min(0)] public float topOutDuration = 0.5f;
         [Min(0)] public float topOutHopHeight = 0.4f;
+        [Min(.1f)] public float topOutLiftSpeed=7;
         [Min(0)] public float poleTurnSpeed = 180f;
         [Min(0.05f)] public float poleBodyDistance = 0.45f;
         [Min(0.1f)] public float poleAttachmentSpeed = 4f;
@@ -85,6 +86,11 @@ namespace Pootle
         [Min(0)] public float railMagnetHeight = 1.8f;
         [Tooltip("Press toward a connected branch within this distance to walk to its junction and turn.")]
         [Min(0)] public float railJunctionApproach = .9f;
+        [Header("Rail side dismount")]
+        [Min(0)] public float railDismountSettleTime=.18f;
+        [Min(0)] public float railDismountHoldTime=.3f;
+        [Range(0,1)] public float railDismountPressure=.75f;
+        [Min(0)] public float railDismountSpeed=2.5f;
         [Header("Ground pound")]
         [Min(1)] public float groundPoundSpeed = 28;
         [Min(0)] public float poundSlideSpeed = 7;

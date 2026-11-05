@@ -8,8 +8,11 @@ namespace Pootle
         public float Speed { get; private set; }
         private int segment;
         private float along, cooldown, facingAngle;
-        private bool sliding;
-        public void ResetRide() { Rail=null;Speed=cooldown=0;sliding=false; }
+        private bool sliding,dismountArmed;
+        private float settleTime,pressureTime;
+        private Vector3 pressureDirection;
+        public void ResetRide() { Rail=null;Speed=cooldown=0;sliding=false;ResetDismount(); }
+        private void ResetDismount(){dismountArmed=false;settleTime=pressureTime=0;pressureDirection=Vector3.zero;}
         private static Vector3 Flat(Vector3 v)=>Vector3.ProjectOnPlane(v,Vector3.up).normalized;
         private void SnapFacing(PootleCharacter c,Vector3 tangent,Vector3 desired)
         {
@@ -70,7 +73,7 @@ namespace Pootle
             if(c.Mode==PootleMode.Airborne || c.Mode==PootleMode.Gliding || c.Mode==PootleMode.GroundPounding)
                 c.ReportLanding(-c.Velocity.y);
             bool pound=c.Mode==PootleMode.GroundPounding;
-            Rail=rail;segment=section;along=location;
+            Rail=rail;segment=section;along=location;ResetDismount();
             // Only genuine horizontal momentum is inherited; a falling impact never kicks along an incline.
             Speed=Vector3.Dot(Vector3.ProjectOnPlane(c.Velocity,Vector3.up),Flat(tangent));
             sliding=pound || c.Mode==PootleMode.Sliding || Mathf.Abs(tangent.y)>Mathf.Sin(c.Motor.slopeLimit*Mathf.Deg2Rad);
@@ -101,6 +104,7 @@ namespace Pootle
             Vector3 tangent=Rail.Tangent(segment,along);
             bool steep=Mathf.Abs(tangent.y)>Mathf.Sin(c.Motor.slopeLimit*Mathf.Deg2Rad);
             if(steep && !sliding){sliding=true;SnapFacing(c,tangent,c.Facing);}
+            if(TrySideDismount(c,dt,input,magnitude,tangent,approaching))return false;
             float oldSpeed=Speed;
             if(sliding)
             {
@@ -146,6 +150,29 @@ namespace Pootle
             c.SeatedNormal=Vector3.ProjectOnPlane(Vector3.up,newTangent).normalized;c.Velocity=newTangent*Speed;
             c.SetMode(sliding?PootleMode.RailSliding:PootleMode.RailWalking,PootleTransition.Supported);
             if(offEnd)Detach(c);return true;
+        }
+        private bool TrySideDismount(PootleCharacter c,float dt,Vector3 input,float magnitude,Vector3 tangent,bool approaching)
+        {
+            var p=c.profile;
+            if(sliding || approaching || Mathf.Abs(Speed)>.2f){ResetDismount();return false;}
+            // Neutral, stable support must precede deliberate pressure. Landing with
+            // a held stick, walking into corners and junction guidance cannot arm it.
+            if(magnitude<.2f)
+            {
+                settleTime+=dt;pressureTime=0;
+                if(settleTime>=p.railDismountSettleTime)dismountArmed=true;
+                return false;
+            }
+            settleTime=0;
+            if(!dismountArmed)return false;
+            float across=Vector3.Dot(input,Flat(tangent));
+            if(magnitude<p.railDismountPressure || Mathf.Abs(across)>.35f){pressureTime=0;return false;}
+            Vector3 direction=Vector3.ProjectOnPlane(input,Flat(tangent)).normalized;
+            if(Vector3.Dot(direction,pressureDirection)<.9f)pressureTime=0;
+            pressureDirection=direction;pressureTime+=dt;
+            if(pressureTime<p.railDismountHoldTime)return false;
+            c.Velocity=direction*p.railDismountSpeed+Vector3.down*.5f;c.Facing=direction;
+            Detach(c);cooldown=Mathf.Max(.65f,c.profile.detachRegrabDelay);c.BlockGrabs();return true;
         }
         private bool HasConnection(Vector3 point)
         {
@@ -220,6 +247,6 @@ namespace Pootle
             return nearest && Attach(c,nearest,chosen,chosenAlong);
         }
         private void Detach(PootleCharacter c)
-        {Rail=null;cooldown=.2f;c.SetMode(PootleMode.Airborne,PootleTransition.Released);sliding=false;}
+        {Rail=null;ResetDismount();cooldown=.2f;c.SetMode(PootleMode.Airborne,PootleTransition.Released);sliding=false;}
     }
 }

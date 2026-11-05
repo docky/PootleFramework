@@ -13,10 +13,15 @@ namespace Pootle.Tests
     {
         private Gamepad gamepad;
         private PootleCharacter character;
+        private InputSettings.EditorInputBehaviorInPlayMode previousEditorInputBehavior;
 
         [UnitySetUp]
         public IEnumerator Setup()
         {
+            previousEditorInputBehavior=InputSystem.settings.editorInputBehaviorInPlayMode;
+            // Synthetic keyboard/mouse events belong to the game even when the
+            // Test Runner has focus. Restore the user's setting after each test.
+            InputSystem.settings.editorInputBehaviorInPlayMode=InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             yield return SceneManager.LoadSceneAsync("PootlePlayground", LoadSceneMode.Single);
             gamepad = InputSystem.AddDevice<Gamepad>();
             character = Object.FindAnyObjectByType<PootleCharacter>();
@@ -26,6 +31,7 @@ namespace Pootle.Tests
         public IEnumerator Cleanup()
         {
             if (gamepad != null) InputSystem.RemoveDevice(gamepad);
+            InputSystem.settings.editorInputBehaviorInPlayMode=previousEditorInputBehavior;
             if (character) character.Teleport(new Vector3(0, 0.03f, -4), Quaternion.identity);
             yield return null;
         }
