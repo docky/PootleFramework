@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5658332c6c0682c4983e7e12e72d754b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Effects/Drifting Smoke.prefab
+  uploadId: 811446

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 26f1343b80403b8f98d4518d056a48ff
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Effects/Basic Effects.prefab
+  uploadId: 811446

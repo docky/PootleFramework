@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 270eee7d2bba6164eacee525e9b9e610
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 15600000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Environment/Terrain.asset
+  uploadId: 811446

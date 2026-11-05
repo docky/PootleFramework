@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8342f1b18a09f257584fbc623f89e8f8
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Effects/Hit Particles.prefab
+  uploadId: 811446

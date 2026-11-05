@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 61075efaa0771be45a806ec7877ccb36
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Effects/Drifting Skidmarks.prefab
+  uploadId: 811446

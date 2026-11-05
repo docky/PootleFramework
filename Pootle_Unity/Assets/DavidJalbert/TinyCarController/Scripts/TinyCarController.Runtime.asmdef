@@ -1,0 +1,4 @@
+{
+  "name": "TinyCarController.Runtime",
+  "references": ["Unity.InputSystem", "UnityEngine.UI"]
+}

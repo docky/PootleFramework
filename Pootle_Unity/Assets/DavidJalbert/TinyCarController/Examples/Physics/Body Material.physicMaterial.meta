@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 26e564b41b5d13243a688f527259fe9c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 13400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Physics/Body Material.physicMaterial
+  uploadId: 811446

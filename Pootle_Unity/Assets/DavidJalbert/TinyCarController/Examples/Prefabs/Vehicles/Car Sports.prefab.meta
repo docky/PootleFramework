@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e55a50f24eb564149991082c64917841
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Car Sports.prefab
+  uploadId: 811446

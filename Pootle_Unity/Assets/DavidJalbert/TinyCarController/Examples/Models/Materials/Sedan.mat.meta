@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 46426c119cb32be4fa5b8387fb8698c8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Models/Materials/Sedan.mat
+  uploadId: 811446

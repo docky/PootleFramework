@@ -3,6 +3,8 @@
   "references": [
     "Pootle.Runtime",
     "Pootle.Cinemachine",
+    "Pootle.TinyCarController",
+    "TinyCarController.Runtime",
     "Unity.Cinemachine",
     "Unity.InputSystem",
     "Pootle.Splines",

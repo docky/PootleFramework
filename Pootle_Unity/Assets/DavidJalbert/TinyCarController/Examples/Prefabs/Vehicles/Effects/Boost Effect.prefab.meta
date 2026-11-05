@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4bd079699d7153198a5eddbcb865d221
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Effects/Boost Effect.prefab
+  uploadId: 811446

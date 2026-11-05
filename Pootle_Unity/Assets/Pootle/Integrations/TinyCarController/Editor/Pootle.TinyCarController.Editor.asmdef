@@ -1,0 +1,5 @@
+{
+  "name": "Pootle.TinyCarController.Editor",
+  "references": ["Pootle.Runtime", "Pootle.TinyCarController", "TinyCarController.Runtime", "Unity.Cinemachine"],
+  "includePlatforms": ["Editor"]
+}

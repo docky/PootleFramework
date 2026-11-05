@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 204ef7d2338239d4cb699f42f5a6bd57
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Vehicles/Motorcycle.prefab
+  uploadId: 811446

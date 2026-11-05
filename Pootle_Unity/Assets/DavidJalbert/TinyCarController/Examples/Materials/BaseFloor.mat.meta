@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f17ac27e284a34c46b726aab375f3b54
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Materials/BaseFloor.mat
+  uploadId: 811446

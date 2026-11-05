@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a6a0599952dbdd5469f1c1a86b459dfa
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Models/Materials/Motorcycle.mat
+  uploadId: 811446

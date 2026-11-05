@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 9b16c0292892f356e8a00e11117d04d5
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Examples/Prefabs/Environment/Race Track.prefab
+  uploadId: 811446

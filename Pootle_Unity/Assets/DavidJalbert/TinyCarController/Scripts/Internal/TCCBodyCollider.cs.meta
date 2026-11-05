@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 60055678d072b7b45b0894905fcb5214
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 151827
+  packageName: Tiny Car Controller 2
+  packageVersion: 2.1.0
+  assetPath: Assets/DavidJalbert/TinyCarController/Scripts/Internal/TCCBodyCollider.cs
+  uploadId: 811446

@@ -1,0 +1,5 @@
+{
+  "name": "Pootle.TinyCarController",
+  "rootNamespace": "Pootle",
+  "references": ["Pootle.Runtime", "TinyCarController.Runtime", "Unity.InputSystem", "Unity.Cinemachine"]
+}
