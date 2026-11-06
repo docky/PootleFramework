@@ -27,10 +27,11 @@ namespace Pootle.Editor
             PootleAnimationSetup.Configure(character);
             var visual = character.GetComponent<PootleGliderVisual>() ?? character.gameObject.AddComponent<PootleGliderVisual>();
             visual.character = character;
-            var root = character.visualRoot.Find("Glider");
+            var tilt = character.visualRoot.GetComponentInChildren<PootleViewTilt>(true);
+            var root = tilt ? tilt.transform.Find("Glider") : character.visualRoot.Find("Glider");
             if (!root)
             {
-                root = new GameObject("Glider").transform; root.SetParent(character.visualRoot,false);
+                root = new GameObject("Glider").transform; root.SetParent(tilt ? tilt.transform : character.visualRoot,false);
                 PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Pootle/Samples/Art/Glider/glider.fbx"), root);
             }
             root.localScale=Vector3.one; root.localPosition=Vector3.up*2.05f;

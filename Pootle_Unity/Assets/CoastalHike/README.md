@@ -1,8 +1,20 @@
 # Coastal Hike — automatic exploration camera prototype
 
+## Mountain skywalk and summit hut
+
+[86-second feature playthrough](https://docky.net/builds/pootle-coastal-hike-bridges-hut-path-assist-2026-11-06.mp4) — view tilt, digital path assistance, mountain crossings and the hut interior.
+
+The summit lookout now leads into a six-bridge timber loop across all five mountain tops, reaching Y=37 before returning to the lookout. Plank decks, rope handrails, open summit junctions and coral flags mark the walkable route. Each crossing and landing has an exploration camera region; jumping is optional. The two loop entrances are near **(2, 15.16, 66)** and **(5, 15.16, 65)**.
+
+The wooden hut stands beside the summit path, with its black entrance at **(-3, 15.16, 58)**. Walk into the doorway to enter its furnished cutaway interior via the existing circle transition. Walk back through the interior doorway to return to the porch. The interior belongs to the existing +100Y network and shares its lighting switch, arrival buffers and camera policy. It is a separate room, not an additional branch of the three-way cave.
+
+Objects live under **07 · Mountain skywalk and summit hut** and **Cave Network · hidden +100Y / Summit hut · interior**. `CoastalHighRoutesSetup.Build()` is an explicit additive authoring pass that refuses to duplicate the addition. `CoastalHighRoutesPlayModeTests` verifies both directions of each bridge and the full hut entry/exit sequence.
+
 Open **CoastalHike.unity** and press Play. The existing Pootle/Lily controller is retained. The project already uses Cinemachine **6.6** (the Cinemachine 3 API family) and Splines 2.9; no packages were replaced.
 
 ## Controls and test areas
+
+`PootleControls` binds the Atari CX stick and trigger directly to Character/Move and Character/Jump, with joystick fallback bindings. WASD, arrow keys, D-pad and analog sticks use the same movement smoothing: 0.12s acceleration, 0.08s release and 0.12s full reversal. Analog target direction defaults to 16 sectors (22.5°) with 3° hysteresis past each boundary; magnitude is preserved. Tune these in **Movement Smoothing** on `PootleInput`; zero direction steps disables analog quantization. Jump remains an immediate button action.
 
 - **WASD / left stick:** camera-relative movement. **Space / south face button:** jump. **F / right shoulder:** glide. **Shift / east face button:** run. **R / Select:** reset. Approach the marked walls to climb automatically; up/down and left/right traverse the wall. No camera-control input is connected.
 - **F8:** show/hide the development camera overlay. It is absent from non-development builds; the component can also be disabled.
@@ -116,3 +128,11 @@ Door landings are raised 0.12 units above the underlying grass, with 0.04 separa
 Crash investigation (6 November 2026): the supplied 13:06 crash is a native macOS `NSView addCursorRect:cursor:` / Unity `GUIRenderView resetCursorRects` exception during Inspector UI work. No managed game-script frame identifies its cause. The direct camera-policy window provides an alternate editing route; this is not a confirmed repair of the native Editor bug. No package or Editor upgrade was applied, and no crash logs were uploaded.
 
 After restarting Unity, expanding the Cinemachine component succeeded in both Edit and Play Mode; expanding its Lens foldout also succeeded in Play Mode. The reported native crash was not reproduced in those checks.
+
+## Experimental path input alignment
+
+`PootlePathInputZone` is an oriented BoxCollider trigger whose blue local Z axis follows the path. Within the volume, movement within **12 degrees** of either direction along that axis aligns to the path. The threshold, priority, digital-only and grounded-only switches are editable per zone. Analog and airborne movement remain free by default; movement speed and jump are preserved. It aligns camera-relative input after conversion to world space and does not pull the avatar toward the centre of a path.
+
+Two trial zones cover Meadow traverse (46.4°) and Lookout ascent (54.2°), under `07 · Mountain skywalk and summit hut`. Disable either component to compare unassisted movement. Keyboard, D-pad and the Atari CX stick share the digital source classification from movement smoothing.
+
+The avatar prefab now places Lily and the glider beneath `Visual/View Tilt`; the motor and camera target stay outside that pivot. The base prefab uses zero tilt, while CoastalHike retains its authored tilt settings. `Has Visual Children` in the inspector helps catch an empty pivot.

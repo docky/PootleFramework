@@ -1,7 +1,8 @@
 using UnityEngine;
 namespace Pootle
 {
-    [DisallowMultipleComponent, DefaultExecutionOrder(120)]
+    // Resolve world-space suspension lines after the visual view-tilt pivot.
+    [DisallowMultipleComponent, DefaultExecutionOrder(10010)]
     public sealed class PootleGliderVisual : MonoBehaviour
     {
         public PootleCharacter character;

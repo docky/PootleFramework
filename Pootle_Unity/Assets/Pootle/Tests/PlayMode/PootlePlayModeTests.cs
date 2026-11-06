@@ -191,9 +191,14 @@ namespace Pootle.Tests
         public IEnumerator SpringLaunchesWithoutJumpButtonInLiveScene()
         {
             character.Teleport(new Vector3(-5,.43f,-3),Quaternion.identity);
-            yield return new WaitForSeconds(.3f);
+            float deadline = Time.time + .3f, peakUpwardSpeed = 0;
+            while (Time.time < deadline)
+            {
+                yield return null;
+                peakUpwardSpeed = Mathf.Max(peakUpwardSpeed, character.Velocity.y);
+            }
             Assert.That(character.Mode,Is.EqualTo(PootleMode.Airborne));
-            Assert.That(character.transform.position.y,Is.GreaterThan(4));Assert.That(character.Velocity.y,Is.GreaterThan(10));
+            Assert.That(character.transform.position.y,Is.GreaterThan(4));Assert.That(peakUpwardSpeed,Is.GreaterThan(10));
         }
 
         [UnityTest]

@@ -95,7 +95,7 @@ namespace Pootle.Tests
         }
         [UnityTest] public IEnumerator ChamberConnectsThreeMainPaths()
         {
-            foreach (var exit in travel.portals.Where(p => p.name.StartsWith("EXIT") && !p.name.Contains("Hidden")))
+            foreach (var exit in travel.portals.Where(p => p.name.StartsWith("EXIT") && !p.name.Contains("Hidden") && !p.name.Contains("Summit hut")))
             {
                 player.Teleport(new Vector3(9, 103.1f, 34), Quaternion.identity);
                 Vector3 bend = exit.name.Contains("South") ? new Vector3(9, 103, 28) :

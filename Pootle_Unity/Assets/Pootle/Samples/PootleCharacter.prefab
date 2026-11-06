@@ -1,5 +1,57 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1791945346872259743
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6639278076002381272}
+  - component: {fileID: 4592523273962760241}
+  m_Layer: 0
+  m_Name: View Tilt
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6639278076002381272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791945346872259743}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 1808494885743386109}
+  - {fileID: 8127427093663206196}
+  m_Father: {fileID: 9025258232074004750}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4592523273962760241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791945346872259743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: affc1db9786c1457caf9216e97bbfb3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleViewTilt
+  viewCamera: {fileID: 0}
+  policy: {fileID: 0}
+  overridePolicy: 1
+  tiltBackDegrees: 0
+  limitToCameraElevation: 1
+  restLocalRotation: {x: 0, y: 0, z: 0, w: 1}
 --- !u!1 &2673097897882647364
 GameObject:
   m_ObjectHideFlags: 0
@@ -1001,8 +1053,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 1808494885743386109}
-  - {fileID: 8127427093663206196}
+  - {fileID: 6639278076002381272}
   m_Father: {fileID: 6051165044723501434}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8705797765344532293
@@ -1029,7 +1080,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8705797765344532293}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 2.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
@@ -1037,7 +1088,7 @@ Transform:
   - {fileID: 1592591181024809889}
   - {fileID: 2520382213093294251}
   - {fileID: 6319287503234397020}
-  m_Father: {fileID: 9025258232074004750}
+  m_Father: {fileID: 6639278076002381272}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9174771242963346828
 GameObject:
@@ -1186,6 +1237,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Pootle.Runtime::Pootle.PootleInput
   actions: {fileID: -944628639613478452, guid: 763745bb092734e8687510fb0c7b1733, type: 3}
+  digitalMovement:
+    enabled: 1
+    accelerationTime: 0.12
+    releaseTime: 0.08
+    turnTime: 0.12
+    analogDirectionSteps: 16
+    analogDirectionHysteresis: 3
+    digitalControlPaths:
+    - '<HID:: Retro Games LTD  Atari CX Wireless Controller>/stick'
 --- !u!114 &6953787591326086126
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1205,6 +1265,7 @@ MonoBehaviour:
   cameraTarget: {fileID: 419961258361937494}
   simulateAutomatically: 1
   captureDiagnostics: 1
+  movementPolicy: {fileID: 0}
 --- !u!114 &5231824915278326869
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1618,7 +1679,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 9025258232074004750}
+    m_TransformParent: {fileID: 6639278076002381272}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalScale.x
@@ -1642,7 +1703,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.063172475
+      value: 0.06317258
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1650,15 +1711,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 40e21d8ce79cdf04a9168a06cb1ed52e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

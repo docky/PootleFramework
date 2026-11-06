@@ -8,12 +8,17 @@ namespace Pootle
     {
         [Tooltip("A private runtime copy is enabled; this asset is never enabled/disabled globally.")]
         public InputActionAsset actions;
+        [InspectorName("Movement Smoothing")]
+        public PootleDigitalMoveSmoothing digitalMovement = new PootleDigitalMoveSmoothing();
         private InputActionAsset instance;
         private InputAction move, run, jump, reset, glide, detach, roll, carry, interact;
         private int lastSample = -1;
+        private int lastMovementSample = -1;
+        private Vector2 sampledMove;
 
         private void OnEnable()
         {
+            ResetMovement();
             if (!actions) return;
             instance = Instantiate(actions);
             move = instance.FindAction("Character/Move", true);
@@ -35,9 +40,17 @@ namespace Pootle
             if (!instance || !isActiveAndEnabled) return default;
             bool first = lastSample != Time.frameCount;
             lastSample = Time.frameCount;
+            if (lastMovementSample != Time.frameCount)
+            {
+                sampledMove = digitalMovement.Read(move, Time.deltaTime);
+                lastMovementSample = Time.frameCount;
+            }
+            // A deliberately neutral jump must not turn the release ramp into a directional launch.
+            if (first && jump.WasPressedThisFrame() && move.ReadValue<Vector2>() == Vector2.zero) ResetMovement();
             return new PootleInputFrame
             {
-                move = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1),
+                move = sampledMove,
+                moveIsDigital = digitalMovement.DigitalActive,
                 run = run.IsPressed(), glide = glide.IsPressed(), jumpHeld = jump.IsPressed(),
                 jumpPressed = first && jump.WasPressedThisFrame(),
                 detachPressed = first && detach.WasPressedThisFrame(),
@@ -48,11 +61,27 @@ namespace Pootle
             };
         }
 
+        public void ResetMovement()
+        {
+            digitalMovement.Reset();
+            sampledMove = Vector2.zero;
+            // Resample held movement after a teleport without replaying this frame's button edges.
+            lastMovementSample = -1;
+        }
+
         private void OnDisable()
         {
             if (instance) { instance.Disable(); Destroy(instance); }
             instance = null;
             move = run = jump = reset = glide = detach = roll = carry = interact = null;
+            lastSample = -1;
+            ResetMovement();
+        }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            if (focused) return;
+            ResetMovement();
             lastSample = -1;
         }
     }

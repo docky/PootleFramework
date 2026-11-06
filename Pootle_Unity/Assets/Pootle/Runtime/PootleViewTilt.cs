@@ -17,6 +17,8 @@ namespace Pootle
         [Range(0, 60), Tooltip("Lean away from the view to reveal more of the upright silhouette.")]
         public float tiltBackDegrees = 25;
         public bool limitToCameraElevation = true;
+        [ShowInInspector, ReadOnly, Tooltip("The visible model must be below this pivot in the hierarchy.")]
+        public bool HasVisualChildren => GetComponentInChildren<Renderer>(true) != null;
         [SerializeField, HideInInspector] Quaternion restLocalRotation = Quaternion.identity;
         public Quaternion RestLocalRotation => restLocalRotation;
         void Reset() => restLocalRotation = transform.localRotation;

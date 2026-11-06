@@ -33,6 +33,7 @@ namespace Pootle
     public struct PootleInputFrame
     {
         public Vector2 move;
+        public bool moveIsDigital;
         public bool run, grip, glide, jumpPressed, jumpHeld, resetPressed, detachPressed, rollPressed, carryPressed, interactPressed;
     }
 
