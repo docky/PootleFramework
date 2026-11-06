@@ -136,3 +136,39 @@ After restarting Unity, expanding the Cinemachine component succeeded in both Ed
 Two trial zones cover Meadow traverse (46.4°) and Lookout ascent (54.2°), under `07 · Mountain skywalk and summit hut`. Disable either component to compare unassisted movement. Keyboard, D-pad and the Atari CX stick share the digital source classification from movement smoothing.
 
 The avatar prefab now places Lily and the glider beneath `Visual/View Tilt`; the motor and camera target stay outside that pivot. The base prefab uses zero tilt, while CoastalHike retains its authored tilt settings. `Has Visual Children` in the inspector helps catch an empty pivot.
+
+### Stable path assistance and climbing presentation
+
+Path alignment enters within the configured angle tolerance (12° by default) and releases beyond tolerance plus **3° hysteresis**. An active zone also retains its latch for **0.3 m outside the box**, measured in world metres even when the zone is scaled. Steering correction blends in, out, and between paths with a **0.18 s smoothing time**, preserving input magnitude. Equal-priority overlaps retain the current path; higher priority paths blend in. Each character owns its own filter, and teleporting or disabling the character clears it. Neutral, analog-only-excluded and airborne-excluded input does not retain assistance.
+
+View Tilt yields immediately to wall/rock alignment while climbing or hanging, and is also suppressed on poles. Rock presentation uses the full surface normal independently of the motor's horizontal climbing basis. After detaching or starting a top-out, the visual pivot returns to view-relative tilt over **0.25 s** (`Detach Blend Time`). Camera motion cannot tilt an attached avatar away from the surface. Reattaching cancels the return blend; teleports and disable/enable clear it.
+
+## Push intent gates and island rollercoaster
+
+`08 · Island rollercoaster` contains an editable closed Unity spline with four **Spline Mesher Pro** components: twin ivory running rails, a teal spine and coral cross ties. The loop links **Cove station** beside the beach boardwalk to **Summit station**, reached from the highest mountain landing. Edit the spline to reshape the track; the mesher components regenerate its geometry. Runtime travel uses an arc-length lookup and evaluates the actual spline, so speed does not depend on knot spacing.
+
+Walk into either narrow coral gate and keep pushing for **0.35 seconds** to communicate intent. The gate flashes green on acknowledgement and latches until movement is released and the player leaves its volume. If the empty cart is elsewhere, the gate calls it and gently pushes the player back; push again after it arrives to board. A separate **Spring-back intent button** on the beach boardwalk demonstrates acknowledgement without boarding.
+
+Boarding takes control while keeping Lily visible, moves her into the seat, poses her legs and arms around the lap bar, then shows three red/amber/green lights over **three seconds** before departure. The ride loops until **Jump** (Space, gamepad jump or the Atari CX trigger) requests the **next station**. An amber cart lamp acknowledges the request. The cart brakes at that station, animates Lily onto the platform, then restores normal movement, camera and presentation. An obstructed exit holds the cart at the station until clear. Reset or disabling the ride returns the passenger to the boarding location and restores the components that were enabled before boarding.
+
+Reusable components:
+
+- `PootleIntentGate`: directional trigger, hold time, spring-back speed, plunger, lamp and `onPressed` event. An optional `IPootleIntentReceiver` can take control of the player for any machine.
+- `PootleMachinePassenger`: visible passenger ownership, seat pose and restoration of movement/presentation/colliders.
+- `PootleRollercoaster` / `PootleCoasterStation`: spline travel, station calls, boarding, countdown and queued stops. Cruise speed, acceleration, braking and animation durations are Inspector settings.
+- `PootleMachineCamera`: a higher-priority ride shot that returns to the existing exploration cameras on exit. **Fixed Third Person** is enabled by default on `08 · Island rollercoaster / CAM · coaster ride`: it follows from a constant world-space pitch/yaw (55°/0°), unaffected by track turns or slopes. It shares the exploration policy’s 30° field of view and viewed-size scaling. Adjust **Fixed Pitch Yaw**, **Fixed Distance** or **Focus Height** to compose the view. Disable **Fixed Third Person** to use the original cart-relative chase camera; mode changes blend smoothly.
+
+The scene is authored explicitly through `Pootle → Coastal Hike → Add Island Rollercoaster`; it refuses duplicate generation. `CoastalCoasterPlayModeTests` checks deliberate pushing, one-shot acknowledgement, countdown, real Jump input, calls and looping, blocked exits, control restoration and clearance from existing terrain.
+
+## Beach swings and mountain chair lift
+
+`09 · Beach swings and mountain chair lift` adds a play pier south of the beach, reached by its short boardwalk, and a lift to the western mountain landing.
+
+- Walk into either swing to push it and automatically sit down. Forward/back input (W/S, stick or D-pad) pumps the pendulum; timing the input with its direction builds amplitude. Releasing input lets it slow naturally. Each swing uses an authored **stationary camera** that frames the play area and never follows the swinging avatar. Jump dismounts with the current swing momentum and returns to the exploration camera.
+- The two chair platforms automatically catch nearby players on contact, including in the air, like dangle hooks. They travel around a closed Unity spline at constant speed, stay upright on slopes, turn at both pulleys and return along the other side. Jump releases anywhere along the route; the upper timber platform connects to the existing western skywalk landing.
+
+Both rides keep Lily visible in the seat, suspend ordinary movement while riding, and restore input, colliders and presentation on release. A clearance check prevents jumping into blocked space. A short re-board delay plus leaving the pickup volume prevents an immediate re-grab. Disabling a ride or pressing Reset returns its passenger to their entry position.
+
+`PootleRideSeat` is the reusable contact/push pickup and release component. `Require Push` and `Grounded Only` are enabled for swings and disabled for lift chairs. Its boarding duration, re-board delay and jump impulse are editable. `PootleSwing` exposes rope length, damping, pumping strength and maximum angle. `PootleChairLift` exposes the closed path, speed and starting fraction. `PootleStationaryRideCamera` supplies the fixed swing shot; lift chairs use the existing fixed-third-person machine camera.
+
+The explicit menu `Pootle → Coastal Hike → Add Swings and Mountain Chair Lift` refuses duplicate generation. `CoastalSeatRidesPlayModeTests` covers walking/contact pickup, timed pumping and damping, stationary camera ownership, real forward/back/jump input, upright loop traversal, momentum on release, blocked dismounts, restore-on-disable and route/access clearance.

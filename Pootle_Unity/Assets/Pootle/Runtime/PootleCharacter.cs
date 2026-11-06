@@ -38,6 +38,7 @@ namespace Pootle
         public event Action<float> ClimbingViewRotated;
         internal void RotateClimbingView(float degrees)=>ClimbingViewRotated?.Invoke(degrees);
         public Vector3 SeatedNormal { get; internal set; } = Vector3.up;
+        private readonly PootlePathInputAlignment pathAlignment = new PootlePathInputAlignment();
         private PootleTraversal traversal;
         private PootleRailRider railRider;
         private PootlePlatformRider platformRider;
@@ -74,6 +75,7 @@ namespace Pootle
         }
         private void OnEnable()
         {
+            pathAlignment.Reset();
             Velocity = Vector3.zero;
             Mode = PootleMode.Airborne;
             traversal?.ResetTraversal(); railRider?.ResetRide(); platformRider?.ClearRiding(); hookRider?.ResetRide(); SeatedNormal = Vector3.up;
@@ -82,6 +84,7 @@ namespace Pootle
         }
         private void OnDisable()
         {
+            pathAlignment.Reset();
             ResetSlideRide();
             ResetForces();ResetRolling();carrying?.ReleaseForReset();
             Velocity = Vector3.zero; Support = default; jumpBuffer.Clear();
@@ -103,6 +106,8 @@ namespace Pootle
             if (!Motor) Motor = GetComponent<PootleMotor>();
             dt = Mathf.Min(dt, 0.1f);
             var policy = movementPolicy && movementPolicy.isActiveAndEnabled ? movementPolicy as IPootleMovementPolicy : null;
+            if (PootleRideSeat.Process(this, frame, dt)) return;
+            if (PootleIntentGate.Process(this, frame, dt)) return;
             bool groundedAtTickStart = IsGrounded;
             clock += dt; tick++;
 #if UNITY_EDITOR
@@ -223,7 +228,7 @@ namespace Pootle
                 Jumped?.Invoke();
             }
             Vector3 direction = PootleMovement.CameraDirection(Mode==PootleMode.GroundPounding ? Vector2.zero : frame.move, outputCamera, out float magnitude);
-            direction = PootlePathInputZone.Align(transform.position, direction, frame.moveIsDigital, IsGrounded);
+            direction = pathAlignment.Align(transform.position, direction, frame.moveIsDigital, IsGrounded, dt);
             Vector3 planar = Vector3.ProjectOnPlane(Velocity, Vector3.up) - externalPlanar;
             IsRunning = profile.allowRun && frame.run;
             float topSpeed = IsRunning ? profile.runSpeed : profile.walkSpeed;
@@ -550,6 +555,7 @@ namespace Pootle
         public void Teleport(Vector3 position, Quaternion rotation)
         {
             input?.ResetMovement();
+            pathAlignment.Reset();
             ResetSlideRide();
             ResetForces();ResetRolling();carrying?.ReleaseForReset();carryRequested=false;
             Vector3 delta = position - transform.position;

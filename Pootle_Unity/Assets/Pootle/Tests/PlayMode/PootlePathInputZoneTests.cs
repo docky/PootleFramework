@@ -45,6 +45,89 @@ namespace Pootle.Tests
             zone.enabled = false;
             Assert.That(zone.TryAlign(go.transform.position, Direction(45), true, true, out _), Is.False);
         }
+        [Test] public void AngularAndSpatialHysteresisKeepTheLatchUntilTheExitThreshold()
+        {
+            var state = new PootlePathInputAlignment();
+            state.Align(Vector3.zero, Direction(11), true, true, .1f);
+            Assert.That(state.ActiveZone, Is.SameAs(zone));
+            foreach (float angle in new[] { 12.5f, 11.8f, 14.9f, 12.1f })
+            {
+                state.Align(new Vector3(2.2f, 0, 0), Direction(angle), true, true, .02f);
+                Assert.That(state.ActiveZone, Is.SameAs(zone));
+            }
+            state.Align(Vector3.zero, Direction(15.1f), true, true, .02f);
+            Assert.That(state.ActiveZone, Is.Null);
+            state.Align(Vector3.zero, Direction(13), true, true, .02f);
+            Assert.That(state.ActiveZone, Is.Null, "Must cross the entry angle again");
+            state.Align(Vector3.zero, Direction(11), true, true, .02f);
+            state.Align(new Vector3(2.31f, 0, 0), Direction(11), true, true, .02f);
+            Assert.That(state.ActiveZone, Is.Null);
+            state.Align(new Vector3(2.1f, 0, 0), Direction(11), true, true, .02f);
+            Assert.That(state.ActiveZone, Is.Null, "Must enter the original box again");
+        }
+        [Test] public void EntryExitAndAngleReleaseBlendWithoutChangingInputStrength()
+        {
+            var state = new PootlePathInputAlignment();
+            var input = Direction(10) * .6f;
+            var first = state.Align(Vector3.zero, input, true, true, 1f / 60);
+            Assert.That(Vector3.Angle(first, input), Is.InRange(.01f, 1f));
+            Vector3 settled = first;
+            for (int i = 0; i < 120; i++) settled = state.Align(Vector3.zero, input, true, true, 1f / 60);
+            Assert.That(Vector3.Angle(settled, Vector3.forward), Is.LessThan(.03f));
+            var outside = new Vector3(4, 0, 0);
+            var leaving = state.Align(outside, input, true, true, 1f / 60);
+            Assert.That(Vector3.Angle(leaving, settled), Is.LessThan(1));
+            Assert.That(Vector3.Angle(leaving, input), Is.GreaterThan(8));
+            for (int i = 0; i < 120; i++) leaving = state.Align(outside, input, true, true, 1f / 60);
+            Assert.That(Vector3.Angle(leaving, input), Is.LessThan(.03f));
+            Assert.That(leaving.magnitude, Is.EqualTo(.6f).Within(.00001f));
+            for (int i = 0; i < 120; i++) state.Align(Vector3.zero, input, true, true, 1f / 60);
+            float before = state.CorrectionDegrees;
+            state.Align(Vector3.zero, Direction(16), true, true, 1f / 60);
+            Assert.That(state.ActiveZone, Is.Null);
+            Assert.That(Mathf.Abs(state.CorrectionDegrees - before), Is.LessThan(1));
+        }
+        [Test] public void ReadersAreIndependentAndAnalogAirborneNeutralAndResetDoNotRetainAssistance()
+        {
+            var a = new PootlePathInputAlignment(); var b = new PootlePathInputAlignment();
+            var input = Direction(10);
+            for (int i = 0; i < 60; i++) a.Align(Vector3.zero, input, true, true, 1f / 60);
+            Assert.That(b.Align(new Vector3(4, 0, 0), input, true, true, .02f), Is.EqualTo(input));
+            Assert.That(a.Align(Vector3.zero, input, false, true, .02f), Is.EqualTo(input));
+            a.Align(Vector3.zero, input, true, true, .1f);
+            Assert.That(a.Align(Vector3.zero, input, true, false, .02f), Is.EqualTo(input));
+            a.Align(Vector3.zero, input, true, true, .1f);
+            Assert.That(a.Align(Vector3.zero, Vector3.zero, true, true, .02f), Is.EqualTo(Vector3.zero));
+            Assert.That(a.ActiveZone, Is.Null);
+            a.Align(Vector3.zero, input, true, true, .1f); a.Reset();
+            Assert.That(a.CorrectionDegrees, Is.Zero); Assert.That(a.ActiveZone, Is.Null);
+        }
+        [Test] public void OverlappingZonesKeepEqualPriorityLatchAndBlendIntoHigherPriorityPath()
+        {
+            var other = new GameObject("Second path");
+            try
+            {
+                var second = other.AddComponent<PootlePathInputZone>(); second.Volume.isTrigger = true;
+                second.transform.rotation = Quaternion.Euler(0, 20, 0);
+                var state = new PootlePathInputAlignment();
+                for (int i = 0; i < 60; i++) state.Align(Vector3.zero, Direction(8), true, true, 1f / 60);
+                Assert.That(state.ActiveZone, Is.SameAs(zone));
+                state.Align(Vector3.zero, Direction(12), true, true, .02f);
+                Assert.That(state.ActiveZone, Is.SameAs(zone));
+                float previous = state.CorrectionDegrees; second.priority = 1;
+                state.Align(Vector3.zero, Direction(12), true, true, .02f);
+                Assert.That(state.ActiveZone, Is.SameAs(second));
+                Assert.That(Mathf.Abs(state.CorrectionDegrees - previous), Is.LessThan(2));
+            }
+            finally { Object.DestroyImmediate(other); }
+        }
+        [Test] public void BlendIsComparableAtThirtyAndOneTwentyFps()
+        {
+            var a = new PootlePathInputAlignment(); var b = new PootlePathInputAlignment();
+            for (int i = 0; i < 9; i++) a.Align(Vector3.zero, Direction(10), true, true, 1f / 30);
+            for (int i = 0; i < 36; i++) b.Align(Vector3.zero, Direction(10), true, true, 1f / 120);
+            Assert.That(a.CorrectionDegrees, Is.EqualTo(b.CorrectionDegrees).Within(.05f));
+        }
         [Test] public void CameraRelativeInputIsConvertedBeforePathAlignment()
         {
             var camera = new GameObject("Rotated camera");

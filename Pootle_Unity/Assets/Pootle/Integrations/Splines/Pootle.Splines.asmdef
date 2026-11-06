@@ -1,1 +1,11 @@
-{"name":"Pootle.Splines","rootNamespace":"Pootle","references":["Pootle.Runtime","Unity.Splines","Unity.Mathematics"]}
+{
+  "name": "Pootle.Splines",
+  "rootNamespace": "Pootle",
+  "references": [
+    "Pootle.Runtime",
+    "Unity.Splines",
+    "Unity.Mathematics",
+    "Unity.InputSystem",
+    "Unity.TextMeshPro"
+  ]
+}

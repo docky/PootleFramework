@@ -15,6 +15,25 @@ namespace Pootle
         public Collider AttachedWall => wall;
         public PootlePole AttachedPole => pole;
         public Vector3 SurfaceNormal => normal;
+        // Presentation uses the full rock normal; locomotion keeps its existing horizontal grip basis.
+        public Vector3 VisualSurfaceNormal
+        {
+            get
+            {
+                if (!wall) return normal;
+                var motor = GetComponent<PootleMotor>();
+                Vector3 center = transform.position + motor.center;
+                var surface = wall.GetComponentInParent<PootleClimbSurface>();
+                if (surface && surface.cylindrical)
+                {
+                    Vector3 radial = Vector3.ProjectOnPlane(center - wall.bounds.center, wall.transform.up);
+                    return radial.sqrMagnitude > .00001f ? radial.normalized : normal;
+                }
+                // Raycast the actual face, including non-convex rock meshes, without moving the motor.
+                return wall.Raycast(new Ray(center, -normal), out var hit, motor.Radius + 1)
+                    ? hit.normal : normal;
+            }
+        }
         public void ResetTraversal() { wall = null; pole = hopPole = null; cooldown = stateTime = 0; }
 
         public void Drop(PootleCharacter c) { if(wall || pole || c.Mode==PootleMode.LedgeHop) Release(c); }

@@ -55,6 +55,53 @@ namespace Pootle.Tests
         }
 
         [UnityTest]
+        public IEnumerator ClimbingUsesRockNormalAndDetachingBlendsBackToViewTilt()
+        {
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                wall.name = "Tilted rock test";
+                wall.transform.SetPositionAndRotation(new Vector3(1000, 4, 1001), Quaternion.Euler(10, 25, 0));
+                wall.transform.localScale = new Vector3(6, 8, 1);
+                wall.AddComponent<PootleClimbSurface>();
+                var normal = -wall.transform.forward;
+                var feet = wall.transform.TransformPoint(new Vector3(0, 0, -.5f)) + normal * (player.Motor.Radius + .04f) - player.Motor.center;
+                var tilt = player.GetComponentInChildren<PootleViewTilt>();
+                tilt.overridePolicy = true; tilt.tiltBackDegrees = 27.6f; tilt.limitToCameraElevation = false;
+                player.Teleport(feet, Quaternion.LookRotation(Vector3.ProjectOnPlane(-normal, Vector3.up)));
+                Physics.SyncTransforms();
+                for (int i = 0; i < 3; i++) player.Tick(1f / 60, new PootleInputFrame { grip = true });
+                Assert.That(player.Mode, Is.EqualTo(PootleMode.Climbing));
+                foreach (float yaw in new[] { 0f, 90f, 180f, 270f })
+                {
+                    tilt.viewCamera.transform.rotation = Quaternion.Euler(60, yaw, 0);
+                    tilt.TickTilt(1f / 60);
+                    Assert.That(tilt.AppliedTiltDegrees, Is.Zero);
+                    Assert.That(Vector3.Angle(tilt.transform.forward, -normal), Is.LessThan(.1f));
+                }
+                var attached = tilt.transform.localRotation;
+                player.Tick(1f / 60, new PootleInputFrame { detachPressed = true });
+                Assert.That(player.Mode, Is.Not.EqualTo(PootleMode.Climbing));
+                tilt.TickTilt(0);
+                Assert.That(Quaternion.Angle(attached, tilt.transform.localRotation), Is.LessThan(.05f));
+                tilt.TickTilt(tilt.detachBlendTime * .5f);
+                Assert.That(tilt.AppliedTiltDegrees, Is.EqualTo(13.8f).Within(.02f));
+                tilt.TickTilt(tilt.detachBlendTime * .5f);
+                Assert.That(tilt.AppliedTiltDegrees, Is.EqualTo(27.6f).Within(.02f));
+                var completed = tilt.transform.rotation; tilt.ApplyTilt();
+                Assert.That(Quaternion.Angle(completed, tilt.transform.rotation), Is.LessThan(.05f));
+                player.Teleport(feet, Quaternion.LookRotation(Vector3.ProjectOnPlane(-normal, Vector3.up)));
+                Physics.SyncTransforms();
+                player.Tick(1f / 60, new PootleInputFrame { grip = true }); tilt.TickTilt(.01f);
+                Assert.That(player.Mode, Is.EqualTo(PootleMode.Climbing));
+                Assert.That(tilt.AppliedTiltDegrees, Is.Zero, "Reattaching must immediately cancel the return blend");
+                yield return null;
+                Assert.That(tilt.AppliedTiltDegrees, Is.Zero, "Actual LateUpdate must keep the climb pose");
+            }
+            finally { Object.Destroy(wall); }
+        }
+
+        [UnityTest]
         public IEnumerator EveryBridgeCanBeWalkedBothWaysWithoutJumping()
         {
             var root = GameObject.Find("07 · Mountain skywalk and summit hut");
