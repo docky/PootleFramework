@@ -79,6 +79,8 @@ crashlytics-build.properties
 # Preserve stable GUIDs for Pootle folders and their assets.
 !Pootle_Unity/Assets/Pootle.meta
 !Pootle_Unity/Assets/Pootle/**/*.meta
+!Pootle_Unity/Assets/CoastalHike.meta
+!Pootle_Unity/Assets/CoastalHike/**/*.meta
 
 # Odin creates these default local configurations during editor/build verification.
 Pootle_Unity/Assets/Plugins/Sirenix/Odin Inspector/Config/Editor/TypeRegistryUserConfig.asset*
