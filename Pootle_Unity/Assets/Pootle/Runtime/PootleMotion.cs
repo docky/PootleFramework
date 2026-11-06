@@ -59,6 +59,8 @@ namespace Pootle
             if (forward.sqrMagnitude < 0.0001f)
                 forward = camera ? Vector3.ProjectOnPlane(camera.up, Vector3.up) : Vector3.forward;
             forward.Normalize();
+            if (camera && camera.TryGetComponent<PootleMovementBasis>(out var basis) && basis.isActiveAndEnabled)
+                forward = basis.Forward;
             return (forward * input.y + Vector3.Cross(Vector3.up, forward) * input.x).normalized;
         }
     }

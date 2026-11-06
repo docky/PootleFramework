@@ -1,0 +1,129 @@
+COASTAL HIKE — CURRENT PROTOTYPE
+
+See README.md for controls, setup, component authoring, test areas and trade-offs.
+The original scene now includes a west climbing courtyard, high-camera hedge
+garden, east cliff loop, upper bridge/lower walkway and static viewpoints.
+There are 18 independently authored shots and 18 BoxCollider trigger regions,
+including five interior cave shots and a low hidden-entrance approach shot.
+The existing Pootle character prefab, movement profiles and input asset are retained.
+
+Validation — 6 November 2026
+Compilation: zero errors or warnings.
+PootleCameraZoneTests: 3/3 passed.
+PootleExplorationCameraTests: 7/7 passed.
+CoastalExplorationPlayModeTests: 5/5 passed.
+Play-mode frame counters were confirmed advancing before captures.
+Both climb surfaces reached their upper platforms. All six east-loop walking legs
+completed without jumping. Upper/lower selection was checked in both directions.
+A real Brain yaw blend kept held input fixed in world space, and release/re-press
+adopted the new camera basis. Right-stick input and turning in place did not rotate
+the view. A controller-level glide test measured zero horizontal steering change
+while rotating the supplied camera basis by 90 degrees with held input.
+Orthographic profile switching was confirmed on the rendered camera.
+Final runtime console: zero errors.
+
+Visual review — environment/camera scope
+Palette discipline: 4/5 — matched sand, sage, pine, teal and coral materials.
+Style uniformity: 3/5 — deliberately simple geometry with the existing Lily art.
+Lighting depth: 3/5 — warm surfaces, cool ambient and readable cast shadows.
+Silhouette: 3/5 — Lily remains identifiable; high hedge view deliberately trades
+character detail for passage visibility.
+UI intentionality: 3/5 — compact optional development overlay, toggled with F8.
+Feedback visibility: 3/5 — active mode, blend, region wait and held basis displayed.
+Camera readability: 4/5 — validated viewport and unobstructed chest sightlines in
+the hedge garden, on the courtyard ledge and below the stacked bridge.
+Draft-to-final changes: corrected screen composition below centre; expanded the
+courtyard's vertical tracking bounds; moved the lower shot to the open east side
+so the bridge cannot cover the player; separated overlapping deck surfaces;
+moved old boulders out of the simplified hedge passages.
+
+Scope and side effects
+New camera components: shared focus, shot constraints, upgraded region/director,
+optional movement basis, optional debug overlay. The existing movement helper has
+only a two-line opt-in lookup; movement, climb and glide implementations were not
+rewritten. The Cinemachine assembly references the already-installed Splines and
+Mathematics assemblies. New materials, side-route geometry, tests and explicit
+editor authoring utility were added. No package versions or global render settings
+were changed. No new camera script uses ExecuteAlways, ExecuteInEditMode or
+OnValidate. Third-party primitive components retain their existing behavior.
+No automatic occlusion/fade, postprocessing, audio, menu, save or backend system
+was added. Limitations and tuning trade-offs are documented in README.md.
+Scene is saved and left open in Edit mode. Existing auto-tick and background
+settings were already enabled and are retained.
+
+Guidance consulted
+Unity CLI, craft-game-floors camera/lighting/visual review guidance, Unity UI router
+and IMGUI debug-overlay guidance. References: camera-rigs.md, art-direction.md,
+scene-lighting.md, visual-scorecard.md, playmode-verification-loop.md,
+ui-imgui/references/templates.md and gui-elements.md. Installed Cinemachine and
+Splines source and the official documentation linked in README.md were checked.
+
+Secret cave extension — 6 November 2026
+Cave Network root is saved at (0,100,0). Lower to (0,0,0) to inspect alignment;
+Odin buttons provide explicit inspect/restore actions. All interior geometry,
+shots, BoxCollider regions and arrival markers belong to that root.
+Three paired black archways connect south/west/east terrace faces to a central
+room. A circular aperture at (12,7,36) drops into the chamber at Y=103.
+The sun terrace body and crown use baked cut meshes so reload preserves the hole.
+Temporary scripted input drives the existing character during an aspect-correct
+circular iris close/open. Teleport and Brain reset occur behind full black.
+Re-entry requires both leaving the expanded portal buffer and waiting its delay.
+No new changes to movement implementation or input bindings were required.
+CoastalCavePlayModeTests: 5/5 passed, including all six doorway directions,
+all room branches, aperture collision, falling, camera cuts, buffers, exact layout
+alignment within floating-point tolerance, and cancellation cleanup.
+CoastalExplorationPlayModeTests regression: 5/5 passed after the cave addition.
+Visual captures reviewed: exterior doorway, chamber, plateau hole, mid-circle wipe.
+Interior geometry cannot cast shadows down onto the outdoor island.
+Known trade-offs: cutaway roof for camera readability; doorway seams hide
+teleports rather than excavating the exterior cliff. The plateau hole is physical.
+
+Hidden fern room / darkness pass — 6 November 2026
+Added a connected side chamber east of the central room, one paired bush-hidden
+entrance at (26.4,3,38), matching foliage inside the mouth, a small exterior landing
+and approach spur, an interior box camera and a low underpass exterior box camera.
+Runtime interior lighting switches off the sun and applies cool low ambient;
+a small warm point light follows the avatar. All daylight settings are restored
+on exit or component disable. Existing post-processing and outdoor palette retained.
+Draft review found the bridge obscured the exterior bush, and the initial ambient
+was too dark to read the side-room connection. The fix adds the low approach shot,
+raises the ambient slightly, and lifts the avatar light to avoid a white head highlight.
+Scoped visual review: palette 4/5; lighting depth 4/5; character silhouette 3/5;
+feedback visibility 4/5. Existing UI was not changed. Bush foliage is passable.
+Guidance: craft-game-floors scene-lighting.md and visual-scorecard.md; Unity CLI.
+Docs checked: Unity RenderSettings.ambientProbe and Unity 6.6 Volumes in URP.
+Restore snapshot before this addition: /private/tmp/coastal-before-hidden-room.zip.
+
+Hidden-room verification: CoastalCavePlayModeTests 6/6 passed. All four doorway
+pairs work in both directions; all room paths, buffers and the drop hole pass.
+The cave light follows the avatar and daylight restores on exit and disable.
+Final exterior doorway renderer is deliberately disabled: no black silhouette
+peeks above the bush. The invisible portal remains fully operational.
+Outdoor regression after hidden-room addition: 5/5 passed. Final console: zero
+errors, zero current warnings. Saved in Edit Mode; hidden network remains Y=100.
+
+Secret-room layout correction — 6 November 2026
+The prior connected side chamber is superseded: the small bush-entry room is
+now physically separate from the three-door cave. Removed the connecting floor
+and passage walls; restored the main chamber wall and sealed the small room west
+wall. A dark gap separates the floors. Cutaway perimeter colliders retain full
+height, preventing jump/glide shortcuts. The bush doorway is its sole access.
+A cool tunnel fill light (1.3 / range 15) and faint warm room light (1.5 / range 9)
+make the detached room visible as a clue from the main cave camera.
+Verification after separation: 7/7 cave Play Mode checks passed; zero runtime
+errors. Visually checked the disconnected room from the main tunnel/chamber.
+
+View tilt / lens / Edit Mode placement — 6 November 2026
+Reusable PootleViewTilt added on a dedicated visual-only pivot below the player's
+facing root. Default 25 degrees away from rendered camera, capped by elevation;
+physics and controller unchanged. All 18 shots now use 30-degree FOV with zero
+airborne widening. Distances/rail offsets/static anchors adjusted to preserve
+approximate visible area.
+Pootle > Exploration > Surface Placement Preview: Shift-click/drag surface
+placement, height-aware near-surface snapping, live Game view zone selection,
+Brain blends or cuts, A/B positions, restoration and optional Undoable keep.
+No ExecuteAlways/OnValidate; temporary editor session restores on save, reload,
+close or entering Play. Glider hidden only during grounded editor preview.
+Verification: 2/2 targeted Edit Mode checks and 12/12 outdoor/cave Play Mode
+checks passed. Final runtime console has zero errors. Visually checked the panel,
+Edit Mode camera output and standing avatar at 30-degree FOV in live Play Mode.
