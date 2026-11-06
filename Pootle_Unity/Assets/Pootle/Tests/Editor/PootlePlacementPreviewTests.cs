@@ -8,6 +8,41 @@ namespace Pootle.Tests
 {
     public sealed class PootlePlacementPreviewTests
     {
+        [Test] public void SignLabelsUseSeparateEntryAndExitRadii()
+        {
+            var go = new GameObject("Sign hysteresis test");
+            try
+            {
+                var sign = go.AddComponent<PootleSignLabel>(); sign.showDistance = 4; sign.exitDistance = 6;
+                Assert.That(sign.EvaluateVisibility(Vector3.right * 4.1f), Is.False);
+                Assert.That(sign.EvaluateVisibility(Vector3.right * 3.9f), Is.True);
+                Assert.That(sign.EvaluateVisibility(Vector3.right * 5.9f), Is.True);
+                Assert.That(sign.EvaluateVisibility(Vector3.right * 6.1f), Is.False);
+                Assert.That(sign.EvaluateVisibility(Vector3.right * 5), Is.False);
+                Assert.That(sign.EvaluateVisibility(Vector3.up * 10), Is.False, "Stacked floors use 3D distance");
+                Assert.That(sign.EvaluateVisibility(Vector3.zero), Is.True);
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+        [Test] public void SharedPolicyDrivesShotDistanceLensAndSupportedTilt()
+        {
+            var go = new GameObject("Policy shot test"); var visual = new GameObject("View Tilt test"); var cameraObject = new GameObject("View Tilt camera");
+            var policy = ScriptableObject.CreateInstance<PootleCameraPolicy>();
+            try
+            {
+                var shot = go.AddComponent<PootleExplorationShot>(); shot.policy = policy; shot.distance = 39;
+                policy.viewedSizeMultiplier = 1.3f; policy.fieldOfView = 30; policy.viewTiltDegrees = 35;
+                shot.ApplySettings();
+                Assert.That(shot.EffectiveDistance, Is.EqualTo(30).Within(.001f));
+                Assert.That(shot.Rig.Lens.FieldOfView, Is.EqualTo(30));
+                var tilt = visual.AddComponent<PootleViewTilt>(); tilt.policy = policy; tilt.viewCamera = cameraObject.AddComponent<Camera>();
+                cameraObject.transform.rotation = Quaternion.Euler(60, 0, 0); tilt.ApplyTilt();
+                Assert.That(tilt.AppliedTiltDegrees, Is.EqualTo(35));
+                policy.enableViewTilt = false; tilt.ApplyTilt(); Assert.That(tilt.AppliedTiltDegrees, Is.Zero);
+                tilt.overridePolicy = true; tilt.tiltBackDegrees = 15; tilt.ApplyTilt(); Assert.That(tilt.AppliedTiltDegrees, Is.EqualTo(15));
+            }
+            finally { Object.DestroyImmediate(go); Object.DestroyImmediate(visual); Object.DestroyImmediate(cameraObject); Object.DestroyImmediate(policy); }
+        }
         [Test] public void VisualTiltIsViewRelativeAndNeverRotatesTheParent()
         {
             var root = new GameObject("Tilt test root"); var view = new GameObject("Tilt test camera");

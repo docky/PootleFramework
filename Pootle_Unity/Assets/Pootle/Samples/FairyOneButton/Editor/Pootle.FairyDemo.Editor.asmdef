@@ -1,0 +1,1 @@
+{"name":"Pootle.FairyDemo.Editor","references":["Pootle.Runtime","Pootle.FairyDemo","Unity.InputSystem","Unity.TextMeshPro","Unity.ugui"],"includePlatforms":["Editor"]}

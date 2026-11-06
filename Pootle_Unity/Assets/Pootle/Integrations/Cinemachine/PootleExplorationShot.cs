@@ -12,7 +12,12 @@ namespace Pootle
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachinePositionComposer))]
     public sealed class PootleExplorationShot : MonoBehaviour
     {
+        public PootleCameraPolicy policy;
         public ExplorationCameraMode mode;
+        public float EffectiveFieldOfView => policy ? policy.fieldOfView : fieldOfView;
+        public float DistanceScale => policy ? policy.CameraDistanceMultiplier : 1;
+        public float EffectiveDistance => distance * DistanceScale;
+        public Vector3 EffectiveAnchor => focusOrigin + (anchor - focusOrigin) * DistanceScale;
         public PootleCameraFocus focus;
         [FoldoutGroup("Composition")] public Vector2 pitchYaw = new Vector2(55, 0);
         [FoldoutGroup("Composition"), Range(15, 90)] public float fieldOfView = 30;
@@ -58,7 +63,7 @@ namespace Pootle
             if (!rig || !composer) return;
             if (focus) rig.Follow = focus.transform;
             composer.enabled = mode == ExplorationCameraMode.FixedAngleFollow;
-            composer.CameraDistance = distance; composer.Damping = damping;
+            composer.CameraDistance = EffectiveDistance; composer.Damping = damping;
             var composition = ScreenComposerSettings.Default;
             composition.ScreenPosition = screenPosition;
             composition.DeadZone.Enabled = true; composition.DeadZone.Size = deadZone;
@@ -67,7 +72,7 @@ namespace Pootle
             composer.Lookahead.Enabled = false; // Shared focus owns lookahead, avoiding double prediction.
             rig.Lens.ModeOverride = orthographic ? LensSettings.OverrideModes.Orthographic : LensSettings.OverrideModes.Perspective;
             rig.Lens.OrthographicSize = orthographicSize;
-            if (!Application.isPlaying) rig.Lens.FieldOfView = fieldOfView;
+            if (!Application.isPlaying) rig.Lens.FieldOfView = EffectiveFieldOfView;
             if (mode != ExplorationCameraMode.RailFollow || railOrientation == RailOrientation.Authored) transform.rotation = AuthoredRotation;
         }
         public void TickShot(float dt)
@@ -75,8 +80,8 @@ namespace Pootle
             ApplySettings();
             if (!rig || !focus) return;
             bool reset = !initialized || previousMode != mode;
-            if (reset) { initialized = true; previousMode = mode; railVelocity = 0; positionVelocity = Vector3.zero; lensValue = fieldOfView; rig.PreviousStateIsValid = false; }
-            float wantedFov = fieldOfView + (focus.IsAirborne ? airborneWidening : 0);
+            if (reset) { initialized = true; previousMode = mode; railVelocity = 0; positionVelocity = Vector3.zero; lensValue = EffectiveFieldOfView; rig.PreviousStateIsValid = false; }
+            float wantedFov = EffectiveFieldOfView + (focus.IsAirborne ? airborneWidening : 0);
             lensValue = Mathf.Lerp(lensValue, wantedFov, 1 - Mathf.Exp(-Mathf.Max(0, dt) / .6f));
             rig.Lens.FieldOfView = lensValue;
             if (mode == ExplorationCameraMode.RailFollow)
@@ -93,7 +98,7 @@ namespace Pootle
             }
             else if (mode == ExplorationCameraMode.StaticOrBounded)
             {
-                Vector3 desired = bounded ? ClampPosition(anchor + focus.transform.position - focusOrigin) : anchor;
+                Vector3 desired = bounded ? ClampPosition(EffectiveAnchor + focus.transform.position - focusOrigin) : EffectiveAnchor;
                 transform.position = reset || !bounded ? desired : ClampPosition(Vector3.SmoothDamp(transform.position, desired, ref positionVelocity, railDamping, Mathf.Infinity, dt));
             }
         }
@@ -101,10 +106,10 @@ namespace Pootle
         public Vector3 ClampPosition(Vector3 value)
         {
             var half = new Vector3(Mathf.Abs(positionBounds.x), Mathf.Abs(positionBounds.y), Mathf.Abs(positionBounds.z)) * .5f;
-            return new Vector3(Mathf.Clamp(value.x, anchor.x-half.x, anchor.x+half.x), Mathf.Clamp(value.y, anchor.y-half.y, anchor.y+half.y), Mathf.Clamp(value.z, anchor.z-half.z, anchor.z+half.z));
+            return new Vector3(Mathf.Clamp(value.x, EffectiveAnchor.x-half.x, EffectiveAnchor.x+half.x), Mathf.Clamp(value.y, EffectiveAnchor.y-half.y, EffectiveAnchor.y+half.y), Mathf.Clamp(value.z, EffectiveAnchor.z-half.z, EffectiveAnchor.z+half.z));
         }
         public Vector3 EvaluateGuide(float t) => spline && spline.Spline.Count > 1 ? (Vector3)spline.EvaluatePosition(Mathf.Clamp01(t)) : Vector3.Lerp(lineStart, lineEnd, Mathf.Clamp01(t));
-        public Vector3 EvaluateRail(float t) => EvaluateGuide(t) + railOffset;
+        public Vector3 EvaluateRail(float t) => EvaluateGuide(t) + railOffset * DistanceScale;
         public float Project(Vector3 player)
         {
             float best = float.PositiveInfinity, bestT = 0;
@@ -129,7 +134,7 @@ namespace Pootle
                 for (int i=1;i<=64;i++) { Gizmos.DrawLine(EvaluateRail((i-1)/64f), EvaluateRail(i/64f)); }
                 if (focus) { var p=EvaluateRail(Project(focus.transform.position)); Gizmos.DrawSphere(p,.35f); Gizmos.DrawLine(focus.transform.position,p); }
             }
-            if (mode == ExplorationCameraMode.StaticOrBounded) { Gizmos.DrawWireCube(anchor, bounded ? positionBounds : Vector3.one); }
+            if (mode == ExplorationCameraMode.StaticOrBounded) { Gizmos.DrawWireCube(EffectiveAnchor, bounded ? positionBounds : Vector3.one); }
         }
     }
 }

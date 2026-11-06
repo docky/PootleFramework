@@ -127,3 +127,21 @@ close or entering Play. Glider hidden only during grounded editor preview.
 Verification: 2/2 targeted Edit Mode checks and 12/12 outdoor/cave Play Mode
 checks passed. Final runtime console has zero errors. Visually checked the panel,
 Edit Mode camera output and standing avatar at 30-degree FOV in live Play Mode.
+
+Readability / general camera policy — 6 November 2026
+Shared Exploration Camera Policy.asset: viewed-size multiplier 1.3, FOV30,
+view tilt25 degrees. All18shots and View Tilt pivot assigned. Measured beach-shot
+projected height27.710px before /36.286px after =1.30947x.
+Four proximity sign labels show within4 and hide beyond6 units in3D, with
+camera-facing TMP canvases. Raised labels to3.2units to clear the avatar head.
+Raised exterior doorway landing tops3.00->3.12; approaches remain3.08;
+tunnel floors have0.035 separation from overlapping central chamber floor.
+Saved View Tilt.prefab and View Tilt Comparison.unity with0/25degree examples;
+visually verified and captured.
+Crash evidence:13:06 native AppKit NSView addCursorRect:cursor: / Unity
+GUIRenderView resetCursorRects exception. Expanded the Cinemachine component
+in both Edit and Play Mode and its Lens foldout in Play Mode after restart;
+no repeat crash. Native defect not claimed fixed. Added direct Camera Policy
+and Shot Settings window as an alternate editing route; no logs uploaded.
+Verification:4/4 targeted Edit Mode checks,12/12 Coastal Play Mode checks;
+final compile successful. User's saved player position preserved.

@@ -1,5 +1,5 @@
 {
   "name": "Pootle.Cinemachine",
   "rootNamespace": "Pootle",
-  "references": ["Pootle.Runtime", "Unity.Cinemachine", "Unity.InputSystem", "Unity.Splines", "Unity.Mathematics", "Unity.ugui"]
+  "references": ["Pootle.Runtime", "Unity.Cinemachine", "Unity.InputSystem", "Unity.Splines", "Unity.Mathematics", "Unity.ugui", "Unity.TextMeshPro"]
 }

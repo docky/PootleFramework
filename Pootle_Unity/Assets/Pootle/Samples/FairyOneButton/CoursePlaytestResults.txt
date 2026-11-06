@@ -1,0 +1,103 @@
+Rainbow Fairy Grove branching course — 6 November 2026
+
+PASS 18 seeds and five authored hoops
+PASS swept seed pickup without button
+PASS seed scores only once
+PASS standing in hoop plane does not score
+PASS crossing outside hoop aperture does not score
+PASS passing through aperture scores and blooms
+PASS repeated hoop passage cannot score twice
+PASS normal post-movement update collects a nearby seed
+PASS teleport does not sweep across collectibles
+PASS UI reset restores all progress and visuals
+PASS reset clears flight and dialogue state
+PASS nearby sign reveals text automatically
+PASS sign text does not consume the launch button
+PASS sign text disappears outside radius
+PASS all seeds and hoops complete the grove
+PASS garden reset acquires a one-button prompt
+PASS garden reset executes after movement and restores course
+PASS catch shelf at x=-8 supports a fall and restores flaps
+PASS catch shelf at x=8 supports a fall and restores flaps
+PASS branch 1 landing (-0.40, 0.80, 0.00), actual (-0.30, 0.79, -0.05)
+PASS branch 1 landing (-1.80, 0.80, 0.45), actual (-1.80, 0.80, 0.39)
+PASS branch 1 landing (-2.30, 1.60, 2.40), actual (-2.17, 1.59, 2.36)
+PASS branch 1 landing (-1.90, 2.35, 3.90), actual (-1.73, 2.34, 3.87)
+PASS branch 1 landing (0.00, 2.90, 5.10), actual (-0.15, 2.90, 5.15)
+PASS branch 2 landing (-0.40, 0.80, 0.00), actual (-0.30, 0.79, -0.05)
+PASS branch 2 landing (2.50, 1.70, 1.20), actual (2.46, 1.70, 1.21)
+PASS branch 2 landing (2.00, 2.35, 3.40), actual (1.90, 2.37, 3.35)
+PASS branch 2 landing (0.00, 2.90, 5.10), actual (0.01, 2.90, 5.12)
+
+PASS return from -8 catch shelf to meadow: (-6.55, -0.01, -0.40)
+PASS return from 8 catch shelf to meadow: (6.57, -0.01, -0.50)
+
+PASS reset input test starts with collected seed
+PASS R key resets through live Input System
+PASS reset button receives UI raycasts
+PASS mouse click resets through UI input module
+PASS reset releases UI selection so Space stays a flight action
+
+PASS direct scene spawn settles
+PASS first tap winds up
+PASS held button cannot repeat launch
+PASS released second tap launches
+PASS fast-rise flap preserves charge
+PASS first accepted flap consumes one charge
+PASS second accepted flap consumes last charge
+PASS empty flap does not lift
+PASS confirmed landing restores flaps
+PASS moving cancels wind-up
+PASS late second tap expires
+PASS fresh tap after expiry re-arms
+PASS press during settling is discarded
+PASS air reverse responds in opposite direction
+PASS neutral air braking stops drift
+PASS plunger has distinct focused prompt
+PASS plunger tap toggles without launch
+PASS disappearing target consumes press
+PASS chatty NPC focuses
+PASS chatter frees next action for launch
+PASS launch during chatter changes reaction
+PASS manual dialogue owns fresh press
+PASS manual dialogue advances second page
+PASS last page closes without reacquisition
+PASS closed dialogue remains suppressed while stationary
+PASS back closes dialogue and clears action
+PASS walking away closes manual dialogue
+PASS low arch reports ceiling collision
+PASS ledge can be walked off
+PASS touchdown press cannot use prop
+PASS fall respawn clears state
+PASS wall pressure never settles into an action
+PASS target entering range cannot steal armed launch
+PASS walking onto plunger never uses it
+PASS 30 fps: apex 1.435 m, airtime 1.200 s
+PASS 60 fps: apex 1.435 m, airtime 1.233 s
+PASS 120 fps: apex 1.435 m, airtime 1.242 s
+
+PASS Input System: Space hold is a single tap
+PASS Input System: Space double tap launches
+PASS Input System: Space in flight flaps
+PASS Input System: W moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: S moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: A moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: D moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: W+A moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: W+D moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: S+A moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: S+D moves with normalized speed
+PASS Input System: neutral stops
+PASS Input System: gamepad D-pad moves
+PASS Input System: South double tap launches
+PASS Input System: enters dialogue before Escape
+PASS Input System: Escape exits dialogue
+PASS Input System: enters dialogue before B
+PASS Input System: B exits dialogue

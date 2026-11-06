@@ -16,6 +16,8 @@ namespace Pootle
         public Transform cameraTarget;
         public bool simulateAutomatically = true;
         public bool captureDiagnostics = true;
+        [Tooltip("Optional IPootleMovementPolicy. Leave empty for standard Pootle controls.")]
+        public MonoBehaviour movementPolicy;
         public Vector3 Velocity { get; internal set; }
         public Vector3 Facing { get; internal set; } = Vector3.forward;
         public PootleMode Mode { get; private set; } = PootleMode.Airborne;
@@ -100,6 +102,8 @@ namespace Pootle
             if (!profile || dt <= 0 || !float.IsFinite(dt)) return;
             if (!Motor) Motor = GetComponent<PootleMotor>();
             dt = Mathf.Min(dt, 0.1f);
+            var policy = movementPolicy && movementPolicy.isActiveAndEnabled ? movementPolicy as IPootleMovementPolicy : null;
+            bool groundedAtTickStart = IsGrounded;
             clock += dt; tick++;
 #if UNITY_EDITOR
             Motor.Capture = captureDiagnostics ? DebugSnapshot : null;
@@ -137,7 +141,8 @@ namespace Pootle
                     if (!this || !isActiveAndEnabled) return;
                 }
             }
-            if (frame.jumpPressed) jumpBuffer.Press(clock, profile.jumpBufferTime);
+            if (policy != null) jumpBuffer.Clear();
+            else if (frame.jumpPressed) jumpBuffer.Press(clock, profile.jumpBufferTime);
             TickEnvironment(dt);
             Vector3 tickStart = transform.position;
             var previousMode = Mode;
@@ -208,13 +213,24 @@ namespace Pootle
                 if (TickGlide(dt, frame, tickStart, out var glideMotion))
                 { UpdateVisual(); Capture(previousMode, Vector3.zero, glideMotion, false); return; }
             }
+            float policyImpulse = policy != null ? policy.BeforeMovement(this, dt, frame, groundedAtTickStart) : float.NaN;
+            bool policyJump = float.IsFinite(policyImpulse);
+            if (policyJump)
+            {
+                Velocity = new Vector3(Velocity.x, policyImpulse, Velocity.z);
+                groundJumpUsed = true; variableJump = false; lastGrounded = float.NegativeInfinity;
+                SetMode(PootleMode.Airborne, PootleTransition.Jumped);
+                Jumped?.Invoke();
+            }
             Vector3 direction = PootleMovement.CameraDirection(Mode==PootleMode.GroundPounding ? Vector2.zero : frame.move, outputCamera, out float magnitude);
             Vector3 planar = Vector3.ProjectOnPlane(Velocity, Vector3.up) - externalPlanar;
             IsRunning = profile.allowRun && frame.run;
             float topSpeed = IsRunning ? profile.runSpeed : profile.walkSpeed;
             IsBraking = IsGrounded && magnitude > 0 &&
                 (IsBraking || planar.magnitude > profile.minimumBrakeSpeed && Vector3.Dot(direction, planar) < profile.brakeThreshold);
-            if (IsBraking)
+            if (policy != null && !IsGrounded)
+                planar = policy.AirVelocity(planar, direction, magnitude, dt);
+            else if (IsBraking)
             {
                 planar = Vector3.MoveTowards(planar, Vector3.zero, profile.brakeDeceleration * dt);
                 if (planar.sqrMagnitude < 0.0001f) IsBraking = false;
@@ -239,7 +255,7 @@ namespace Pootle
                 ? Vector3.ProjectOnPlane(Support.normal, Vector3.up).normalized * profile.edgeSlipSpeed : Vector3.zero;
 
             float vertical = IsGrounded ? 0 : Velocity.y;
-            bool jumped = Mode != PootleMode.GroundPounding && TryJump(ref vertical, frame.jumpHeld);
+            bool jumped = policyJump || (policy == null && Mode != PootleMode.GroundPounding && TryJump(ref vertical, frame.jumpHeld));
             if (jumped && platformRider)
             {
                 planar += Vector3.ProjectOnPlane(platformRider.CarryVelocity, Vector3.up);
@@ -299,7 +315,7 @@ namespace Pootle
                     SetMode(PootleMode.Grounded, PootleTransition.Landed);
                     Velocity = new Vector3(Velocity.x, 0, Velocity.z);
                     float launch = 0;
-                    if (TryJump(ref launch, frame.jumpHeld)) { Velocity += Vector3.up * launch; jumped = true; }
+                    if (policy == null && TryJump(ref launch, frame.jumpHeld)) { Velocity += Vector3.up * launch; jumped = true; }
                 }
                 else if (IsGrounded) SetMode(PootleMode.Airborne, PootleTransition.WalkedOffEdge);
             }

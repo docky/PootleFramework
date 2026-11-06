@@ -99,3 +99,20 @@ Open **Pootle → Exploration → Surface Placement Preview** outside Play Mode:
 - Watch **Game view** for the correctly selected camera. Toggle **Blend zone changes** off to inspect harsh cuts, or leave it on for the configured duration with Ease In Out through Cinemachine Brain. Store A/B positions on opposite sides of a boundary, then alternate **Go to A/B**. The panel reports the selected region, blend progress and yaw change.
 - Preview intentionally bypasses dwell/hysteresis and airborne deferral to expose exact spatial boundaries. It does not run the movement controller. Runtime steering and full flight behavior still need Play Mode testing.
 - Closing, saving, reloading scripts or entering Play Mode stops preview and restores the original player, camera and cave lighting state. **Keep player here and stop preview** explicitly saves a new placement, with Undo support. Camera priorities are never modified by the preview.
+
+
+## General camera policy, signs and View Tilt comparison
+
+**Assets/CoastalHike/Exploration Camera Policy.asset** is shared by all 18 shots and the player's **View Tilt** component. Edit **Viewed Size Multiplier** (currently **1.3**), **Field Of View** (**30**), and **View Tilt Degrees** (**25**). Viewed size scales camera distance/rail offsets/static anchors inversely; 1.3 gives approximately 30% larger projected objects without scaling characters or changing collisions. Individual shots retain their authored base composition. Supporting NPCs/props can reference the same policy, or enable **Override Policy** on `PootleViewTilt` for their own angle.
+
+**Pootle → Exploration → Camera Policy and Shot Settings** exposes the policy and shot composition directly, without needing to expand Cinemachine's component header. Policy changes update in Play Mode and while surface placement preview is active.
+
+The player's visual pivot is named exactly **View Tilt**. **View Tilt.prefab** is a reusable avatar example with the policy assigned. Open **View Tilt Comparison.unity** to compare an upright reference against the policy-controlled tilt under the same 60-degree camera. The selected component draws upright/tilted axes and reports the applied angle. The effect is camera-relative lean away from the view, rather than a change to the player's physics orientation.
+
+Four signposts use `PootleSignLabel`: **Show Distance = 4**, **Exit Distance = 6**, measured in 3D. Once revealed, a label stays visible through the gap between these radii, preventing boundary flicker. Edit the message, distances and overhead offset per sign. Labels use non-interactive, camera-facing TMP canvases and remain below the circle-transition overlay.
+
+Door landings are raised 0.12 units above the underlying grass, with 0.04 separation from adjacent approach paths; tunnel floors sit 0.035 above the central floor where they overlap. These are geometry offsets, preserving ordinary collision behavior.
+
+Crash investigation (6 November 2026): the supplied 13:06 crash is a native macOS `NSView addCursorRect:cursor:` / Unity `GUIRenderView resetCursorRects` exception during Inspector UI work. No managed game-script frame identifies its cause. The direct camera-policy window provides an alternate editing route; this is not a confirmed repair of the native Editor bug. No package or Editor upgrade was applied, and no crash logs were uploaded.
+
+After restarting Unity, expanding the Cinemachine component succeeded in both Edit and Play Mode; expanding its Lens foldout also succeeded in Play Mode. The reported native crash was not reproduced in those checks.
