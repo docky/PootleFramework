@@ -16,15 +16,18 @@ namespace Pootle
         public Vector3 lookOffset = new Vector3(0, .8f, 0);
         [Min(0)] public float cameraSharpness = 8;
         public LayerMask obstructionLayers = Physics.DefaultRaycastLayers;
+        [Tooltip("Exit candidates in vehicle-local metres; larger vehicles can keep passengers clear of the body.")]
+        public Vector3[] exitOffsets = { new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 0, -1.5f), new Vector3(0, 0, 1.5f) };
         public PootleCharacter Driver { get; private set; }
         public bool IsOccupied => Driver;
+        public bool IsParked { get; private set; }
         public TCCPlayer Controller { get; private set; }
         public Transform Body => Controller.carBody.transform;
         InputActionAsset inputInstance;
-        InputAction move, exit, brake, reset, jump, boost;
+        InputAction move, accelerate, exit, brake, reset, jump, boost;
         Vector3 startingPosition, entryPosition;
         Quaternion startingRotation, entryRotation;
-        bool initialized;
+        bool initialized, parkingRequested;
         AudioSource engine;
         RaycastHit[] hits = new RaycastHit[32];
 
@@ -64,13 +67,15 @@ namespace Pootle
             reset = inputInstance.FindAction("Character/Reset", true);
             exit = new InputAction("Exit car", InputActionType.Button, "<Gamepad>/buttonEast");
             exit.AddBinding("<Keyboard>/b");
-            brake = new InputAction("Car brake", InputActionType.Button, "<Gamepad>/rightTrigger");
+            accelerate = new InputAction("Car accelerate", InputActionType.Value, "<Gamepad>/rightTrigger");
+            accelerate.AddBinding("<Keyboard>/w");
+            brake = new InputAction("Car brake", InputActionType.Value, "<Gamepad>/leftTrigger");
             brake.AddBinding("<Keyboard>/leftCtrl");
             jump = new InputAction("Car jump", InputActionType.Button, "<Gamepad>/buttonSouth");
             jump.AddBinding("<Keyboard>/space");
             boost = new InputAction("Car boost", InputActionType.Button, "<Gamepad>/rightShoulder");
             boost.AddBinding("<Keyboard>/leftShift");
-            move.Enable(); reset.Enable(); exit.Enable(); brake.Enable(); jump.Enable(); boost.Enable();
+            move.Enable(); accelerate.Enable(); reset.Enable(); exit.Enable(); brake.Enable(); jump.Enable(); boost.Enable();
             Driver = character;
             entryPosition = character.transform.position;
             entryRotation = Quaternion.LookRotation(character.Facing);
@@ -78,6 +83,7 @@ namespace Pootle
             // Deactivate the entire avatar so its motor, collider, input, shadow and effects relinquish control.
             character.gameObject.SetActive(false);
             SetParked(false);
+            InitializeCameraControls();
             UpdateCamera(true);
             chaseCamera.gameObject.SetActive(true);
             if (engine) engine.mute = false;
@@ -98,16 +104,18 @@ namespace Pootle
             if (exit.WasPressedThisFrame()) { TryExit(); return; }
             if (jump.WasPressedThisFrame()) TryJump();
             if (boost.WasPressedThisFrame()) TryBoost();
+            UpdateCameraInput();
             Vector2 axes = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1);
-            Controller.setMotor(axes.y);
-            Controller.setSteering(axes.x);
-            Controller.setBrake(brake.IsPressed() ? 1 : 0);
+            ResolveDrivingInput(axes, Mathf.Clamp01(accelerate.ReadValue<float>()), out float motor, out float steering);
+            Controller.setMotor(motor);
+            Controller.setSteering(steering);
+            Controller.setBrake(Mathf.Clamp01(brake.ReadValue<float>()));
         }
 
         public bool TryExit()
         {
             if (!IsOccupied) return false;
-            Controller.immobilize(); Controller.setBrake(1);
+            StopHorizontalMotion(); Controller.setBrake(1);
             Physics.SyncTransforms();
             if (!FindExit(out Vector3 destination)) return false;
             Vector3 facing = Vector3.ProjectOnPlane(Body.forward, Vector3.up).normalized;
@@ -119,9 +127,9 @@ namespace Pootle
         bool FindExit(out Vector3 destination)
         {
             // Try both doors, then behind/in front. A blocked door must never embed Lily in a wall.
-            Vector3[] offsets = { new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 0, -1.5f), new Vector3(0, 0, 1.5f) };
             var yaw = Quaternion.Euler(0, Body.eulerAngles.y, 0);
-            foreach (var offset in offsets)
+            if (exitOffsets == null) { destination = default; return false; }
+            foreach (var offset in exitOffsets)
             {
                 Vector3 candidate = Body.position + yaw * Vector3.Scale(offset, transform.lossyScale);
                 int count = Cast(candidate + Vector3.up * 2, Vector3.down, 5);
@@ -140,12 +148,43 @@ namespace Pootle
 
         void SetParked(bool value)
         {
-            Controller.immobilize(); Controller.setBrake(value ? 1 : 0);
+            parkingRequested = value;
+            Controller.setMotor(0); Controller.setSteering(0); Controller.setBrake(value ? 1 : 0);
+            if (!value) ApplyParkingLock(false);
+            else RefreshParking();
+        }
+
+        void RefreshParking()
+        {
+            if (!parkingRequested || IsOccupied) return;
+            // A brake request must never anchor a jumping/falling vehicle in world space.
+            // Recheck locked vehicles as well, so removing their support releases gravity.
+            bool supported = Mathf.Abs(Controller.getCarRigidBody().linearVelocity.y) < .5f && HasWheelSupport(true, .03f);
+            if (supported == IsParked) return;
+            if (supported) Controller.immobilize();
+            ApplyParkingLock(supported);
+        }
+
+        void ApplyParkingLock(bool value)
+        {
+            IsParked = value;
             var constraints = value ? RigidbodyConstraints.FreezeAll : RigidbodyConstraints.None;
             Controller.carBody.setConstraints(constraints);
             Controller.getCarRigidBody().constraints = constraints;
             foreach (var wheel in Controller.wheels)
             { wheel.setConstraints(constraints); wheel.getRigidbody().constraints = constraints; }
+        }
+
+        void StopHorizontalMotion()
+        {
+            // Stop the engine, sideways motion and rotation, while keeping the natural jump arc.
+            float verticalSpeed = Controller.getCarRigidBody().linearVelocity.y;
+            var wheels = Controller.wheels;
+            var wheelVerticalSpeeds = new float[wheels.Length];
+            for (int i = 0; i < wheels.Length; i++) wheelVerticalSpeeds[i] = wheels[i].getRigidbody().linearVelocity.y;
+            Controller.immobilize();
+            Controller.getCarRigidBody().linearVelocity = Vector3.up * verticalSpeed;
+            for (int i = 0; i < wheels.Length; i++) wheels[i].getRigidbody().linearVelocity = Vector3.up * wheelVerticalSpeeds[i];
         }
 
         void RestoreDriver(Vector3 position, Quaternion rotation)
@@ -172,9 +211,8 @@ namespace Pootle
 
         void UpdateCamera(bool snap)
         {
-            Quaternion yaw = Quaternion.Euler(0, Body.eulerAngles.y, 0);
             Vector3 target = Body.position + lookOffset;
-            Vector3 desired = Body.position + yaw * cameraOffset;
+            Vector3 desired = CameraPosition(target, snap);
             float blend = snap ? 1 : 1 - Mathf.Exp(-cameraSharpness * Time.deltaTime);
             desired = Vector3.Lerp(chaseCamera.transform.position, desired, blend);
             Vector3 delta = desired - target;
@@ -198,8 +236,9 @@ namespace Pootle
 
         void ReleaseInput()
         {
-            exit?.Dispose(); brake?.Dispose(); jump?.Dispose(); boost?.Dispose();
-            exit = brake = jump = boost = move = reset = null;
+            ReleaseCameraControls();
+            accelerate?.Dispose(); exit?.Dispose(); brake?.Dispose(); jump?.Dispose(); boost?.Dispose();
+            accelerate = exit = brake = jump = boost = move = reset = null;
             if (inputInstance) { inputInstance.Disable(); Destroy(inputInstance); inputInstance = null; }
         }
         void OnDisable()

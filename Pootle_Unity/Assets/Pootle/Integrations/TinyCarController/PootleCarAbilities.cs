@@ -37,19 +37,27 @@ namespace Pootle
             // Wheel contact flags can lag takeoff or report walls as ground. Check below the tires
             // and require two supported wheels before restoring the airborne jump allowance.
             if (Time.time < nextJumpTime || Controller.getCarRigidBody().linearVelocity.y > .5f) return false;
+            return HasWheelSupport(false, .06f);
+        }
+
+        bool HasWheelSupport(bool stationaryOnly, float tolerance)
+        {
             int supported = 0;
             foreach (var wheel in Controller.wheels)
             {
                 var shape = wheel.getCollider();
                 float radius = shape.radius * Mathf.Max(Mathf.Abs(wheel.transform.lossyScale.x), Mathf.Abs(wheel.transform.lossyScale.y), Mathf.Abs(wheel.transform.lossyScale.z));
-                int count = Physics.RaycastNonAlloc(wheel.getRigidbody().position, Vector3.down, groundHits, radius + .06f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                int count = Physics.RaycastNonAlloc(wheel.getRigidbody().position, Vector3.down, groundHits, radius + tolerance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
                 // Conservatively refuse a saturated query rather than refilling against an unseen obstruction.
                 if (count == groundHits.Length) continue;
                 RaycastHit nearest = default; float distance = float.PositiveInfinity;
                 for (int i = 0; i < count; i++)
                     if (!OwnCollider(groundHits[i].collider) && groundHits[i].distance < distance)
                     { nearest = groundHits[i]; distance = nearest.distance; }
-                if (nearest.collider && nearest.normal.y >= .65f && ++supported >= 2) return true;
+                if (!nearest.collider || nearest.normal.y < .65f) continue;
+                // Dynamic/kinematic platforms must remain free to carry the braked vehicle.
+                if (stationaryOnly && (nearest.rigidbody || nearest.collider.GetComponentInParent<PootleMovingSurface>())) continue;
+                if (++supported >= 2) return true;
             }
             return false;
         }
@@ -101,6 +109,7 @@ namespace Pootle
         void FixedUpdate()
         {
             if (!initialized) return;
+            RefreshParking();
             if (HasJumpSupport()) AirJumpsRemaining = Mathf.Max(0, extraAirJumps);
             if (IsOccupied && IsBoosting) ApplyBoostVelocity(boostAcceleration * Time.fixedDeltaTime);
         }

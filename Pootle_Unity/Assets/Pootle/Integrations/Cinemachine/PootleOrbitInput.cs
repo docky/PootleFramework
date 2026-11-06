@@ -46,6 +46,7 @@ namespace Pootle
         private float Read(InputAction action, IInputAxisOwner.AxisDescriptor.Hints hint,
             Object context, CinemachineInputAxisController.Reader.ControlValueReader fallback)
         {
+            if (character && !character.isActiveAndEnabled) return 0;
             var styles=GetComponent<PootleCameraStyles>();
             if(styles && styles.isActiveAndEnabled && !styles.AllowsLook)return 0;
             Vector2 value = action.ReadValue<Vector2>() * stickDegreesPerSecond;
@@ -55,6 +56,7 @@ namespace Pootle
         }
         private void Update()
         {
+            if (character && !character.isActiveAndEnabled) return;
             if (recenter != null && recenter.WasPressedThisFrame() && orbit && (!GetComponent<PootleCameraStyles>() || GetComponent<PootleCameraStyles>().AllowsLook))
             {
                 Vector3 facing = character ? character.Facing : Vector3.forward;

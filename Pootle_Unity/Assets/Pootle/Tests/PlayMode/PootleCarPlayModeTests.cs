@@ -10,6 +10,70 @@ namespace Pootle.Tests
 {
     public sealed partial class PootlePlayModeTests
     {
+        [UnityTest]
+        public IEnumerator Car_BothVehiclesUseAnalogueRTAccelerationAndLTBrake()
+        {
+            foreach (string name in new[] { "Pootle Sedan", "Pootle Pickup" })
+            {
+                var car = GameObject.Find(name).GetComponent<PootleCar>();
+                Assert.That(car, Is.Not.Null);
+                yield return ApproachCar(car);
+                Assert.That(character.GetComponent<PootleFrobjectSensor>().TryInteract(), Is.True);
+                InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.up });
+                yield return new WaitForSeconds(.1f);
+                Assert.That(car.Controller.getMotor(), Is.Zero, "Forward stick is not an accelerator");
+                InputSystem.QueueStateEvent(gamepad, new GamepadState { rightTrigger = .4f, leftTrigger = .25f, leftStick = Vector2.right * .3f });
+                yield return null; yield return null;
+                Assert.That(car.Controller.getMotor(), Is.EqualTo(.4f).Within(.02f));
+                Assert.That(car.Controller.getBrake(), Is.EqualTo(.25f).Within(.02f));
+                Assert.That(car.Controller.getSteering(), Is.EqualTo(gamepad.leftStick.ReadValue().x).Within(.02f), "Steering preserves the Input System stick dead zone");
+                Vector3 start = car.Body.position;
+                InputSystem.QueueStateEvent(gamepad, new GamepadState { rightTrigger = 1 });
+                yield return new WaitForSeconds(.5f);
+                Assert.That(Vector3.Distance(start, car.Body.position), Is.GreaterThan(.3f));
+                float speed = car.Controller.getCarRigidBody().linearVelocity.magnitude;
+                InputSystem.QueueStateEvent(gamepad, new GamepadState { leftTrigger = 1 });
+                yield return new WaitForSeconds(.4f);
+                Assert.That(car.Controller.getMotor(), Is.Zero);
+                Assert.That(car.Controller.getBrake(), Is.EqualTo(1));
+                Assert.That(car.Controller.getCarRigidBody().linearVelocity.magnitude, Is.LessThan(speed * .5f));
+                InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.down });
+                yield return null; yield return null;
+                Assert.That(car.Controller.getMotor(), Is.EqualTo(-1));
+                yield return PressCarButton(GamepadButton.East);
+                Assert.That(car.IsOccupied, Is.False);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Car_PickupHasScaledMaterialsAbilitiesAndUsableDemoColliders()
+        {
+            var truck = GameObject.Find("Pootle Pickup").GetComponent<PootleCar>();
+            Assert.That(truck.transform.localScale, Is.EqualTo(Vector3.one * 1.7f));
+            Assert.That(truck.extraAirJumps, Is.EqualTo(4)); Assert.That(truck.BoostCharges, Is.EqualTo(4));
+            foreach (var renderer in truck.GetComponentsInChildren<Renderer>())
+                foreach (var material in renderer.sharedMaterials) Assert.That(material.shader.name, Does.StartWith("Universal Render Pipeline/"));
+            foreach (string name in new[] { "Demo race ramp", "Demo quarter pipe", "Demo mound" })
+            {
+                var prop = GameObject.Find(name); Assert.That(prop, Is.Not.Null);
+                Assert.That(prop.transform.localScale, Is.EqualTo(Vector3.one * 1.7f));
+                Assert.That(prop.GetComponentsInChildren<Collider>().Length, Is.GreaterThan(0));
+                foreach (var renderer in prop.GetComponentsInChildren<Renderer>())
+                    foreach (var material in renderer.sharedMaterials) Assert.That(material.shader.name, Does.StartWith("Universal Render Pipeline/"));
+                Assert.That(Physics.Raycast(prop.GetComponentInChildren<Renderer>().bounds.center + Vector3.up * 20, Vector3.down, out var hit, 30), Is.True);
+                Assert.That(hit.collider.transform.IsChildOf(prop.transform), Is.True, "The authored ramp surface must be driveable");
+            }
+            yield return ApproachCar(truck);
+            Assert.That(character.GetComponent<PootleFrobjectSensor>().TryInteract(), Is.True);
+            yield return new WaitForSeconds(.1f);
+            Assert.That(truck.TryJump(), Is.True); yield return new WaitForSeconds(.2f);
+            Assert.That(truck.AirJumpsRemaining, Is.EqualTo(4));
+            Assert.That(truck.Body.position.y, Is.GreaterThan(.4f));
+            Assert.That(truck.TryBoost(), Is.True); Assert.That(truck.BoostCharges, Is.EqualTo(3));
+            truck.enabled = false;
+            Assert.That(character.gameObject.activeSelf, Is.True);
+        }
+
         IEnumerator PressCarButton(GamepadButton button)
         {
             InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(button));
@@ -21,7 +85,7 @@ namespace Pootle.Tests
         [UnityTest]
         public IEnumerator Car_JumpAllowsFourAirJumpsThenRefillsOnlyOnLanding()
         {
-            var car = Object.FindAnyObjectByType<PootleCar>();
+            var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>();
             yield return ApproachCar(car);
             Assert.That(character.GetComponent<PootleFrobjectSensor>().TryInteract(), Is.True);
             yield return new WaitForSeconds(.1f);
@@ -51,7 +115,7 @@ namespace Pootle.Tests
         [UnityTest]
         public IEnumerator Car_FourBoostsRechargeWhileParkedWithoutEntryRefill()
         {
-            var car = Object.FindAnyObjectByType<PootleCar>();
+            var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>();
             Assert.That(car.BoostCharges, Is.EqualTo(4));
             Assert.That(car.TryBoost(), Is.False, "An unoccupied car cannot spend charges");
             yield return ApproachCar(car);
@@ -91,7 +155,7 @@ namespace Pootle.Tests
             var keyboard = InputSystem.AddDevice<Keyboard>();
             try
             {
-                var car = Object.FindAnyObjectByType<PootleCar>();
+                var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>();
                 yield return ApproachCar(car);
                 Assert.That(character.GetComponent<PootleFrobjectSensor>().TryInteract(), Is.True);
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Space));
@@ -128,9 +192,9 @@ namespace Pootle.Tests
         }
 
         [UnityTest]
-        public IEnumerator Car_XEntersStickDrivesBStopsExitsAndCanReenter()
+        public IEnumerator Car_XEntersTriggerDrivesBStopsExitsAndCanReenter()
         {
-            var car = Object.FindAnyObjectByType<PootleCar>(); Assert.That(car, Is.Not.Null);
+            var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>(); Assert.That(car, Is.Not.Null);
             yield return ApproachCar(car);
             InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.West));
             yield return null; yield return null;
@@ -139,7 +203,7 @@ namespace Pootle.Tests
             Assert.That(car.interaction.interactable, Is.False);
             var brain = character.outputCamera.GetComponent<CinemachineBrain>();
             Vector3 start = car.Body.position;
-            InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = new Vector2(.25f, 1) });
+            InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = new Vector2(.25f, 0), rightTrigger = 1 });
             yield return new WaitForSeconds(.65f);
             Assert.That(Vector3.Distance(start, car.Body.position), Is.GreaterThan(.5f));
             Assert.That(car.Controller.getSteering(), Is.GreaterThan(.1f));
@@ -166,7 +230,7 @@ namespace Pootle.Tests
         [UnityTest]
         public IEnumerator Car_ParkedIgnoresInputAndUsesScaledUrpSedan()
         {
-            var car = Object.FindAnyObjectByType<PootleCar>();
+            var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>();
             Assert.That(car.transform.localScale, Is.EqualTo(Vector3.one * 1.6f));
             Assert.That(car.GetComponentsInChildren<Transform>(), Has.Some.Matches<Transform>(t => t.name == "Sedan"));
             foreach (var renderer in car.GetComponentsInChildren<Renderer>())
@@ -185,7 +249,7 @@ namespace Pootle.Tests
         [UnityTest]
         public IEnumerator Car_BlockedExitStaysSeatedThenDisableRestoresPlayer()
         {
-            var car = Object.FindAnyObjectByType<PootleCar>();
+            var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>();
             yield return ApproachCar(car);
             Assert.That(character.GetComponent<PootleFrobjectSensor>().TryInteract(), Is.True);
             var blocker = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -211,7 +275,7 @@ namespace Pootle.Tests
             var keyboard = InputSystem.AddDevice<Keyboard>();
             try
             {
-                var car = Object.FindAnyObjectByType<PootleCar>();
+                var car = GameObject.Find("Pootle Sedan").GetComponent<PootleCar>();
                 yield return ApproachCar(car);
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.E));
                 yield return null; yield return null;

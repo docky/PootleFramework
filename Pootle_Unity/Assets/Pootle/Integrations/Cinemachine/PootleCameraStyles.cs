@@ -51,6 +51,7 @@ namespace Pootle
         private float FacingYaw()=>character?Mathf.Atan2(character.Facing.x,character.Facing.z)*Mathf.Rad2Deg:0;
         private void Update()
         {
+            if (character && !character.isActiveAndEnabled) return;
             for(int i=0;i<selectors.Length;i++)if(selectors[i]!=null && selectors[i].WasPressedThisFrame())Select((PootleCameraStyle)i);
             bool manual=look!=null && look.ReadValue<Vector2>().sqrMagnitude>.0025f;
             manual|=Mouse.current!=null && Mouse.current.rightButton.isPressed && mouseLook!=null && mouseLook.ReadValue<Vector2>().sqrMagnitude>.01f;

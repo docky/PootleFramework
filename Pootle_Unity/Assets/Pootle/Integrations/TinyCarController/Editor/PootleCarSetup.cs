@@ -57,7 +57,7 @@ namespace Pootle.Editor
             }
             finally { Object.DestroyImmediate(car); }
 
-            var existing = Object.FindAnyObjectByType<PootleCar>();
+            var existing = GameObject.Find("Pootle Sedan");
             if (!existing)
             {
                 var pickup = GameObject.Find("Car Pickup");
@@ -75,7 +75,7 @@ namespace Pootle.Editor
             return "Sedan added at 1.6 scale with URP materials, Frobject entry, B exit and a chase camera.";
         }
 
-        static T ConvertEffect<T>(T source, Dictionary<Material, Material> materials) where T : Component
+        internal static T ConvertEffect<T>(T source, Dictionary<Material, Material> materials) where T : Component
         {
             if (!source) return null;
             var copy = Object.Instantiate(source.gameObject);
@@ -88,7 +88,7 @@ namespace Pootle.Editor
             finally { Object.DestroyImmediate(copy); }
         }
 
-        static void RemapMaterials(GameObject root, Dictionary<Material, Material> materials)
+        internal static void RemapMaterials(GameObject root, Dictionary<Material, Material> materials)
         {
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {

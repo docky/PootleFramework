@@ -1409,6 +1409,12 @@ MonoBehaviour:
   boostAccelerationMultiplier: 3
   boostKickSpeed: 6
   boostAcceleration: 18
+  cameraMode: 0
+  cameraStickDegreesPerSecond: 135
+  cameraMouseDegreesPerPixel: 0.12
+  demoCameraFollowUpToSpeed: 12
+  demoCameraRotationSharpness: 3
+  cameraSteeringFullLockAngle: 50
 --- !u!1 &6456621840613367879
 GameObject:
   m_ObjectHideFlags: 0
