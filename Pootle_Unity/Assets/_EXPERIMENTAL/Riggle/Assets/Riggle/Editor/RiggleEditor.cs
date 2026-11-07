@@ -9,11 +9,15 @@ namespace Docky.RiggleTools.Editor
         private Riggle.Point selected = Riggle.Point.LeftElbow;
         private bool placing;
         private bool showAllDotsInInspector;
+        private RiggleDeformationInspector deformation;
+        private void OnEnable() { deformation = new RiggleDeformationInspector((Riggle)target); }
+        private void OnDisable() { deformation?.Dispose(); deformation = null; }
 
         public override void OnInspectorGUI()
         {
             var rig = (Riggle)target;
             serializedObject.Update();
+            if (GUILayout.Button("Open guided Rig Helper", GUILayout.Height(28))) RiggleHelperWindow.Open(rig);
             EditorGUILayout.HelpBox(
                 "RIGGLE • Biped first pass\nCharacter faces +Z, up is +Y, left is -X. " +
                 "Fit dots, refine them in the Scene view, then Bake. The source meshes stay untouched.",
@@ -29,7 +33,7 @@ namespace Docky.RiggleTools.Editor
                 SceneView.RepaintAll();
             }
             DrawPropertiesExcluding(serializedObject, "m_Script", "mirrorRight", "landmarks",
-                "generatedBones", "bakedSources", "bakedAvatar");
+                "generatedBones", "bakedSources", "bakedAvatar", "attachedObjects");
             serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.Space(8);
@@ -39,7 +43,7 @@ namespace Docky.RiggleTools.Editor
             Vector3 value = EditorGUILayout.Vector3Field("Local position", rig.GetLocal(selected));
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(rig, "Move Riggle dot");
+                RecordPointUndo(rig, selected, "Move Riggle dot");
                 rig.SetLocal(selected, value);
                 EditorUtility.SetDirty(rig);
                 SceneView.RepaintAll();
@@ -54,7 +58,7 @@ namespace Docky.RiggleTools.Editor
                 }
                 if (GUILayout.Button("Fit from mesh bounds"))
                 {
-                    Undo.RecordObject(rig, "Fit Riggle dots to mesh");
+                    for (int i = 0; i < Riggle.PointCount; i++) RecordPointUndo(rig, (Riggle.Point)i, "Fit Riggle dots to mesh");
                     if (!rig.FitPointsToMeshBounds())
                         Debug.LogWarning("Riggle: no MeshFilter+MeshRenderer sources to fit to.", rig);
                     EditorUtility.SetDirty(rig);
@@ -74,7 +78,7 @@ namespace Docky.RiggleTools.Editor
                     Vector3 edited = EditorGUILayout.Vector3Field(point.ToString(), rig.GetLocal(point));
                     if (EditorGUI.EndChangeCheck())
                     {
-                        Undo.RecordObject(rig, "Edit Riggle landmark");
+                        RecordPointUndo(rig, point, "Edit Riggle landmark");
                         rig.SetLocal(point, edited);
                         EditorUtility.SetDirty(rig);
                         SceneView.RepaintAll();
@@ -87,6 +91,7 @@ namespace Docky.RiggleTools.Editor
             if (GUILayout.Button("BAKE RIGGLE  •  Bones + Skinning", GUILayout.Height(32)))
             {
                 placing = false;
+                deformation?.StopPreview();
                 RiggleBuilder.Bake(rig);
                 SceneView.RepaintAll();
             }
@@ -97,8 +102,49 @@ namespace Docky.RiggleTools.Editor
                     if (GUILayout.Button("Select generated skeleton"))
                         Selection.activeGameObject = rig.GeneratedBones.gameObject;
                     if (GUILayout.Button("Restore original meshes / Clear"))
-                        RiggleBuilder.Clear(rig);
+                    { deformation?.StopPreview(); RiggleBuilder.Clear(rig); GUIUtility.ExitGUI(); }
                 }
+                EditorGUILayout.Space(8);
+                EditorGUILayout.LabelField("Generated character", EditorStyles.boldLabel);
+                if (GUILayout.Button("Save skinned character prefab"))
+                { deformation?.StopPreview(); EditorGUIUtility.PingObject(RigglePrefabExporter.Save(rig)); }
+                var poseAnimator = rig.GetComponent<Animator>();
+                bool canShowPoses = poseAnimator && poseAnimator.avatar && poseAnimator.avatar.isHuman;
+                using (new EditorGUI.DisabledScope(!canShowPoses || EditorApplication.isPlaying))
+                    if (GUILayout.Button("Build / refresh visible pose row to the right"))
+                    { deformation?.StopPreview(); RigglePoseGalleryBuilder.Rebuild(rig); }
+                if (!canShowPoses) EditorGUILayout.HelpBox("Bake with Try Humanoid Avatar to enable the pose tests.", MessageType.Info);
+                var gallery = rig.GetComponent<RigglePoseGallery>();
+                if (gallery && gallery.generatedRow)
+                {
+                    bool visible = EditorGUILayout.Toggle("Show pose tests", gallery.visible);
+                    bool compare = gallery.correctiveRow && EditorGUILayout.Toggle("Compare corrections", gallery.compareCorrectives);
+                    if (visible != gallery.visible || compare != gallery.compareCorrectives)
+                    {
+                        Undo.RecordObject(gallery, "Toggle pose tests"); Undo.RecordObject(gallery.generatedRow.gameObject, "Toggle pose tests");
+                        if (gallery.correctiveRow) Undo.RecordObject(gallery.correctiveRow.gameObject, "Toggle corrective tests");
+                        gallery.visible = visible; gallery.compareCorrectives = compare; gallery.ApplyVisibility();
+                        EditorUtility.SetDirty(gallery);
+                    }
+                }
+                var modes = rig.GetComponentInChildren<ControlRig.ControlRigModes>();
+                if (modes)
+                {
+                    EditorGUILayout.LabelField("IK / FK — preserve current pose", EditorStyles.boldLabel);
+                    for (int i = 0; i < modes.limbs.Length; i++)
+                    {
+                        var limb = modes.limbs[i];
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            EditorGUILayout.LabelField(limb.label + " · " + limb.mode);
+                            if (GUILayout.Button(limb.mode == ControlRig.ControlRigModes.Mode.IK ? "Switch to FK" : "Switch to IK"))
+                                ControlRig.ControlRigModesSetup.Switch(modes, i, limb.mode == ControlRig.ControlRigModes.Mode.IK ? ControlRig.ControlRigModes.Mode.FK : ControlRig.ControlRigModes.Mode.IK);
+                            if (GUILayout.Button("Select control", GUILayout.Width(100)))
+                                Selection.activeTransform = limb.mode == ControlRig.ControlRigModes.Mode.IK ? limb.ik.data.target : limb.fk[0];
+                        }
+                    }
+                }
+                if (rig.Assembly == Riggle.AssemblyMode.SmoothSkin) deformation?.Draw();
                 if (GUILayout.Button("Validate baked mesh weights and bind poses"))
                     RiggleDiagnostics.Validate(rig);
                 EditorGUILayout.HelpBox(
@@ -114,11 +160,20 @@ namespace Docky.RiggleTools.Editor
                 MessageType.None);
         }
 
+        internal static void RecordPointUndo(Riggle rig, Riggle.Point point, string label)
+        {
+            Undo.RecordObject(rig, label);
+            var refs = rig.GetComponent<RiggleReferencePoints>();var driven = refs ? refs.Driven(point) : null;
+            if (driven) Undo.RecordObject(driven.TryGetComponent<RiggleOriginReference>(out var origin) ? (UnityEngine.Object)origin : driven, label);
+        }
+
         private void OnSceneGUI()
         {
             var rig = (Riggle)target;
             if (!rig) return;
+            if (rig.Assembly == Riggle.AssemblyMode.SmoothSkin && deformation != null && deformation.SceneGUI()) return;
             rig.EnsurePoints();
+            RiggleAppendageBuilder.DrawGuides(rig);
             DrawReferenceSkeleton(rig);
 
             Event evt = Event.current;
@@ -146,7 +201,7 @@ namespace Docky.RiggleTools.Editor
                     {
                         Vector3 newLocal = rig.transform.InverseTransformPoint(ray.GetPoint(distance));
                         newLocal.z = old.z;
-                        Undo.RecordObject(rig, "Place Riggle landmark");
+                        RecordPointUndo(rig, selected, "Place Riggle landmark");
                         rig.SetLocal(selected, newLocal);
                         EditorUtility.SetDirty(rig);
                         placing = false;
@@ -166,7 +221,7 @@ namespace Docky.RiggleTools.Editor
             Vector3 changedWorld = Handles.PositionHandle(world, orientation);
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(rig, "Move Riggle landmark");
+                RecordPointUndo(rig, selected, "Move Riggle landmark");
                 rig.SetLocal(selected, rig.transform.InverseTransformPoint(changedWorld));
                 EditorUtility.SetDirty(rig);
             }

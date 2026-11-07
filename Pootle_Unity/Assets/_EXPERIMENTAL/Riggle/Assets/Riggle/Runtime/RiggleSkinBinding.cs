@@ -7,7 +7,7 @@ namespace Docky.RiggleTools
     [DisallowMultipleComponent, RequireComponent(typeof(MeshFilter))]
     public sealed class RiggleSkinBinding : MonoBehaviour
     {
-        public enum Part { Automatic, Torso, Head, LeftArm, RightArm, LeftHand, RightHand, LeftLeg, RightLeg, LeftFoot, RightFoot, Hips }
+        public enum Part { Automatic, Torso, Head, LeftArm, RightArm, LeftHand, RightHand, LeftLeg, RightLeg, LeftFoot, RightFoot, Hips, LeftEar, RightEar, Tail, LeftWing, RightWing }
         [Serializable]
         public struct Island
         {

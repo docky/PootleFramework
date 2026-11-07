@@ -66,5 +66,70 @@ namespace Docky.RiggleTools.Tests
                 Assert.That(Quaternion.Angle(original[i], r.headRig.data.constrainedObject.rotation), Is.GreaterThan(5));
             }
         }
+        [UnityTest] public IEnumerator CorrectiveShapesFollowLiveFkBendsAndReleaseAtRest()
+        {
+            foreach (var rig in rigs)
+            {
+                var driver = rig.GetComponent<RiggleCorrectives>();
+                Assert.That(driver.bindings.Length, Is.EqualTo(4));
+                foreach (var binding in driver.bindings) Assert.That(binding.skin.GetBlendShapeWeight(binding.Index), Is.EqualTo(0).Within(.001));
+                var modes = rig.GetComponentInChildren<ControlRigModes>();
+                var bindingLeft = driver.bindings.First(b => b.bone == modes.limbs[0].ik.data.root);
+                modes.SwitchMode(0, ControlRigModes.Mode.FK);
+                modes.limbs[0].fk[0].rotation = bindingLeft.bone.parent.rotation * bindingLeft.restRotation * Quaternion.AngleAxis(65, bindingLeft.axis);
+            }
+            yield return null; yield return null;
+            foreach (var rig in rigs)
+            {
+                var driver = rig.GetComponent<RiggleCorrectives>(); var modes = rig.GetComponentInChildren<ControlRigModes>();
+                var binding = driver.bindings.First(b => b.bone == modes.limbs[0].ik.data.root);
+                Assert.That(binding.skin.GetBlendShapeWeight(binding.Index), Is.GreaterThan(50));
+                var on = new Mesh(); var off = new Mesh();
+                try
+                {
+                    binding.skin.BakeMesh(on, true); driver.enabled = false; binding.skin.BakeMesh(off, true);
+                    Assert.That(on.vertices.Zip(off.vertices,(a,b)=>Vector3.Distance(a,b)).Max(), Is.GreaterThan(.0001f));
+                    foreach (var b in driver.bindings) Assert.That(b.skin.GetBlendShapeWeight(b.Index), Is.Zero);
+                }
+                finally { Object.Destroy(on); Object.Destroy(off); }
+                driver.enabled = true;
+                modes.limbs[0].fk[0].rotation = binding.bone.parent.rotation * binding.restRotation;
+            }
+            yield return null; yield return null;
+            foreach (var rig in rigs)
+                foreach (var b in rig.GetComponent<RiggleCorrectives>().bindings)
+                    Assert.That(b.skin.GetBlendShapeWeight(b.Index), Is.EqualTo(0).Within(.001));
+        }
+        [UnityTest] public IEnumerator IkFkRoundTripPreservesEveryJointAndFkControlsDriveTheBones()
+        {
+            foreach(var rig in rigs)
+            {
+                var modes=rig.GetComponentInChildren<ControlRigModes>();
+                foreach(var limb in modes.limbs)
+                    limb.ik.data.target.position+=(limb.ik.data.root.position-limb.ik.data.tip.position).normalized*.15f+rig.transform.up*.05f;
+            }
+            yield return null; yield return null;
+            foreach(var rig in rigs)
+            {
+                var modes=rig.GetComponentInChildren<ControlRigModes>();
+                for(int i=0;i<modes.limbs.Length;i++)
+                {
+                    var limb=modes.limbs[i]; var bones=new[]{limb.ik.data.root,limb.ik.data.mid,limb.ik.data.tip};
+                    var positions=bones.Select(t=>t.position).ToArray();var rotations=bones.Select(t=>t.rotation).ToArray();
+                    modes.SwitchMode(i,ControlRigModes.Mode.FK);
+                    yield return null;yield return null;
+                    for(int b=0;b<3;b++)
+                    {Assert.That(Vector3.Distance(positions[b],bones[b].position),Is.LessThan(.002f),limb.label+" IK to FK position");Assert.That(Quaternion.Angle(rotations[b],bones[b].rotation),Is.LessThan(.2f),rig.name+" "+limb.label+" bone "+b+" IK to FK rotation before="+rotations[b].eulerAngles+" after="+bones[b].rotation.eulerAngles+" control="+limb.fk[b].rotation.eulerAngles);}
+                    limb.fk[1].localRotation*=Quaternion.Euler(12,7,5);
+                    yield return null;yield return null;
+                    Assert.That(Quaternion.Angle(rotations[1],bones[1].rotation),Is.GreaterThan(5));
+                    positions=bones.Select(t=>t.position).ToArray();rotations=bones.Select(t=>t.rotation).ToArray();
+                    modes.SwitchMode(i,ControlRigModes.Mode.IK);
+                    yield return null;yield return null;
+                    for(int b=0;b<3;b++)
+                    {Assert.That(Vector3.Distance(positions[b],bones[b].position),Is.LessThan(.002f),limb.label+" FK to IK position");Assert.That(Quaternion.Angle(rotations[b],bones[b].rotation),Is.LessThan(.2f),limb.label+" FK to IK rotation");}
+                }
+            }
+        }
     }
 }

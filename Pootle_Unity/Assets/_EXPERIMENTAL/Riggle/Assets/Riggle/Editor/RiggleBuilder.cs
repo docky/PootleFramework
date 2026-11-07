@@ -10,7 +10,7 @@ namespace Docky.RiggleTools.Editor
     /// <summary>Pure editor-side generation. No edit-mode Update/OnValidate/ExecuteAlways.</summary>
     internal static class RiggleBuilder
     {
-        internal enum Region { Torso, Head, Arm, Leg }
+        internal enum Region { Torso, Head, Arm, Leg, Appendage }
 
         internal sealed class BoneSpec
         {
@@ -23,6 +23,9 @@ namespace Docky.RiggleTools.Editor
             public bool skinned;
             public Transform transform;
             public int skinIndex = -1;
+            public string twistSource;
+            public string appendage;
+            public float radiusFraction;
 
             public BoneSpec(string name, string parent, Vector3 position, Vector3 end,
                 Region region, HumanBodyBones human, bool skinned = true)
@@ -40,8 +43,12 @@ namespace Docky.RiggleTools.Editor
         public static void Bake(Riggle rig)
         {
             if (!CheckInput(rig)) return;
-            var sources = rig.CollectSourceMeshes();
+            var rigid = rig.Assembly != Riggle.AssemblyMode.SmoothSkin ? RiggleRigidParts.Plan(rig) : null;
+            var sources = RiggleRigidParts.Sources(rig);
             List<BoneSpec> bones = MakeBoneSpecs(rig);
+            // Reject topology/bone changes before touching the previous generated hierarchy.
+            foreach (var source in rigid == null ? sources : new List<MeshFilter>())
+                RiggleDeformationTools.Validate(source.sharedMesh, source.GetComponent<RiggleMeshEdits>(), bones.ConvertAll(b => b.name));
             Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
             Undo.SetCurrentGroupName("Riggle: generate skeleton and skinning");
@@ -61,16 +68,21 @@ namespace Docky.RiggleTools.Editor
                     spec.transform = bone;
                     boneLookup.Add(spec.name, bone);
                 }
+                ConfigureTwists(rig, bones, boneLookup);
 
                 List<BoneSpec> deformBones = bones.FindAll(x => x.skinned);
                 for (int i = 0; i < deformBones.Count; i++) deformBones[i].skinIndex = i;
                 string folder = PrepareFolder(rig.AssetFolder);
                 string baseName = SafeFileName(rig.gameObject.name);
 
-                foreach (var filter in sources)
+                if (rigid != null) RiggleRigidParts.Build(rig, rigid, deformBones, boneLookup, folder, baseName);
+                foreach (var filter in rigid == null ? sources : new List<MeshFilter>())
                 {
                     MeshRenderer originalRenderer = filter.GetComponent<MeshRenderer>();
                     Mesh skinnedCopy = RiggleSkinner.BuildSkinnedMesh(rig, filter, deformBones);
+                    var edits = filter.GetComponent<RiggleMeshEdits>();
+                    RiggleDeformationTools.ApplyWeights(filter.sharedMesh, skinnedCopy, deformBones.ConvertAll(b => b.name).ToArray(), edits);
+                    RiggleDeformationTools.ApplyShapes(skinnedCopy, edits);
                     string newAssetPath = AssetDatabase.GenerateUniqueAssetPath(
                         folder + "/" + baseName + "_" + SafeFileName(filter.gameObject.name) + "_Riggle.asset");
                     AssetDatabase.CreateAsset(skinnedCopy, newAssetPath);
@@ -85,7 +97,7 @@ namespace Docky.RiggleTools.Editor
                     skin.bones = deformBones.ConvertAll(x => x.transform).ToArray();
                     skin.rootBone = boneLookup["Riggle_Hips"];
                     skin.quality = SkinQuality.Bone4;
-                    skin.localBounds = skinnedCopy.bounds;
+                    skin.localBounds = RiggleDeformationTools.ExpandedBounds(skinnedCopy, edits);
                     skin.updateWhenOffscreen = true; // Safe defaults for exaggerated motion and prototyping.
                     skin.shadowCastingMode = originalRenderer.shadowCastingMode;
                     skin.receiveShadows = originalRenderer.receiveShadows;
@@ -103,12 +115,16 @@ namespace Docky.RiggleTools.Editor
                 }
 
                 if (rig.TryHumanoid) TryMakeHumanoid(rig, bones, folder, baseName);
+                RiggleAppendageBuilder.BuildControls(rig, bones, boneLookup);
+                if (rigid != null) RiggleRigidParts.Attach(rig, rigid, boneLookup);
                 if (rig.GetComponentInChildren<ControlRig.Rig_References>())
                 {
                     if (!rig.BakedAvatar) throw new InvalidOperationException("Cannot reconnect existing controls without a valid Humanoid Avatar.");
                     ControlRig.ControlRigBuilder.Build(rig.GetComponent<Animator>());
                 }
+                RiggleDeformationTools.Bind(rig);
                 AssetDatabase.SaveAssets();
+                RigglePrefabExporter.Save(rig);
                 EditorUtility.SetDirty(rig);
                 Debug.Log($"Riggle: created {deformBones.Count} deform bones and {sources.Count} skinned mesh(es) on '{rig.name}'.", rig);
             }
@@ -129,6 +145,9 @@ namespace Docky.RiggleTools.Editor
         private static void Clear(Riggle rig, bool preserveControls)
         {
             Undo.RecordObject(rig, "Clear Riggle bake");
+            RiggleRigidParts.RestoreAttachments(rig);
+            var appendages = rig.GetComponent<RiggleAppendageRig>();
+            if (appendages) { Undo.RecordObject(appendages, "Clear appendage controls"); appendages.chains = Array.Empty<RiggleAppendageRig.Chain>(); }
             if (!preserveControls)
             {
                 var builder = rig.GetComponent<UnityEngine.Animations.Rigging.RigBuilder>();
@@ -166,6 +185,10 @@ namespace Docky.RiggleTools.Editor
             if (rig.GeneratedBones) Undo.DestroyObjectImmediate(rig.GeneratedBones.gameObject);
             rig.GeneratedBones = null;
             rig.BakedAvatar = null;
+            var correctives = rig.GetComponent<RiggleCorrectives>();
+            if (correctives) { Undo.RecordObject(correctives, "Clear corrective bindings"); correctives.bindings = Array.Empty<RiggleCorrectives.Binding>(); }
+            var twists = rig.GetComponent<RiggleTwistDistribution>();
+            if (twists) { Undo.RecordObject(twists, "Clear twist bindings"); twists.chains = Array.Empty<RiggleTwistDistribution.Chain>(); }
             EditorUtility.SetDirty(rig);
         }
 
@@ -187,8 +210,8 @@ namespace Docky.RiggleTools.Editor
                 Debug.LogError("Riggle asset folder must be under Assets/.", rig);
                 return false;
             }
-            var filters = rig.CollectSourceMeshes();
-            if (filters.Count == 0)
+            var filters = RiggleRigidParts.Sources(rig);
+            if (filters.Count == 0 && !(rig.Assembly != Riggle.AssemblyMode.SmoothSkin && rig.AttachedObjects.Count > 0))
             {
                 Debug.LogError("Riggle needs at least one MeshFilter + MeshRenderer. You may explicitly assign source meshes in the component.", rig);
                 return false;
@@ -274,7 +297,33 @@ namespace Docky.RiggleTools.Editor
 
             AddSide(b, rig, true, upperChest, pelvis, hipHalfWidth);
             AddSide(b, rig, false, upperChest, pelvis, hipHalfWidth);
+            RiggleAppendageBuilder.AddSpecs(rig, b);
+            if (rig.DistributeTwist)
+            {
+                foreach (var segment in b.FindAll(x => x.name.EndsWith("UpperArm") || x.name.EndsWith("LowerArm") || x.name.EndsWith("UpperLeg") || x.name.EndsWith("LowerLeg")))
+                    for (int i = 1; i <= 3; i++)
+                        b.Add(new BoneSpec(segment.name + "_Twist" + i, segment.name,
+                            Vector3.Lerp(segment.position, segment.end, i / 3f), segment.end,
+                            segment.region, HumanBodyBones.LastBone) { twistSource = segment.name });
+            }
             return b;
+        }
+
+        private static void ConfigureTwists(Riggle rig, List<BoneSpec> specs, Dictionary<string, Transform> bones)
+        {
+            var distribution = rig.GetComponent<RiggleTwistDistribution>() ?? Undo.AddComponent<RiggleTwistDistribution>(rig.gameObject);
+            Undo.RecordObject(distribution, "Bind twist distribution");
+            var chains = new List<RiggleTwistDistribution.Chain>();
+            foreach (var segment in specs.FindAll(s => s.twistSource == null && bones.ContainsKey(s.name + "_Twist1")))
+            {
+                var end = specs.Find(s => s.parent == segment.name && s.twistSource == null);
+                if (end == null) continue;
+                chains.Add(new RiggleTwistDistribution.Chain { start = segment.transform, end = end.transform,
+                    axis = segment.transform.InverseTransformDirection(segment.end - segment.position).normalized,
+                    restRelative = Quaternion.Inverse(segment.transform.rotation) * end.transform.rotation,
+                    twists = new[] { bones[segment.name + "_Twist1"], bones[segment.name + "_Twist2"], bones[segment.name + "_Twist3"] } });
+            }
+            distribution.chains = chains.ToArray();
         }
 
         private static void AddSide(List<BoneSpec> b, Riggle rig, bool left,
@@ -342,6 +391,10 @@ namespace Docky.RiggleTools.Editor
                 // Include only the rig root and generated skeleton, not unrelated
                 // MeshFilter objects, skinned renderers, or accessory transforms.
                 AddSingleSkeletonBone(rig.transform, skeleton);
+                // Avatar reference poses are character-local, independent of scene placement.
+                var referenceRoot = skeleton[0];
+                referenceRoot.position = Vector3.zero; referenceRoot.rotation = Quaternion.identity;
+                skeleton[0] = referenceRoot;
                 AddSkeleton(rig.GeneratedBones, skeleton);
                 var description = new HumanDescription
                 {
@@ -356,7 +409,15 @@ namespace Docky.RiggleTools.Editor
                     feetSpacing = 0f,
                     hasTranslationDoF = false
                 };
-                Avatar avatar = AvatarBuilder.BuildHumanAvatar(rig.gameObject, description);
+                Avatar avatar;
+                Vector3 scenePosition = rig.transform.localPosition;
+                Quaternion sceneRotation = rig.transform.localRotation;
+                try
+                {
+                    rig.transform.localPosition = Vector3.zero; rig.transform.localRotation = Quaternion.identity;
+                    avatar = AvatarBuilder.BuildHumanAvatar(rig.gameObject, description);
+                }
+                finally { rig.transform.localPosition = scenePosition; rig.transform.localRotation = sceneRotation; }
                 if (!avatar || !avatar.isValid || !avatar.isHuman)
                 {
                     if (avatar) UnityEngine.Object.DestroyImmediate(avatar);

@@ -1,0 +1,16 @@
+.rig-helper { flex-grow: 1; background-color: #20262e; color: #e8edf2; padding: 16px; }
+.helper-title { font-size: 23px; -unity-font-style: bold; margin-bottom: 5px; }
+.helper-subtitle { white-space: normal; color: #b4c8da; margin-bottom: 14px; }
+.step-row { flex-direction: row; flex-wrap: wrap; margin-bottom: 12px; }
+.step-button { flex-grow: 1; margin-right: 4px; margin-bottom: 4px; min-height: 30px; }
+.step-active { background-color: #367ca5; color: #ffffff; }
+.helper-body { flex-grow: 1; margin-top: 8px; margin-bottom: 10px; }
+.section-title { font-size: 17px; -unity-font-style: bold; margin-bottom: 10px; }
+.copy { white-space: normal; margin-bottom: 12px; }
+.action { min-height: 29px; margin-bottom: 7px; }
+.primary { background-color: #367ca5; color: #ffffff; }
+.point-row { padding-top: 5px; padding-bottom: 7px; border-bottom-width: 1px; border-bottom-color: #3b4652; }
+.point-status { color: #a6d6be; margin-left: 4px; margin-bottom: 4px; }
+.helper-footer { flex-direction: row; margin-top: 10px; }
+.helper-footer Button { flex-grow: 1; min-height: 32px; margin-right: 6px; }
+.helper-message { white-space: normal; color: #f0d597; margin-top: 8px; margin-bottom: 7px; }

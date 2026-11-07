@@ -9,6 +9,7 @@ namespace Docky.RiggleTools.Editor
             int meshes = 0;
             int vertices = 0;
             int problems = 0;
+            var visited = new System.Collections.Generic.HashSet<SkinnedMeshRenderer>();
             foreach (var item in rig.BakedSources)
             {
                 if (item == null || !item.baked || !item.source)
@@ -19,6 +20,7 @@ namespace Docky.RiggleTools.Editor
                 }
 
                 SkinnedMeshRenderer skin = item.baked;
+                if (!visited.Add(skin)) continue;
                 Mesh mesh = skin.sharedMesh;
                 if (!mesh || skin.bones == null)
                 {

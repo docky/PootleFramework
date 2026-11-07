@@ -45,6 +45,8 @@ namespace Docky.RiggleTools
         [SerializeField, HideInInspector] private Vector3[] landmarks = new Vector3[0];
 
         [Header("Skeleton proportions")]
+        [SerializeField, Tooltip("Adds three weighted twist helpers to each upper/lower arm and leg. Rebake after changing.")]
+        private bool distributeTwist = true;
         [Tooltip("Approximate hip width relative to shoulder width. This is only an initial guess for the hip joints.")]
         [SerializeField, Range(0.2f, 1.2f)] private float hipToShoulderWidth = 0.62f;
         [Tooltip("Fraction of neck-to-crown distance to place the head joint (not the tip of the head).")]
@@ -68,6 +70,28 @@ namespace Docky.RiggleTools
         [SerializeField, Range(0.02f, 0.24f)] private float armRadius = 0.072f;
         [SerializeField, Range(0.03f, 0.3f)] private float legRadius = 0.095f;
         [SerializeField, Range(0.05f, 0.4f)] private float headRadius = 0.15f;
+
+        public enum AssemblyMode { SmoothSkin, NamedRigidParts, NamedBodyParts }
+        [Header("Assembly")]
+        [SerializeField, Tooltip("Named Rigid Parts uses one bone per part. Named Body Parts lets chunks bend within their own anatomical chain only. Marked accessories are parented instead.")]
+        private AssemblyMode assemblyMode;
+        [SerializeField, Tooltip("In Named Body Parts, keep each arm/leg/ear/tail/wing chunk as its own skinned renderer for later replacement. Other chunks still merge unless their Riggle Body Part component requests separation.")]
+        private bool separateLimbMeshes;
+        [SerializeField, Tooltip("Marker for an accessory that stays separate, e.g. Head^ Hat. May be changed; leave empty to disable attachments.")]
+        private string attachmentSymbol = "^";
+        [Serializable] public sealed class AttachedObject
+        {
+            public Transform source, originalParent;
+            public int siblingIndex;
+            public Vector3 localPosition, localScale;
+            public Quaternion localRotation;
+            public string boneName;
+        }
+        [SerializeField, HideInInspector] private List<AttachedObject> attachedObjects = new List<AttachedObject>();
+        public AssemblyMode Assembly => assemblyMode;
+        public bool SeparateLimbMeshes => separateLimbMeshes;
+        public string AttachmentSymbol => attachmentSymbol;
+        public List<AttachedObject> AttachedObjects => attachedObjects;
 
         [Header("Bake")]
         [Tooltip("Optional MeshFilters to bind. Empty = collect all ordinary MeshFilters in this character's children.")]
@@ -97,6 +121,7 @@ namespace Docky.RiggleTools
         public MeshFilter[] SourceMeshes { get { return sourceMeshes; } }
         public string AssetFolder { get { return assetFolder; } }
         public bool TryHumanoid { get { return tryHumanoid; } }
+        public bool DistributeTwist => distributeTwist;
         public Transform GeneratedBones { get { return generatedBones; } set { generatedBones = value; } }
         public List<BakedSource> BakedSources { get { return bakedSources; } }
         public Avatar BakedAvatar { get { return bakedAvatar; } set { bakedAvatar = value; } }
@@ -110,6 +135,10 @@ namespace Docky.RiggleTools
         public Vector3 GetLocal(Point point)
         {
             EnsurePoints();
+            var refs = GetComponent<RiggleReferencePoints>();
+            if (refs && refs.TryGetLocal(this, point, out var referenced)) return referenced;
+            int opposite = RiggleReferencePoints.Opposite((int)point);
+            if (refs && refs.useReferences && !refs.inferMissingSide && opposite >= 0 && refs.Assigned((Point)opposite)) return landmarks[(int)point];
             if (mirrorRight && IsRightPoint(point))
             {
                 var left = landmarks[(int)ToLeftPoint(point)];
@@ -137,9 +166,21 @@ namespace Docky.RiggleTools
         public void SetLocal(Point point, Vector3 localPosition)
         {
             EnsurePoints();
-            if (mirrorRight && IsRightPoint(point))
+            var refs = GetComponent<RiggleReferencePoints>();
+            var driven = refs ? refs.Driven(point) : null;
+            if (driven)
             {
-                var pelvisX = landmarks[(int)Point.Pelvis].x;
+                if (!refs.Assigned(point)) localPosition.x = 2 * GetLocal(Point.Pelvis).x - localPosition.x;
+                if (driven.TryGetComponent<RiggleOriginReference>(out var origin))
+                    origin.localOffset = driven.InverseTransformPoint(transform.TransformPoint(localPosition));
+                else driven.position = transform.TransformPoint(localPosition);
+                return;
+            }
+            int opposite = RiggleReferencePoints.Opposite((int)point);
+            bool manualMissing = refs && refs.useReferences && !refs.inferMissingSide && opposite >= 0 && refs.Assigned((Point)opposite);
+            if (mirrorRight && IsRightPoint(point) && !manualMissing)
+            {
+                var pelvisX = GetLocal(Point.Pelvis).x;
                 landmarks[(int)ToLeftPoint(point)] = new Vector3(2f * pelvisX - localPosition.x, localPosition.y, localPosition.z);
             }
             else
@@ -198,6 +239,18 @@ namespace Docky.RiggleTools
                 var left = landmarks[i - (int)Point.RightShoulder + (int)Point.LeftShoulder];
                 landmarks[i] = new Vector3(2f * cx - left.x, left.y, left.z);
             }
+            var refs = GetComponent<RiggleReferencePoints>();
+            if (refs && refs.useReferences)
+                for (int i = 0; i < PointCount; i++)
+                {
+                    var marker = refs.Assigned((Point)i);
+                    if (marker)
+                    {
+                        if (marker.TryGetComponent<RiggleOriginReference>(out var origin))
+                            origin.localOffset = marker.InverseTransformPoint(transform.TransformPoint(landmarks[i]));
+                        else marker.position = transform.TransformPoint(landmarks[i]);
+                    }
+                }
             return true;
         }
 
@@ -227,6 +280,7 @@ namespace Docky.RiggleTools
             return filter != null && filter.sharedMesh != null &&
                    (filter.transform == transform || filter.transform.IsChildOf(transform)) &&
                    filter.GetComponent<MeshRenderer>() != null &&
+                   filter.GetComponentInParent<RiggleImportedSource>() == null &&
                    (generatedBones == null || !filter.transform.IsChildOf(generatedBones)) &&
                    filter.GetComponent<SkinnedMeshRenderer>() == null;
         }

@@ -214,6 +214,81 @@ namespace Docky.RiggleTools.Tests
             }
         }
 
+        [Test] public void GeneratedPrefabsAreSelfContainedSkinnedCharacters()
+        {
+            foreach (var rig in rigs)
+            {
+                string path = rig.AssetFolder + "/" + rig.name + "_Skinned.prefab";
+                var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                Assert.That(prefab, Is.Not.Null, path);
+                var copy = Object.Instantiate(prefab);
+                try
+                {
+                    Assert.That(copy.GetComponent<Animator>().avatar.isHuman, Is.True);
+                    Assert.That(copy.GetComponent<Riggle>(), Is.Null);
+                    Assert.That(copy.GetComponentsInChildren<MeshFilter>(), Is.Empty);
+                    Assert.That(copy.GetComponentsInChildren<SkinnedMeshRenderer>().Length, Is.EqualTo(rig.BakedSources.Count));
+                    foreach (var skin in copy.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    {
+                        Assert.That(UnityEditor.AssetDatabase.Contains(skin.sharedMesh), Is.True);
+                        foreach (var bone in skin.bones) Assert.That(bone && bone.IsChildOf(copy.transform), Is.True);
+                    }
+                    var modes = copy.GetComponentInChildren<ControlRig.ControlRigModes>();
+                    Assert.That(modes.limbs.Length, Is.EqualTo(4));
+                    foreach (var limb in modes.limbs) foreach (var fk in limb.fk) Assert.That(fk.IsChildOf(copy.transform), Is.True);
+                }
+                finally { Object.DestroyImmediate(copy); }
+            }
+        }
+
+        [Test] public void TwistRollDistributesByThirdsAndHasRealSkinInfluence()
+        {
+            foreach (var rig in rigs)
+            {
+                var distribution = rig.GetComponent<RiggleTwistDistribution>();
+                Assert.That(distribution.chains.Length, Is.EqualTo(8));
+                foreach (var chain in distribution.chains)
+                {
+                    var rest = chain.end.localRotation;
+                    try
+                    {
+                        chain.end.rotation = chain.start.rotation * Quaternion.AngleAxis(90, chain.axis) * chain.restRelative;
+                        distribution.Evaluate();
+                        for (int i = 0; i < 3; i++)
+                            Assert.That(Quaternion.Angle(chain.twists[i].localRotation, Quaternion.AngleAxis(30*(i+1),chain.axis)), Is.LessThan(.05f));
+                        foreach (var source in rig.BakedSources) AssertClosedSeams(source.baked);
+                    }
+                    finally { chain.end.localRotation = rest; distribution.Evaluate(); }
+                }
+                var weighted = new System.Collections.Generic.HashSet<Transform>();
+                foreach (var skin in rig.BakedSources.Select(s=>s.baked))
+                    foreach (var w in skin.sharedMesh.boneWeights)
+                    {
+                        if(w.weight0>0)weighted.Add(skin.bones[w.boneIndex0]); if(w.weight1>0)weighted.Add(skin.bones[w.boneIndex1]);
+                        if(w.weight2>0)weighted.Add(skin.bones[w.boneIndex2]); if(w.weight3>0)weighted.Add(skin.bones[w.boneIndex3]);
+                    }
+                foreach (var chain in distribution.chains) foreach (var twist in chain.twists) Assert.That(weighted.Contains(twist), Is.True, twist.name);
+            }
+        }
+
+        [Test] public void GalleryHasSixLabelledSkinnedPosesToTheRightOfEachSource()
+        {
+            foreach (var rig in rigs)
+            {
+                var gallery=rig.GetComponent<RigglePoseGallery>(); Assert.That(gallery && gallery.generatedRow, Is.True);
+                var models=gallery.generatedRow.GetComponentsInChildren<Animator>(true);
+                Assert.That(models.Length,Is.EqualTo(6));
+                Assert.That(gallery.generatedRow.GetComponentsInChildren<TextMesh>(true).Length,Is.EqualTo(6));
+                foreach(var model in models)
+                {
+                    Assert.That(model.transform.position.x,Is.GreaterThan(rig.transform.position.x));
+                    Assert.That(model.enabled,Is.False);
+                    Assert.That(model.GetComponent<UnityEngine.Animations.Rigging.RigBuilder>().enabled,Is.False);
+                    Assert.That(model.GetComponentsInChildren<SkinnedMeshRenderer>().Length,Is.EqualTo(rig.BakedSources.Count));
+                }
+            }
+        }
+
         static void AssertClosedSeams(SkinnedMeshRenderer skin)
         {
             var topology = new RiggleTopology(skin.sharedMesh);

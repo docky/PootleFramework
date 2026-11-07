@@ -17,7 +17,7 @@ namespace Docky.RiggleTools.Editor
         }
 
         public static Mesh BuildSkinnedMesh(Riggle rig, MeshFilter source,
-            List<RiggleBuilder.BoneSpec> deformBones)
+            List<RiggleBuilder.BoneSpec> deformBones, bool useSourceBinding = true)
         {
             Mesh copy = UnityEngine.Object.Instantiate(source.sharedMesh);
             copy.name = source.sharedMesh.name + "_RiggleSkinned";
@@ -28,7 +28,8 @@ namespace Docky.RiggleTools.Editor
                 int vertexCount = vertices.Length;
                 if (vertexCount == 0) throw new InvalidOperationException("Mesh has no vertices: " + source.name);
                 var topology = new RiggleTopology(copy);
-                var parts = topology.GetParts(source.GetComponent<RiggleSkinBinding>());
+                var parts = useSourceBinding ? topology.GetParts(source.GetComponent<RiggleSkinBinding>())
+                    : new RiggleSkinBinding.Part[vertexCount];
 
                 float characterHeight = Mathf.Max(0.05f,
                     Vector3.Distance(rig.GetWorld(Riggle.Point.HeadTop),
@@ -42,6 +43,7 @@ namespace Docky.RiggleTools.Editor
                     if (spec.region == RiggleBuilder.Region.Head) fraction = rig.HeadRadius;
                     else if (spec.region == RiggleBuilder.Region.Arm) fraction = rig.ArmRadius;
                     else if (spec.region == RiggleBuilder.Region.Leg) fraction = rig.LegRadius;
+                    if (spec.radiusFraction > 0) fraction = spec.radiusFraction;
                     capsules[i] = new Capsule
                     {
                         a = spec.position,
@@ -68,7 +70,7 @@ namespace Docky.RiggleTools.Editor
                     float best = 0;
                     for (int i = 0; i < boneCount; i++)
                     {
-                        if (!Allows(parts[v], deformBones[i].human)) continue;
+                        if (deformBones[i].twistSource != null || !Allows(parts[v], deformBones[i])) continue;
                         Capsule c = capsules[i];
                         float distance = DistanceToSegment(world, c.a, c.b);
                         // Radius offsets govern blending without letting short bones dominate
@@ -100,12 +102,13 @@ namespace Docky.RiggleTools.Editor
                             if (values[v * boneCount + b] > values[v * boneCount + owners[v]]) owners[v] = b;
                     for (int b = 0; b < boneCount; b++)
                     {
+                        if (deformBones[b].twistSource != null) continue;
                         var seeds = new float[vertexCount];
                         for (int v = 0; v < vertexCount; v++)
                             seeds[v] = owners[v] == b ? DistanceToSegment(meshToWorld.MultiplyPoint3x4(vertices[v]), capsules[b].a, capsules[b].b) : float.PositiveInfinity;
                         var distances = graph.Distances(seeds);
                         for (int v = 0; v < vertexCount; v++)
-                            values[v * boneCount + b] = Allows(parts[v], deformBones[b].human) && !float.IsPositiveInfinity(distances[v])
+                            values[v * boneCount + b] = Allows(parts[v], deformBones[b]) && !float.IsPositiveInfinity(distances[v])
                                 ? Mathf.Pow(capsules[b].radius / (distances[v] + capsules[b].radius * smoothing), exponent) : 0;
                     }
                     for (int v = 0; v < vertexCount; v++)
@@ -123,6 +126,23 @@ namespace Docky.RiggleTools.Editor
                         rig.SurfaceSmoothSteps, rig.SurfaceSmoothAmount, topology);
 
                 topology.ShareSeamWeights(values, boneCount);
+
+                // Transfer each segment's influence along its roll chain, after anatomical solving.
+                for (int b = 0; b < boneCount; b++)
+                {
+                    int first = deformBones.FindIndex(s => s.twistSource == deformBones[b].name);
+                    if (first < 0) continue;
+                    Vector3 axis = deformBones[b].end - deformBones[b].position;
+                    for (int v = 0; v < vertexCount; v++)
+                    {
+                        int at = v * boneCount; float weight = values[at + b]; values[at + b] = 0;
+                        float t = Mathf.Clamp01(Vector3.Dot(meshToWorld.MultiplyPoint3x4(vertices[v]) - deformBones[b].position, axis) / Mathf.Max(.0000001f, axis.sqrMagnitude)) * 3;
+                        int lo = Mathf.Min(2, Mathf.FloorToInt(t)); float blend = t - lo;
+                        int a = lo == 0 ? b : first + lo - 1;
+                        values[at + a] += weight * (1 - blend);
+                        values[at + first + lo] += weight * blend;
+                    }
+                }
 
                 BoneWeight[] result = new BoneWeight[vertexCount];
                 for (int v = 0; v < vertexCount; v++)
@@ -161,7 +181,9 @@ namespace Docky.RiggleTools.Editor
                     float sum = wa + wb + wc + wd;
                     if (sum < 1e-10f)
                     {
-                        result[v] = new BoneWeight { boneIndex0 = 0, weight0 = 1 };
+                        int fallback = deformBones.FindIndex(spec => spec.twistSource == null && Allows(parts[v], spec));
+                        if (fallback < 0) throw new InvalidOperationException(source.name + ": no enabled bones match skin binding " + parts[v] + ".");
+                        result[v] = new BoneWeight { boneIndex0 = fallback, weight0 = 1 };
                         continue;
                     }
                     float inverse = 1f / sum;
@@ -242,11 +264,17 @@ namespace Docky.RiggleTools.Editor
             if (current != original) Array.Copy(current, original, current.Length);
         }
 
-        private static bool Allows(RiggleSkinBinding.Part part, HumanBodyBones bone)
+        private static bool Allows(RiggleSkinBinding.Part part, RiggleBuilder.BoneSpec spec)
         {
+            var bone = spec.human;
             switch (part)
             {
                 case RiggleSkinBinding.Part.Automatic: return true;
+                case RiggleSkinBinding.Part.LeftEar: return spec.appendage == "LeftEar";
+                case RiggleSkinBinding.Part.RightEar: return spec.appendage == "RightEar";
+                case RiggleSkinBinding.Part.Tail: return spec.appendage == "Tail";
+                case RiggleSkinBinding.Part.LeftWing: return spec.appendage == "LeftWing";
+                case RiggleSkinBinding.Part.RightWing: return spec.appendage == "RightWing";
                 case RiggleSkinBinding.Part.Torso: return bone == HumanBodyBones.Hips || bone == HumanBodyBones.Spine || bone == HumanBodyBones.Chest || bone == HumanBodyBones.UpperChest || bone == HumanBodyBones.Neck;
                 case RiggleSkinBinding.Part.Head: return bone == HumanBodyBones.Head;
                 case RiggleSkinBinding.Part.Hips: return bone == HumanBodyBones.Hips;

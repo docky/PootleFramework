@@ -30,8 +30,14 @@ namespace Docky.RiggleTools
             positions = new Vector3[bones.Length]; rotations = new Quaternion[bones.Length]; scales = new Vector3[bones.Length];
             for (int i = 0; i < bones.Length; i++)
             { positions[i] = bones[i].localPosition; rotations[i] = bones[i].localRotation; scales[i] = bones[i].localScale; }
-            handler = new HumanPoseHandler(animator.avatar, transform);
-            handler.GetHumanPose(ref pose);
+            var rootPosition = transform.position; var rootRotation = transform.rotation;
+            try
+            {
+                transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                handler = new HumanPoseHandler(animator.avatar, transform);
+                handler.GetHumanPose(ref pose);
+            }
+            finally { transform.SetPositionAndRotation(rootPosition, rootRotation); }
             restMuscles = (float[])pose.muscles.Clone();
             elapsed = 0;
         }
@@ -53,7 +59,15 @@ namespace Docky.RiggleTools
             Offset("Left Forearm Stretch", -(1 + Mathf.Sin(phase)) * .45f * strength);
             Offset("Right Forearm Stretch", -(1 - Mathf.Sin(phase)) * .45f * strength);
             Offset("Head Turn Left-Right", Mathf.Sin(phase * .5f) * .35f * strength);
-            handler.SetHumanPose(ref pose);
+            ApplyLocalPose(handler, ref pose, transform);
+        }
+        public static void ApplyLocalPose(HumanPoseHandler handler, ref HumanPose pose, Transform root)
+        {
+            // HumanPoseHandler applies body pose in world space. Exercise in the
+            // character frame so scene yaw does not reverse the apparent bend.
+            var position = root.position; var rotation = root.rotation;
+            try { root.SetPositionAndRotation(Vector3.zero, Quaternion.identity); handler.SetHumanPose(ref pose); }
+            finally { root.SetPositionAndRotation(position, rotation); }
         }
         void Offset(string name, float amount)
         {
