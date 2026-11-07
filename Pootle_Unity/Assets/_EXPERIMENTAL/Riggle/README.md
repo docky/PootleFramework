@@ -1,5 +1,7 @@
 # Riggle v0.1 — Unity landmark-to-skeleton tool
 
+For model delivery and automation, see the [model handoff sheet](MODEL_HANDOFF.md) and [model structure and one-button specification](MODEL_SPEC.md). The specification distinguishes current behavior from the proposed one-button workflow.
+
 **Purpose:** a quick, scene-authored biped skeleton and automatic skin bind for low-poly, cartoon, soft-vinyl and other strongly stylised characters. **No facial rig and no fingers.** Independent C# implementation: no Auto-Rig Pro scripts or other Blender add-on code are included.
 
 **Designed for:** Unity 2022.3+ / Unity 6, including URP. This project integration requires the included Ash Assets Control Rig and Unity Animation Rigging package. The project integration is compiled and exercised in Unity 6000.6.3f1. See the test-scene workflow below.
@@ -388,6 +390,8 @@ and FK controls, and excludes the authoring guide component.
 Riggle uses `Resources/Riggle Control Rig`, a prefab variant of the shared Control Rig. It removes unbound effectors while keeping hand/foot targets, poles, body controls and IK/FK switching. Animation Rigging component icons are hidden through the Scene Gizmos settings without hiding the actual controls. This Editor setting also hides those icons on non-Riggle rigs.
 
 The generated `ControlRigAnatomy` component estimates facing from toe-versus-heel reach around both ankles. Nearly symmetric feet fall back to +Z. Choose Positive Z or Negative Z explicitly for unusual feet, then Build / Refit Rig. Knee and elbow poles sit outside the limb reach to avoid crossing the target line during ordinary lifts.
+
+Humanoid reference poses calibrate the arms to a temporary T-pose, including models authored in an A-pose. The original skeleton pose, mesh bind poses and landmarks are restored after Avatar creation. This prevents retargeted forearm flexion from folding backwards or across the torso on lowered-arm source models. Gallery elbow bends use each forearm’s anatomical bend axis rather than a fixed local Y rotation.
 
 Humanoid reference poses exclude scene position/yaw. The muscle preview samples in character space, so rotating an example in the scene does not reverse its limb bends. This is separate from the visible pose gallery, whose elbow flexion now points the hands forwards.
 

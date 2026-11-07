@@ -1,0 +1,6 @@
+.panel { padding: 12px; flex-grow: 1; }
+.title { font-size: 20px; -unity-font-style: bold; margin-bottom: 8px; }
+.note { white-space: normal; margin-bottom: 10px; }
+.row { flex-direction: row; margin-top: 6px; margin-bottom: 6px; }
+.row > Button { flex-grow: 1; margin-right: 4px; min-height: 28px; }
+.metrics { white-space: normal; margin-top: 10px; padding: 8px; background-color: #242d36; color: #e2edf7; }

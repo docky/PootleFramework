@@ -1,0 +1,1 @@
+{"name":"BodyShapeMotion.Editor","references":["BodyShapeMotion.Runtime","ControlRig.Runtime","Riggle.Runtime","Unity.Animation.Rigging"],"includePlatforms":["Editor"]}

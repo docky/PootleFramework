@@ -387,37 +387,7 @@ namespace Docky.RiggleTools.Editor
                     });
                 }
 
-                var skeleton = new List<SkeletonBone>();
-                // Include only the rig root and generated skeleton, not unrelated
-                // MeshFilter objects, skinned renderers, or accessory transforms.
-                AddSingleSkeletonBone(rig.transform, skeleton);
-                // Avatar reference poses are character-local, independent of scene placement.
-                var referenceRoot = skeleton[0];
-                referenceRoot.position = Vector3.zero; referenceRoot.rotation = Quaternion.identity;
-                skeleton[0] = referenceRoot;
-                AddSkeleton(rig.GeneratedBones, skeleton);
-                var description = new HumanDescription
-                {
-                    human = human.ToArray(),
-                    skeleton = skeleton.ToArray(),
-                    upperArmTwist = 0.5f,
-                    lowerArmTwist = 0.5f,
-                    upperLegTwist = 0.5f,
-                    lowerLegTwist = 0.5f,
-                    armStretch = 0.05f,
-                    legStretch = 0.05f,
-                    feetSpacing = 0f,
-                    hasTranslationDoF = false
-                };
-                Avatar avatar;
-                Vector3 scenePosition = rig.transform.localPosition;
-                Quaternion sceneRotation = rig.transform.localRotation;
-                try
-                {
-                    rig.transform.localPosition = Vector3.zero; rig.transform.localRotation = Quaternion.identity;
-                    avatar = AvatarBuilder.BuildHumanAvatar(rig.gameObject, description);
-                }
-                finally { rig.transform.localPosition = scenePosition; rig.transform.localRotation = sceneRotation; }
+                Avatar avatar = BuildHumanoidAvatar(rig.gameObject, rig.GeneratedBones, human.ToArray());
                 if (!avatar || !avatar.isValid || !avatar.isHuman)
                 {
                     if (avatar) UnityEngine.Object.DestroyImmediate(avatar);
@@ -439,6 +409,57 @@ namespace Docky.RiggleTools.Editor
             {
                 Debug.LogWarning("Riggle: Humanoid Avatar could not be built: " + e.Message, rig);
             }
+        }
+
+        // Avatar calibration needs a T-pose even when the source geometry/bind pose is an A-pose.
+        // Only the temporary reference changes; meshes, bind poses and authored landmarks stay intact.
+        internal static Avatar BuildHumanoidAvatar(GameObject root, Transform skeletonRoot, HumanBone[] human)
+        {
+            var transforms = skeletonRoot.GetComponentsInChildren<Transform>(true);
+            var rotations = new Quaternion[transforms.Length];
+            for (int i = 0; i < transforms.Length; i++) rotations[i] = transforms[i].localRotation;
+            Vector3 rootPosition = root.transform.localPosition;
+            Quaternion rootRotation = root.transform.localRotation;
+            try
+            {
+                root.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                foreach (bool left in new[] { true, false })
+                {
+                    Transform upper = FindHumanBone(left ? HumanBodyBones.LeftUpperArm : HumanBodyBones.RightUpperArm, human, transforms);
+                    Transform lower = FindHumanBone(left ? HumanBodyBones.LeftLowerArm : HumanBodyBones.RightLowerArm, human, transforms);
+                    Transform hand = FindHumanBone(left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand, human, transforms);
+                    if (!upper || !lower || !hand) continue;
+                    Vector3 direction = root.transform.TransformDirection(left ? Vector3.left : Vector3.right);
+                    if ((lower.position - upper.position).sqrMagnitude > .000001f)
+                        upper.rotation = Quaternion.FromToRotation(lower.position - upper.position, direction) * upper.rotation;
+                    if ((hand.position - lower.position).sqrMagnitude > .000001f)
+                        lower.rotation = Quaternion.FromToRotation(hand.position - lower.position, direction) * lower.rotation;
+                }
+                var skeleton = new List<SkeletonBone>();
+                AddSingleSkeletonBone(root.transform, skeleton);
+                var referenceRoot = skeleton[0]; referenceRoot.position = Vector3.zero; referenceRoot.rotation = Quaternion.identity; skeleton[0] = referenceRoot;
+                AddSkeleton(skeletonRoot, skeleton);
+                return AvatarBuilder.BuildHumanAvatar(root, new HumanDescription
+                {
+                    human = human, skeleton = skeleton.ToArray(),
+                    upperArmTwist = .5f, lowerArmTwist = .5f, upperLegTwist = .5f, lowerLegTwist = .5f,
+                    armStretch = .05f, legStretch = .05f, feetSpacing = 0, hasTranslationDoF = false
+                });
+            }
+            finally
+            {
+                for (int i = 0; i < transforms.Length; i++) transforms[i].localRotation = rotations[i];
+                root.transform.SetLocalPositionAndRotation(rootPosition, rootRotation);
+            }
+        }
+
+        private static Transform FindHumanBone(HumanBodyBones bone, HumanBone[] human, Transform[] transforms)
+        {
+            string humanName = HumanTrait.BoneName[(int)bone];
+            foreach (var entry in human)
+                if (entry.humanName == humanName)
+                    foreach (var transform in transforms) if (transform.name == entry.boneName) return transform;
+            return null;
         }
 
         private static void AddSkeleton(Transform current, List<SkeletonBone> skeleton)

@@ -81,12 +81,19 @@ namespace Docky.RiggleTools.Editor
                 float facing = model.GetComponent<ControlRigAnatomy>()?.ForwardSign ?? 1;
             Transform Bone(HumanBodyBones b) => animator.GetBoneTransform(b);
             void Rotate(HumanBodyBones b, Vector3 angles) { angles.x *= facing; angles.y *= facing; Bone(b).localRotation *= Quaternion.Euler(angles); }
+            void BendElbow(HumanBodyBones elbow, HumanBodyBones hand, float degrees)
+            {
+                var joint = Bone(elbow);
+                var axis = Vector3.Cross(Bone(hand).position - joint.position, model.transform.forward * facing).normalized;
+                if (axis.sqrMagnitude > .000001f)
+                    joint.localRotation *= Quaternion.AngleAxis(degrees, joint.InverseTransformDirection(axis));
+            }
             if (pose == 1 || pose == 5)
             {
                 Rotate(HumanBodyBones.LeftUpperArm, new Vector3(0,0,-55));
-                Rotate(HumanBodyBones.LeftLowerArm, new Vector3(0,65,0));
+                BendElbow(HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, 65);
                 Rotate(HumanBodyBones.RightUpperArm, new Vector3(0,0,25));
-                Rotate(HumanBodyBones.RightLowerArm, new Vector3(0,-45,0));
+                BendElbow(HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, 45);
             }
             if (pose == 2)
             {
