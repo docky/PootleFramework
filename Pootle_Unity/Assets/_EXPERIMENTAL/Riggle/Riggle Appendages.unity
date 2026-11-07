@@ -67476,6 +67476,7 @@ GameObject:
   - component: {fileID: 1829656302}
   - component: {fileID: 1829656301}
   - component: {fileID: 1829656303}
+  - component: {fileID: 1829656304}
   m_Layer: 0
   m_Name: Winged Bunny
   m_TagString: Untagged
@@ -67544,7 +67545,7 @@ Animator:
   m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -68007,6 +68008,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnatomy
   facing: 0
   detectedForward: 1
+--- !u!114 &1829656304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829656292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc66d4bd13ee04dbf95fd1916aab2ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnimation
+  poseSource: 0
+  rootMotion: 1
 --- !u!1 &1830095565
 GameObject:
   m_ObjectHideFlags: 0

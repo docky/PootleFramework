@@ -143,6 +143,12 @@ In Play Mode, select either original character's **Riggle** component, or use **
 
 Select the original character root and expand **Weight corrections & shoulder / hip shapes** in its Riggle Inspector. The two test characters already contain conservative starter shapes for both shoulders and hips. These are editable starting points, not anatomically finished corrective sculpts.
 
+### Read-only bone influence viewer
+
+Select the original character's **Riggle** component and enable **View bone influences (read only)** at the top of the Inspector. Search or browse bones with **Previous bone / Next bone**, or click a skeleton dot in the Scene view. The selected bone is yellow; vertex dots show its weight from blue (0%) to red (100%) across all generated meshes. **Show zero influence** hides or reveals unweighted regions, **See through mesh** exposes obscured dots, and **Frame bone** focuses the view.
+
+The viewer shows exact affected-vertex/mesh counts and maximum weight; dense meshes use sampled display dots. It works with smooth skins, rigid parts and body chunks. Bone-parented accessories have no vertex weights. Authoring controls and transform handles are hidden while viewing; browsing does not change weights, poses, materials or saved assets. Turn the viewer off or press Escape in the Scene view to return to authoring.
+
 ### Weight corrections
 
 1. Choose **Mesh to edit**, then **Paint weights** and a bone.
@@ -384,3 +390,13 @@ Riggle uses `Resources/Riggle Control Rig`, a prefab variant of the shared Contr
 The generated `ControlRigAnatomy` component estimates facing from toe-versus-heel reach around both ankles. Nearly symmetric feet fall back to +Z. Choose Positive Z or Negative Z explicitly for unusual feet, then Build / Refit Rig. Knee and elbow poles sit outside the limb reach to avoid crossing the target line during ordinary lifts.
 
 Humanoid reference poses exclude scene position/yaw. The muscle preview samples in character space, so rotating an example in the scene does not reverse its limb bends. This is separate from the visible pose gallery, whose elbow flexion now points the hands forwards.
+
+### Kawaii retargeting and root motion
+
+Open `Riggle Kawaii Retargeting.unity` for seven character rows and eight shared Kawaii clips: Shy, Triple Pose, Dance 03, Cheers, Stretch 2, Walk, Run, and Run Turn Left. Saved poses give an immediate comparison; Play animates each cell and repeats from its marked root origin. Root motion comes from the clips, including turning and vertical body movement, scaled through each Humanoid Avatar.
+
+`ControlRigAnimation` chooses pose ownership. Automatic releases the manual body rig when an Animator Controller is assigned. Animation also supports external PlayableGraphs. Controls re-enables IK/FK editing. The Root Motion toggle controls clip-driven movement; the rig no longer pins hips and feet over a playing animation. `RiggleRetargetSample` supplies manual-step playback for the comparison scene and tests. `Kawaii Walk.controller` is included for normal Animator Controller testing.
+
+Offline capture must refresh skinning as well as evaluate the animation graph. Multiple manual `Step` / `Camera.Render` calls without a player frame can render a cached skinned pose while the root keeps moving. The showcase recorder bakes each current `SkinnedMeshRenderer` pose into temporary render meshes per captured frame, then removes them and restores the saved scene. This is capture-only; live playback retains normal skinned renderers. The retarget tests also check arm/leg rotation and a changing rendered silhouette with root motion disabled across real player frames.
+
+The reusable recorder is `Tools/RiggleRetargetVideo.cs` (outside Assets). With the saved comparison scene open in Edit Mode, run `unity command script run --file Tools/RiggleRetargetVideo.cs --entry RiggleRetargetVideo.Main` from the Unity project directory. It writes the 90-second MP4, frame checks and progress status under `Builds/Riggle Showcase`, and restores the saved scene after capture.

@@ -1,1 +1,7 @@
-{"name":"Riggle.Runtime"}
+{
+  "name": "Riggle.Runtime",
+  "references": [
+    "ControlRig.Runtime",
+    "Unity.Animation.Rigging"
+  ]
+}

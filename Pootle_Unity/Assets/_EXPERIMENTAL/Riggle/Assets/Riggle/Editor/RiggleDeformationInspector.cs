@@ -27,6 +27,7 @@ namespace Docky.RiggleTools.Editor
             EditorSceneManager.sceneSaving+=BeforeSave;
             EditorApplication.playModeStateChanged+=BeforePlay;
         }
+        internal void EnterInspection() { FinishStroke(); if (previewBone) StopPreview(); tool=0; }
         public void Dispose()
         {
             StopPreview(); FinishStroke(); Undo.undoRedoPerformed-=OnUndo;

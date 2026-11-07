@@ -4085,6 +4085,7 @@ GameObject:
   - component: {fileID: 3604550414078903972}
   - component: {fileID: 8631084187675484418}
   - component: {fileID: 2027134945150415304}
+  - component: {fileID: 1144371278931372855}
   m_Layer: 0
   m_Name: Retro Robot_Skinned
   m_TagString: Untagged
@@ -4216,7 +4217,7 @@ Animator:
   m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -4269,6 +4270,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnatomy
   facing: 0
   detectedForward: 1
+--- !u!114 &1144371278931372855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6578931334203351405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc66d4bd13ee04dbf95fd1916aab2ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnimation
+  poseSource: 0
+  rootMotion: 1
 --- !u!1 &6632411487528334282
 GameObject:
   m_ObjectHideFlags: 0

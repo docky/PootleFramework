@@ -101,6 +101,8 @@ namespace ControlRig
                 foreach (var component in refs.GetComponentsInChildren<Component>(true))
                 { EditorUtility.SetDirty(component); PrefabUtility.RecordPrefabInstancePropertyModifications(component); }
                 ControlRigModesSetup.Build(animator, refs);
+                var playback = animator.GetComponent<ControlRigAnimation>() ?? Undo.AddComponent<ControlRigAnimation>(animator.gameObject);
+                playback.Refresh();
                 EditorUtility.SetDirty(builder);
                 UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(animator.gameObject.scene);
                 return refs;

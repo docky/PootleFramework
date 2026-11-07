@@ -10,12 +10,19 @@ namespace Docky.RiggleTools.Editor
         private bool placing;
         private bool showAllDotsInInspector;
         private RiggleDeformationInspector deformation;
-        private void OnEnable() { deformation = new RiggleDeformationInspector((Riggle)target); }
-        private void OnDisable() { deformation?.Dispose(); deformation = null; }
+        private RiggleInfluenceView influences;
+        private void OnEnable() { deformation = new RiggleDeformationInspector((Riggle)target); influences = new RiggleInfluenceView((Riggle)target, Repaint); }
+        private void OnDisable() { influences?.Dispose(); influences = null; deformation?.Dispose(); deformation = null; }
 
         public override void OnInspectorGUI()
         {
             var rig = (Riggle)target;
+            bool wasViewing = influences != null && influences.Active;
+            if (influences != null && influences.Draw())
+            {
+                if (!wasViewing) { placing = false; deformation?.EnterInspection(); }
+                return;
+            }
             serializedObject.Update();
             if (GUILayout.Button("Open guided Rig Helper", GUILayout.Height(28))) RiggleHelperWindow.Open(rig);
             EditorGUILayout.HelpBox(
@@ -171,6 +178,7 @@ namespace Docky.RiggleTools.Editor
         {
             var rig = (Riggle)target;
             if (!rig) return;
+            if (influences != null && influences.SceneGUI()) return;
             if (rig.Assembly == Riggle.AssemblyMode.SmoothSkin && deformation != null && deformation.SceneGUI()) return;
             rig.EnsurePoints();
             RiggleAppendageBuilder.DrawGuides(rig);

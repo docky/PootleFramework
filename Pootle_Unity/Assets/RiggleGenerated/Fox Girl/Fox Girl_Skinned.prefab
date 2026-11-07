@@ -1053,6 +1053,7 @@ GameObject:
   - component: {fileID: 4720176548474022117}
   - component: {fileID: 8584349872214716066}
   - component: {fileID: 8300289254075488365}
+  - component: {fileID: 249371589404835892}
   m_Layer: 0
   m_Name: Fox Girl_Skinned
   m_TagString: Untagged
@@ -1170,7 +1171,7 @@ Animator:
   m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -1223,6 +1224,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnatomy
   facing: 0
   detectedForward: 1
+--- !u!114 &249371589404835892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121747420948639224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc66d4bd13ee04dbf95fd1916aab2ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnimation
+  poseSource: 0
+  rootMotion: 1
 --- !u!1 &1144061967319790501
 GameObject:
   m_ObjectHideFlags: 0

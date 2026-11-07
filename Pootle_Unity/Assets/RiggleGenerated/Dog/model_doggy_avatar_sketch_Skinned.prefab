@@ -606,6 +606,7 @@ GameObject:
   - component: {fileID: 4168657704995465293}
   - component: {fileID: 4561120146118960486}
   - component: {fileID: 5802522253824945221}
+  - component: {fileID: 4592250894558864946}
   m_Layer: 0
   m_Name: model_doggy_avatar_sketch_Skinned
   m_TagString: Untagged
@@ -644,7 +645,7 @@ Animator:
   m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -811,6 +812,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnatomy
   facing: 0
   detectedForward: 1
+--- !u!114 &4592250894558864946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130672709806425645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc66d4bd13ee04dbf95fd1916aab2ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ControlRig.Runtime::ControlRig.ControlRigAnimation
+  poseSource: 0
+  rootMotion: 1
 --- !u!1 &1146211947943842803
 GameObject:
   m_ObjectHideFlags: 0
