@@ -1,0 +1,16 @@
+{
+  "name": "Riggle.Tests.Editor",
+  "references": [
+    "Riggle.Runtime",
+    "Riggle.Editor",
+    "ControlRig.Editor",
+    "ControlRig.Runtime",
+    "Unity.Animation.Rigging"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

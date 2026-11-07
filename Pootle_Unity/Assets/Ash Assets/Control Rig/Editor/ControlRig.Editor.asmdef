@@ -1,0 +1,10 @@
+{
+  "name": "ControlRig.Editor",
+  "references": [
+    "ControlRig.Runtime",
+    "Unity.Animation.Rigging"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

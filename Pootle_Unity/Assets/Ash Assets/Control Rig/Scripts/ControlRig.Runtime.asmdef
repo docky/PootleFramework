@@ -1,0 +1,6 @@
+{
+  "name": "ControlRig.Runtime",
+  "references": [
+    "Unity.Animation.Rigging"
+  ]
+}

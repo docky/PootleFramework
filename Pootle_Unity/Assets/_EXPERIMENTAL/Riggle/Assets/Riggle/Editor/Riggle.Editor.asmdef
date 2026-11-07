@@ -1,0 +1,12 @@
+{
+  "name": "Riggle.Editor",
+  "references": [
+    "Riggle.Runtime",
+    "ControlRig.Editor",
+    "ControlRig.Runtime",
+    "Unity.Animation.Rigging"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

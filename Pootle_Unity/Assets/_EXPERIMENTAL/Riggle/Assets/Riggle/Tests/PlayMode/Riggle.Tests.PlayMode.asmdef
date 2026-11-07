@@ -1,0 +1,1 @@
+{"name":"Riggle.Tests.PlayMode","references":["Riggle.Runtime","ControlRig.Runtime","Unity.Animation.Rigging"],"optionalUnityReferences":["TestAssemblies"]}
