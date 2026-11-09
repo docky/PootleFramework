@@ -1,0 +1,11 @@
+{
+  "name": "OinkRomp.Runtime",
+  "references": [
+    "Pootle.Runtime",
+    "Unity.InputSystem",
+    "Unity.TextMeshPro",
+    "Unity.ugui",
+    "Unity.Collections",
+    "Pootle.Cinemachine"
+  ]
+}

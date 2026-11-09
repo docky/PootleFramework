@@ -107,19 +107,19 @@ Names below are mesh names or group names. Sided examples show `.L`; `.R` works 
 | `TorsoWithNeck` | Above, plus Neck |
 | `Head` or `HeadWithoutNeck` | Head |
 | `HeadWithNeck` | Head, Neck |
-| `Ear.L`, `Tail`, `Wing.L` | The corresponding enabled appendage chain |
+| `Ear.L`, `Tail`, `Wing.L`, `Ponytail`, `Ponytail.L`, `Ponytail.R` | The corresponding enabled appendage chain |
 
 Torso chunks never consider shoulder/arm bones. Arm chunks exclude the clavicle/Shoulder bone. Twist helpers remain within their associated allowed limb region. Exact bone assignments such as `UpperArm.L` also work in this mode and remain rigid.
 
 Add `RiggleBodyPart` to override arbitrary names: `kind`, `side`, `includeHandOrFoot`, `includeNeck`, `keepSeparateRenderer`. The component takes precedence over a parsed chunk name. An unnamed descendant inherits the nearest scope; a recognized child scope or exact bone assignment overrides it.
 
-`separateLimbMeshes` retains arms, legs, ears, tails and wings as separate skinned outputs. `keepSeparateRenderer` can retain another specific chunk. This provides a basis for later part replacement; automatic rubber-hose limb generation/replacement is **not implemented**.
+`separateLimbMeshes` retains arms, legs, ears, tails, wings and ponytails as separate skinned outputs. `keepSeparateRenderer` can retain another specific chunk. This provides a basis for later part replacement; automatic rubber-hose limb generation/replacement is **not implemented**.
 
 Both named modes require child parts rather than a mesh on the Riggle root. Merged sources must be active, visible, readable triangle meshes, with material count matching submesh count, and without blend shapes or stored deformation edits. Unassigned parts are errors, not silently discarded. Merging preserves material use; multiple material submeshes do not imply a single draw call.
 
 ### Rigid accessories
 
-The default attachment symbol is `^`, configurable per Riggle root. Prefer explicit names:
+The default attachment symbol is `^`, configurable per Riggle root. Doubling it (`Head^^ Alternate hat`) attaches the object separately and starts it inactive; custom symbols double likewise. Prefab export retains the hidden alternative and its components. Rebake reapplies the hidden default; Clear restores original active state and parent/local transform. Prefer explicit names:
 
 - `Head^ Hat`
 - `UpperChest^ Backpack`
@@ -127,21 +127,22 @@ The default attachment symbol is `^`, configurable per Riggle root. Prefer expli
 
 The marked object and its descendants remain separate and are parented to the named bone, preserving their world transform. A marked child can inherit an exact bone from a named parent; an ambiguous multi-bone region such as Torso is insufficient. Clear/rebuild restores the recorded original parent, sibling order and local pose. Reparenting fails if non-uniform transforms would change the accessory’s shape.
 
-## 5 Optional ears, tail and wings
+## 5 Optional ears, tail, wings and ponytails
 
 `RiggleAppendages` enables these explicitly; matching mesh names alone do not create chains. All optional features start disabled.
 
 | Feature | Skeleton parent | Default weighted segments |
 |---|---|---:|
-| Two bunny ears | Head | 4 per ear |
+| Two animal ears | Head | 4 per ear |
 | Long tail | Hips | 8 |
 | Two back wings | UpperChest | 4 per wing |
+| Middle / Left / Right ponytails (independent) | Head | 5 points including tip (4 deforming segments) |
 
-Each enabled chain needs 2–16 segments, a positive weighting radius and at least two distinct, finite root-to-tip guide points. Guides use character-local positions or a source transform plus a local offset. Right-ear/right-wing guides can mirror the left; the meshes themselves must still be supplied. Guide transforms are assigned explicitly; there is no general appendage-empty name scanner.
+Ear/tail/wing chains need 2–16 segments. Ponytails need 2–7 points including the unweighted tip (1–6 deforming segments), with 2–7 authored guides. Each chain needs a positive weighting radius and at least two distinct, finite root-to-tip guide points. Guides use character-local positions or a source transform plus a local offset. Right-ear/right-wing guides can mirror the left; the meshes themselves must still be supplied. Guide transforms are assigned explicitly; there is no general appendage-empty name scanner.
 
-Generated names use two-digit segments: `Riggle_LeftEar01`, `Riggle_RightEar01`, `Riggle_Tail01`, `Riggle_LeftWing01`, `Riggle_RightWing01`, continuing through the configured count. Each chain has an unweighted `End` helper. For rigid segment targeting, names such as `Ear01.L` and `Tail03` address individual generated segments. The target feature and segment must exist.
+Generated names use two-digit segments: `Riggle_LeftEar01`, `Riggle_RightEar01`, `Riggle_Tail01`, `Riggle_LeftWing01`, `Riggle_RightWing01`, continuing through the configured count. Ponytails use `Riggle_MiddlePonytail01`, `Riggle_LeftPonytail01`, `Riggle_RightPonytail01`, up to `06`. Each chain has an unweighted `End` helper. For rigid segment targeting, names such as `Ear01.L` and `Tail03` address individual generated segments. The target feature and segment must exist.
 
-These are extra Generic bones, not Humanoid muscle mappings. `FK_LeftEar01`-style controls and `RiggleAppendageRig` drive them. Disable that driver when animating the bones directly. There is no automatic ear/tail physics or wing-flight solver.
+These are extra Generic bones, not Humanoid muscle mappings. `FK_LeftEar01`-style controls and `RiggleAppendageRig` drive them. The per-chain `externalMotion` flag relinquishes control to animation or a dynamic bone system. It defaults on for ponytails and is optional for ears (`dynamicEars`). Existing ear/tail/wing FK setups retain their behavior. Ponytails default to horizontal paths with independent Y directions (Middle 180°, Left −90°, Right 90°); ponytail and ear paths also accept XYZ orientation around their root, with ear mirroring reflecting orientation. There is no automatic ear/tail physics or wing-flight solver.
 
 ## 6 Example source and generated structures
 
@@ -271,10 +272,10 @@ Suggested result states: `SuccessHumanoid`, `SuccessGeneric` only when explicitl
 
 Paths below are relative to this spec. These are the current implementation points to consult when changing the contract.
 
-- [Core data and source collection](Assets/Riggle/Runtime/Riggle.cs)
-- [Reference names and origin assignment](Assets/Riggle/Editor/RiggleReferenceSetup.cs), [reference precedence](Assets/Riggle/Runtime/RiggleReferencePoints.cs)
-- [Rigid names and attachment planning](Assets/Riggle/Editor/RiggleRigidParts.cs), [body-part names and allowed bones](Assets/Riggle/Editor/RiggleBodyParts.cs)
-- [Appendage generation](Assets/Riggle/Editor/RiggleAppendageBuilder.cs), [appendage authoring data](Assets/Riggle/Runtime/RiggleAppendages.cs)
-- [Import preparation](Assets/Riggle/Editor/RiggleModelPreparation.cs), [builder](Assets/Riggle/Editor/RiggleBuilder.cs), [prefab exporter](Assets/Riggle/Editor/RigglePrefabExporter.cs)
-- [Current wizard orchestration](Assets/Riggle/Editor/RiggleHelperWindow.cs), [weight diagnostics](Assets/Riggle/Editor/RiggleDiagnostics.cs)
-- [Reference contract tests](Assets/Riggle/Tests/Editor/RiggleReferenceTests.cs), [rigid-part tests](Assets/Riggle/Tests/Editor/RiggleRigidPartsTests.cs), [body-part tests](Assets/Riggle/Tests/Editor/RiggleBodyPartsTests.cs)
+- [Core data and source collection](Core/Runtime/Riggle.cs)
+- [Reference names and origin assignment](Core/Editor/RiggleReferenceSetup.cs), [reference precedence](Core/Runtime/RiggleReferencePoints.cs)
+- [Rigid names and attachment planning](Core/Editor/RiggleRigidParts.cs), [body-part names and allowed bones](Core/Editor/RiggleBodyParts.cs)
+- [Appendage generation](Core/Editor/RiggleAppendageBuilder.cs), [appendage authoring data](Core/Runtime/RiggleAppendages.cs)
+- [Import preparation](Core/Editor/RiggleModelPreparation.cs), [builder](Core/Editor/RiggleBuilder.cs), [prefab exporter](Core/Editor/RigglePrefabExporter.cs)
+- [Current wizard orchestration](Core/Editor/RiggleHelperWindow.cs), [weight diagnostics](Core/Editor/RiggleDiagnostics.cs)
+- [Reference contract tests](Demo/Tests/Editor/RiggleReferenceTests.cs), [rigid-part tests](Demo/Tests/Editor/RiggleRigidPartsTests.cs), [body-part tests](Demo/Tests/Editor/RiggleBodyPartsTests.cs)

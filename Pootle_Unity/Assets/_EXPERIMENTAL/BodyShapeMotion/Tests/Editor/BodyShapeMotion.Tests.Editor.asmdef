@@ -1,1 +1,0 @@
-{"name":"BodyShapeMotion.Tests.Editor","references":["BodyShapeMotion.Runtime","BodyShapeMotion.Editor"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}

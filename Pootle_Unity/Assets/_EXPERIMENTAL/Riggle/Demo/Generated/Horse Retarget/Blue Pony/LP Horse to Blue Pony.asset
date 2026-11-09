@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f079d4f45d824017a4c2184caa9ebed, type: 3}
+  m_Name: LP Horse to Blue Pony
+  m_EditorClassIdentifier: Riggle.Runtime::Docky.RiggleTools.RiggleQuadrupedRetargetProfile
+  sourceModel: {fileID: 100372, guid: 12d878159cd1a3e43a1401d93cf78c4b, type: 3}
+  targetPrefab: {fileID: 8698307540186426964, guid: bda3dea7613024be48e8bbc26f947dab, type: 3}
+  sourceMotionRoot: Rig/Root_Motion
+  sourceHips: Rig/Root_Motion/Back_Back
+  targetHips: Hips
+  sourceReferencePose: {fileID: 7400000, guid: d34e2809bb3a0e14d9520db9f8147809, type: 2}
+  referenceTime: 0
+  sourceToTargetEuler: {x: 0, y: 0, z: 0}
+  includeRootMotion: 0
+  sampleRate: 60
+  strideScale: 1
+  clampFeetToReferenceFloor: 1
+  maxBodyLowering: 0.12
+  outputFolder: Assets/_EXPERIMENTAL/Riggle/Demo/Generated/Horse Retarget/Blue Pony/Clips
+  body:
+  - sourcePath: Rig/Root_Motion/Back_Back
+    targetJoint: Hips
+    rotationWeight: 1
+  - sourcePath: Rig/Root_Motion/Root_Origin/Back_Forward/BackMiddle
+    targetJoint: Spine
+    rotationWeight: 1
+  - sourcePath: Rig/Root_Motion/Root_Origin/Back_Forward
+    targetJoint: Chest
+    rotationWeight: 1
+  - sourcePath: Rig/Root_Motion/Root_Origin/Chest_Pull/Neck_Back/Neck_Middle
+    targetJoint: Neck
+    rotationWeight: 1
+  - sourcePath: Rig/Root_Motion/Root_Origin/Chest_Pull/Neck_Back/Neck_Middle/Neck_Upper/Head
+    targetJoint: Head
+    rotationWeight: 1
+  legs:
+  - name: FrontLeft
+    sourceUpper: Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L
+    sourceFoot: Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L/Front_UpperLeg.L/Front_Shin.L/Front_Calf.L/Front_Hoof.L
+    targetUpper: FrontLeftUpper
+    targetMiddle: FrontLeftLower
+    targetFoot: FrontLeftFoot
+    additionalTargetJoints:
+    - FrontLeftJoint3
+    - FrontLeftJoint4
+    sourceShapeChain:
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L/Front_UpperLeg.L
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L/Front_UpperLeg.L/Front_Shin.L
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L/Front_UpperLeg.L/Front_Shin.L/Front_Calf.L
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.L/Front_UpperLeg.L/Front_Shin.L/Front_Calf.L/Front_Hoof.L
+    sourceSoleOffset: {x: 0.00000004506791, y: 0.0038044024, z: -0.00417261}
+    targetSoleOffset: {x: 0, y: -0.085, z: 0}
+    bendDirection: {x: 0, y: 0, z: -1}
+  - name: FrontRight
+    sourceUpper: Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R
+    sourceFoot: Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R/Front_UpperLeg.R/Front_Shin.R/Front_Calf.R/Front_Hoof.R
+    targetUpper: FrontRightUpper
+    targetMiddle: FrontRightLower
+    targetFoot: FrontRightFoot
+    additionalTargetJoints:
+    - FrontRightJoint3
+    - FrontRightJoint4
+    sourceShapeChain:
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R/Front_UpperLeg.R
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R/Front_UpperLeg.R/Front_Shin.R
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R/Front_UpperLeg.R/Front_Shin.R/Front_Calf.R
+    - Rig/Root_Motion/Root_Origin/Chest_Pull/Shoulder.R/Front_UpperLeg.R/Front_Shin.R/Front_Calf.R/Front_Hoof.R
+    sourceSoleOffset: {x: 0.000000026558892, y: 0.0037666487, z: -0.0041311835}
+    targetSoleOffset: {x: 0, y: -0.085, z: 0}
+    bendDirection: {x: 0, y: 0, z: -1}
+  - name: HindLeft
+    sourceUpper: Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L
+    sourceFoot: Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L/Rear_LowerThigh.L/Rear_Shin.L/Rear_Calf.L/Rear_Hoof.L
+    targetUpper: HindLeftUpper
+    targetMiddle: HindLeftLower
+    targetFoot: HindLeftFoot
+    additionalTargetJoints:
+    - HindLeftJoint3
+    - HindLeftJoint4
+    sourceShapeChain:
+    - Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L
+    - Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L/Rear_LowerThigh.L
+    - Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L/Rear_LowerThigh.L/Rear_Shin.L
+    - Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L/Rear_LowerThigh.L/Rear_Shin.L/Rear_Calf.L
+    - Rig/Root_Motion/Back_Back/Butt.L/Rear_UpperThigh.L/Rear_LowerThigh.L/Rear_Shin.L/Rear_Calf.L/Rear_Hoof.L
+    sourceSoleOffset: {x: -0.0000000047007314, y: 0.0031730654, z: -0.0028395473}
+    targetSoleOffset: {x: 0, y: -0.085, z: 0}
+    bendDirection: {x: 0, y: 0, z: -1}
+  - name: HindRight
+    sourceUpper: Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R
+    sourceFoot: Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R/Rear_LowerThigh.R/Rear_Shin.R/Rear_Calf.R/Rear_Hoof.R
+    targetUpper: HindRightUpper
+    targetMiddle: HindRightLower
+    targetFoot: HindRightFoot
+    additionalTargetJoints:
+    - HindRightJoint3
+    - HindRightJoint4
+    sourceShapeChain:
+    - Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R
+    - Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R/Rear_LowerThigh.R
+    - Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R/Rear_LowerThigh.R/Rear_Shin.R
+    - Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R/Rear_LowerThigh.R/Rear_Shin.R/Rear_Calf.R
+    - Rig/Root_Motion/Back_Back/Butt.R/Rear_UpperThigh.R/Rear_LowerThigh.R/Rear_Shin.R/Rear_Calf.R/Rear_Hoof.R
+    sourceSoleOffset: {x: 0.0000000019023572, y: 0.0031730297, z: -0.0028395487}
+    targetSoleOffset: {x: 0, y: -0.085, z: 0}
+    bendDirection: {x: 0, y: 0, z: -1}
+  clips:
+  - {fileID: 7400000, guid: d34e2809bb3a0e14d9520db9f8147809, type: 2}
+  - {fileID: 7400000, guid: 72d71bdda0b35b64c99745d893a6d15d, type: 2}
+  - {fileID: 7400000, guid: 5667e4d731dedd74fb4398202ca722d1, type: 2}
+  - {fileID: 7400000, guid: b8b75e8517dc1484bb7e4704917a6817, type: 2}
+  - {fileID: 7400000, guid: cda423147bcdece4eb410218e05a61b7, type: 2}
+  - {fileID: 7400000, guid: 1ae3ec20f249d6e468f6f444dafbf376, type: 2}

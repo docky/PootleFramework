@@ -13,6 +13,9 @@ namespace Pootle
         [Min(1)] public float projectionWidth=5;
         [Min(1)] public float maximumDrop=18;
         public bool replaceModelShadow=true;
+        [Tooltip("Optional bone circles for generic rigs. Empty uses humanoid bones.")]
+        public Transform[] customBones = new Transform[0];
+        public float[] customRadii = new float[0];
         public RenderTexture Mask => target;
         public int CircleCount => character && character.IsRolling ? 1 : bones.Count;
         public bool ProjectionActive => surface && surface.activeSelf;
@@ -29,7 +32,12 @@ namespace Pootle
             if(!character || !material)return;
             var animator=character.visualRoot?character.visualRoot.GetComponentInChildren<Animator>():null;
             bones.Clear();radii.Clear();
-            if(animator && animator.isHuman)
+            if(customBones!=null && customBones.Length>0)
+            {
+                for(int i=0;i<customBones.Length;i++)if(customBones[i])
+                {bones.Add(customBones[i]);radii.Add(customRadii!=null && i<customRadii.Length?Mathf.Max(.02f,customRadii[i]):.2f);}
+            }
+            else if(animator && animator.isHuman)
             {
                 Add(animator,HumanBodyBones.Head,.3f);Add(animator,HumanBodyBones.Chest,.34f);Add(animator,HumanBodyBones.Hips,.28f);
                 Add(animator,HumanBodyBones.LeftUpperArm,.14f);Add(animator,HumanBodyBones.RightUpperArm,.14f);

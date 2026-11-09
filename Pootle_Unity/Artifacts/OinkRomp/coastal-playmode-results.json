@@ -1,0 +1,104 @@
+{
+  "status": "completed",
+  "duration": 6.31,
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "results": [
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.BalloonsShrinkWithoutLosingCapacityOrRedeployingUsedSlots",
+      "Status": "Passed",
+      "Duration": 0.6248604,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.CaveTransitionOwnsMotionAndPreservesPermanentBalloons",
+      "Status": "Passed",
+      "Duration": 2.2922151,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.CoastalMapControlsAndHigherCameraZonesAreRetained",
+      "Status": "Passed",
+      "Duration": 0.2254035,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.ExactlySevenUniqueFindsAndApplesPlayEat",
+      "Status": "Passed",
+      "Duration": 0.3054213,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.HighSlamBreaksFloorAndLowContactDoesNot",
+      "Status": "Passed",
+      "Duration": 0.3139685,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.KeyboardAndJoystickBindingsProduceMovementAndJump",
+      "Status": "Passed",
+      "Duration": 0.4459834,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.NativeSpringUsesFirstHopThenDeploysAnUpgrade",
+      "Status": "Passed",
+      "Duration": 0.2279926,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.SevenPermanentUpgradesRechargeAfterPopLandingAndRecovery",
+      "Status": "Passed",
+      "Duration": 0.2952676,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.ShovingButtonOpensGateAndPlaysAttack",
+      "Status": "Passed",
+      "Duration": 0.2987148,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.SlipperyRampSlidesAndCanJumpOff",
+      "Status": "Passed",
+      "Duration": 0.3086733,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.SmoothedDigitalTurnsBlendAndAnalogueRetainsFullDirection",
+      "Status": "Passed",
+      "Duration": 0.303339,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.SpiralRailAndHangingHandleKeepNativeJumpRelease",
+      "Status": "Passed",
+      "Duration": 0.3060531,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.StartsWithOneRegularJumpAndNoAirUpgrades",
+      "Status": "Passed",
+      "Duration": 0.2998793,
+      "Message": null,
+      "StackTrace": null
+    }
+  ]
+}

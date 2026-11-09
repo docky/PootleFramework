@@ -146,8 +146,8 @@ namespace Pootle
                     if (!this || !isActiveAndEnabled) return;
                 }
             }
-            if (policy != null) jumpBuffer.Clear();
-            else if (frame.jumpPressed) jumpBuffer.Press(clock, profile.jumpBufferTime);
+            // Traversal still consumes jump input when a custom airborne policy is installed.
+            if (frame.jumpPressed) jumpBuffer.Press(clock, profile.jumpBufferTime);
             TickEnvironment(dt);
             Vector3 tickStart = transform.position;
             var previousMode = Mode;
@@ -218,6 +218,7 @@ namespace Pootle
                 if (TickGlide(dt, frame, tickStart, out var glideMotion))
                 { UpdateVisual(); Capture(previousMode, Vector3.zero, glideMotion, false); return; }
             }
+            if (policy != null) jumpBuffer.Clear();
             float policyImpulse = policy != null ? policy.BeforeMovement(this, dt, frame, groundedAtTickStart) : float.NaN;
             bool policyJump = float.IsFinite(policyImpulse);
             if (policyJump)

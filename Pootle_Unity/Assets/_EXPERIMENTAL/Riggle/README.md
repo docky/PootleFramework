@@ -1,4 +1,64 @@
-# Riggle v0.1 — Unity landmark-to-skeleton tool
+# Riggle v0.2 — Unity landmark-to-skeleton tool
+
+**Version 0.2 — experimental; not yet validated through use in real projects.**
+
+`Core/` contains the rig authoring/runtime code, editor tools and required control-rig resource. `Demo/` contains example scenes, character imports, generated example meshes/prefabs, scene builders and tests. Core has no dependency on Demo; keep its Control Rig and Animation Rigging dependencies when copying it to another project. The reusable pose gallery and muscle preview remain in Core because the rig helper and exporter use them.
+
+New user characters still default to `Assets/RiggleGenerated`; the supplied examples are stored in `Demo/Generated`.
+
+## Riggle Generic — quadrupeds and custom skeletons
+
+**Riggle Generic is a separate authoring component inside Riggle, sharing its skinning engine.** The original Riggle component remains the humanoid workflow. Generic anatomy is a named joint hierarchy and a list of leg chains, so it is not constrained by the biped landmark enum, Mecanim Humanoid mapping, or humanoid Control Rig. This is an experimental first version for unskinned meshes; it does not retrofit an existing imported skinned skeleton.
+
+1. Select a character root and use **Tools → Riggle → Add Generic Rig to Selected** (or Add Component → Riggle → Riggle Generic). Use a separate root from humanoid Riggle. Orient the mesh +Y up and +Z forward.
+2. **Reset to quadruped preset fitted to mesh bounds** creates a starting layout: hips, spine, chest, neck/head, two tail bones and four legs. This replaces the current definition. Bounds are only an initial estimate; place joints at the actual articulations.
+3. Click joint dots in Scene view and move the handles. Terminal bones also expose a tip handle. **Mirror Left joints to Right** reflects positions and tips across Hips X. Edit the Joints list for other anatomy, tails, or additional leg pairs. Parents refer to unique joint names; End Joint selects a direct child as the envelope endpoint, otherwise Tip is used. Radius is in character-local units. Renaming a joint requires updating its parent/end/leg references.
+4. **Bake Generic • Bones + Skinning** creates an ordinary transform skeleton and cloned, persistent skinned mesh assets. Both envelope and contiguous-surface weighting use Riggle's existing solver. Original mesh assets are preserved and source renderers hidden. There is no generated Humanoid Avatar, Humanoid retargeting, IK controller, or runtime pose writer. Automatic weights are a starting point; generic bones do not use humanoid Skin Binding masks, named body-part assembly, or the humanoid deformation helper UI.
+5. **Set up / reconnect Legs Animator** optionally adds the installed FImpossible Legs Animator and explicitly assigns Hips, Base Transform, leg upper/middle/foot bones, side and opposite-leg pairing. Core has no compile-time dependency on Legs Animator and includes none of its vendor code. The adapter requires positive uniform character scale, a slight knee bend, and direct ordered chains beneath Hips. Pairing must be reciprocal. Generic rigs may have any number of legs. Two-segment legs use the vendor solver; longer chains use the optional Riggle Multi Segment Legs Animator adapter and Riggle chain IK.
+6. Configure ground layers, feet, movement input, gait and modules in **Legs Animator**. The rigger supplies anatomy and skinning; it does not create locomotion clips or a character controller. Existing manually configured Legs Animator components are left alone; assign their bones manually or remove that component before using automatic setup.
+7. **Save new prefab** saves the authored character with its generated bones, skins and optional Legs Animator. **Clear generated rig** removes its generated hierarchy and owned Legs Animator and restores source renderer visibility. Generated asset files remain on disk so exported prefabs remain valid. Rebakes create new mesh assets and reconnect the owned Legs Animator; component settings and per-leg settings are retained by list index, so review them after reordering legs. Bones are rebuilt, so other external bone references must be reconnected manually.
+
+Open `Demo/Scenes/Riggle Generic Quadruped.unity` for the saved example with a ground collider, camera and configured Legs Animator. Its reusable prefab is `Demo/Generated/Generic/Riggle Demo Quadruped.prefab`. For a fresh example, use **GameObject → 3D Object → Riggle Demo Quadruped**. It creates and bakes a capsule-based quadruped and configures Legs Animator when installed. The demo has no floor or movement controller; place it over your scene's ground collider. Its output goes to `Demo/Generated/Generic`.
+
+The editor tests cover four/six-legged anatomy, both weighting methods, transformed bind geometry, deformation, invalid-input protection, Undo/Clear, prefab references and preservation of Legs Animator settings across rebakes.
+
+### Legs with more segments
+
+**Leg Segments** now supports 2–8 segments (3–9 joints) per leg. **Rebuild leg segments** resamples the current guide path while keeping upper and foot endpoints; fit the new handles to the anatomy, then **Bake Generic**. Leg definitions retain Upper, Middle and Foot for compatibility and add an ordered **Additional Joints** list between Middle and Foot. Every parent link must be included. Rebuilding changes extra bone names and references; update any retargeting profiles or external references afterwards. Accessory branches on removed joints must be moved first.
+
+The optional `RiggleMultiSegmentLegsAnimator` subclass uses Legs Animator's custom IK hooks: its ground/glue algorithms still supply foot targets, while `RiggleChainIK` solves the complete chain without stretching its segments. Automatic setup chooses this adapter for longer chains and preserves an owned component's settings when upgrading it. The iterative solver starts from the animated pose. Quadruped conversion and the multi-segment adapter limit the last inter-segment bend to 55 degrees and hoof swing relative to its calibrated terminal frame to 35 degrees. Alternate bend seeds recover from folded poses without stretching. The converter resolves the sole offset after limiting hoof rotation. These terminal limits prevent the short final segment folding back; upper joints do not yet have anatomical hinge limits. A shaped reference pose and sensible target reach are still important.
+
+### Convert Generic quadruped animation clips
+
+Create **Assets → Create → Riggle → Quadruped Animation Profile**. Assign the source model, a baked Riggle Generic target prefab, source motion-root/hips paths, body mappings, four leg mappings and the source clips. Source paths are relative to the model root; target names are Riggle joint names. The optional neutral reference clip is important when animation axes differ from the imported bind pose. Source To Target Euler aligns character facing/up axes.
+
+The converter transfers neutral-relative body rotations, proportion-scaled hips and hoof trajectories, and solves target legs using their own segment lengths. For longer legs, the optional Source Shape Chain maps intermediate source joints to the target chain and transfers hock/ankle shape. It must have the same joint count as the target; leave it empty to use trajectory-only adaptation. Source and target sole offsets identify each hoof's contact reference. Flat-ground clips can use **Clamp Feet To Reference Floor** and a limited **Max Body Lowering** correction. These are authored ground-plane corrections, not terrain raycasts.
+
+Select the profile and run **Tools → Riggle → Convert Selected Quadruped Animation Profile**. Output is ordinary Unity transform `.anim` clips, sampled at the chosen rate, with quaternion continuity. Bind them to an Animator on that target hierarchy. **Include Root Motion** retains horizontal motion and turning on `RiggleGeneric_Bones`; in-place output retains vertical motion. This carrier motion is an animated child transform, not an automatically extracted `Animator.deltaPosition`. Repeated conversions create new assets, preserving earlier clips. Animation events, facial blendshapes and additive-layer semantics are not copied; convert full-body Generic clips first.
+
+The supplied profile is `Demo/Generated/Horse Retarget/LP Horse to Pink Pony.asset`. It converts LP Horse idle, collected walk, extended walk, trot, canter and gallop onto a new four-segment pink pony. `Pink Pony Animated.prefab` has an Animator Controller with all six converted clips. Its multi-segment Legs Animator component starts disabled so animation can be reviewed directly; enable and tune it when adding terrain correction. The original two-segment walking prefabs remain available.
+
+Open `Demo/Scenes/Riggle Pink Pony Horse Animations.unity` for the synchronized source/target comparison. Rebuild with **Tools → Riggle → Build Pink Pony Horse Animation Showcase**. In Edit Mode, call `Docky.RiggleTools.Demo.RiggleQuadrupedRetargetRecording.Arm()` then Play to record 48 seconds at 1080p/30fps under `Builds/Horse Retarget`; it pauses at completion. The video compares baked animation with runtime ground IK disabled. [Watch the uploaded comparison](https://docky.net/builds/riggle-pink-pony-horse-retarget-hoof-fix-2026-11-08.mp4). The converter preserves source asset data and uses isolated preview scenes. Tests cover reference calibration, rotated imported motion roots, deterministic sampling, saved-clip equivalence, optional root travel, chain reach/lengths and existing two-segment behavior.
+
+The blue pony comparison is `Demo/Scenes/Riggle Blue Pony Horse Animations.unity`, rebuilt with **Tools → Riggle → Build Blue Pony Horse Animation Showcase**. Its fitted four-segment rig, mapping profile, animated prefab and six clips are in `Demo/Generated/Horse Retarget/Blue Pony`. Use the same recorder `Arm()` call with this scene open; its recording goes to `Builds/Horse Retarget/Blue Pony`. Both pony profiles run through the same seven retarget tests, including 120 Hz terminal-angle and contact checks across all six gaits. [Watch the blue pony comparison](https://docky.net/builds/riggle-blue-pony-horse-retarget-hoof-fix-2026-11-08.mp4).
+
+The combined terrain trial is `Demo/Scenes/Riggle Pink Pony Retarget Uneven Walk.unity`, rebuilt with **Tools → Riggle → Build Pink Pony Retarget Terrain Trial**. It plays the converted collected walk at a speed matched to 0.3 m/s travel, uses Legs Animator Moving glue mode, and solves all four segments. `RiggleAnimatedHoofGrounding` adjusts sole/reach targets without scheduling steps. Its reusable prefab is `Demo/Generated/Horse Retarget/Pink Pony Retarget Terrain.prefab`. The recorder uses `.Arm("Pink Pony Retarget")`; validate its measured report with `python3 Pootle_Unity/Tools/QuadrupedTrial/verify_retarget_terrain.py`. This authored walk can have two supporting feet, so its validation differs from the earlier three-support procedural walk. Physical support counts actual sole positions within 2 cm of the collider; `minimumSupports` separately retains the vendor glue-state count, which can fall to one while two soles touch the floor. Step counts follow animated detach cycles. Terminal-bend validation uses post-IK bone positions. [Watch the terrain recording](https://docky.net/builds/riggle-pink-pony-retarget-hoof-fix-uneven-walk-2026-11-08.mp4).
+
+### Horse and fawn uneven-floor walking trials
+
+Open `Demo/Scenes/Riggle Pink Horse Uneven Walk.unity` or `Riggle Toy Fawn Uneven Walk.unity` and press Play. Each textured animal walks 12.3 metres over rolling ground, a ramp, a cross-slope and shallow descending steps. The saved walking prefabs and baked meshes are in `Demo/Generated/Quadruped Trials`. **Tools → Riggle → Build Horse and Fawn Walking Trials** rebuilds both scenes from their fitted joint definitions; it requires Legs Animator to be installed.
+
+The supplied GLBs had no skeleton or animation. Their converted, unskinned FBXs and extracted textures are in `Demo/Characters/Quadruped Trials`; Riggle generates the skinned skeletons in the Unity prefabs. Conversion normalizes height to 1.8 metres, grounds the feet and aligns forward. `Tools/QuadrupedTrial/convert_models.py` reproduces conversion through Blender. `Builds/Quadruped Trials/horse-and-fawn-fbx.zip` packages both FBXs with their textures.
+
+`Integrations/LegsAnimatorDemo` is an optional integration with a direct dependency on the installed FImpossible package. Keep it out of projects without Legs Animator. The demo drives forward travel and schedules a four-beat walk, with one swinging leg at a time. Legs Animator supplies foot arcs, glue, ground alignment and IK. The custom cadence module also corrects the final hoof sole against the collider and lowers the hips when necessary to keep targets reachable. These recordings therefore demonstrate Legs Animator with that module, rather than its default configuration. Core's optional reflection adapter remains independent of the vendor assembly.
+
+Expected results: all four legs step, planted sole references remain on the ground, at least three legs support the body, feet adopt different heights on uneven terrain, and chains stay within their reach. The 2026-11-08 recordings completed 45 seconds each with 30 steps per leg, zero missed ground rays, zero invalid bone samples and a maximum reach ratio of 0.975. Maximum swing clearance was 10.95 cm for the horse and 10.17 cm for the fawn. Both passed all 12 checks in `Tools/QuadrupedTrial/verify_recordings.py`. Contact measurements use actual post-IK hoof reference points; they do not certify every skinned surface vertex against the floor.
+
+To record again, open the corresponding saved scene in Edit Mode, call `Docky.RiggleTools.Demo.RiggleQuadrupedRecording.Arm("Pink Horse")` or `.Arm("Toy Fawn")`, then enter Play Mode. The editor-only recorder captures 45 seconds at 1920×1080 / 30 fps, writes MP4, reference frames and measured JSON reports under `Builds/Quadruped Trials/Videos`, and pauses when complete. Stop Play Mode afterwards. From the repository root, run `python3 Pootle_Unity/Tools/QuadrupedTrial/verify_recordings.py` to check both reports. The original scene is not automatically restored by the recorder.
+
+Uploaded through Transmit: [horse recording](https://docky.net/builds/riggle-pink-horse-uneven-walk-2026-11-08.mp4), [fawn recording](https://docky.net/builds/riggle-toy-fawn-uneven-walk-2026-11-08.mp4).
+
+The blue pony uses the same course in `Demo/Scenes/Riggle Blue Pony Uneven Walk.unity`, with `Demo/Generated/Quadruped Trials/Blue Pony Walking.prefab`. Rebuild it separately with **Tools → Riggle → Build Blue Pony Walking Trial**. Its fitted short legs, three-bone tail and body-height settings are specific to this model. The source FBX and textures are in `Demo/Characters/Quadruped Trials/Blue Pony`, also packaged in `Builds/Quadruped Trials/blue-pony-fbx.zip`. To convert this input again, run Blender with `--python Tools/QuadrupedTrial/convert_models.py -- --source /path/to/Cute_Blue_Toy_Pony.glb --label "Blue Pony"` from the Unity project directory. Record with `.Arm("Blue Pony")`; verify with `python3 Pootle_Unity/Tools/QuadrupedTrial/verify_recordings.py pink-horse toy-fawn blue-pony` from the repository root. [Blue pony recording](https://docky.net/builds/riggle-blue-pony-uneven-walk-2026-11-08.mp4).
 
 For model delivery and automation, see the [model handoff sheet](MODEL_HANDOFF.md) and [model structure and one-button specification](MODEL_SPEC.md). The specification distinguishes current behavior from the proposed one-button workflow.
 
@@ -15,7 +75,7 @@ Keep the Riggle and Ash Assets Control Rig folders together, with Unity Animatio
 1. In Unity, select **GameObject → 3D Object → Riggle Demo Biped**. The menu spawns a simple cartoon bean character made from built-in primitives, complete with markers.
 2. Select its root, which has the **Riggle** component.
 3. Turn on **Gizmos** in the Scene view if necessary. Click one of the coloured dots to select it, then drag its position handle. The yellow dot is selected; pink dots are the mirrored side. Alternatively select a dot in the Inspector and use **Place dot by clicking Scene** (click positions a dot on a constant-depth plane, so colliders are unnecessary).
-4. Click **BAKE RIGGLE • Bones + Skinning**. The tool generates `Riggle_Bones` and one `Riggle_Skin_*` child per source mesh, and writes cloned skinned mesh assets under `Assets/RiggleGenerated/`.
+4. Click **BAKE RIGGLE • Bones + Skinning**. The tool generates `Riggle_Bones` and one `Riggle_Skin_*` child per source mesh, and writes cloned skinned mesh assets under `Assets/_EXPERIMENTAL/Riggle/Demo/Generated/`.
 5. Expand the rig and rotate `Riggle_LeftLowerArm`, `Riggle_LeftUpperArm`, or `Riggle_Head` to inspect the deform. Reset their local rotations to (0,0,0) afterwards.
 6. Move a landmark and **Bake** again to rebuild from the original, unmodified meshes.
 
@@ -89,7 +149,7 @@ Auto-Rig Pro's human *Smart* landmark workflow and Quick Rig's editable/non-dest
 
 ## Riggle test scene: two working humanoids
 
-Open `Assets/_EXPERIMENTAL/Riggle/riggle test.unity`. Both **Bean Biped** and **model_doggy_avatar_sketch** have fitted landmarks, saved Humanoid Avatars, skinned meshes and an imported **Control Rig** child. The camera frames both characters and their six-pose comparison rows.
+Open `Assets/_EXPERIMENTAL/Riggle/Demo/Scenes/riggle test.unity`. Both **Bean Biped** and **model_doggy_avatar_sketch** have fitted landmarks, saved Humanoid Avatars, skinned meshes and an imported **Control Rig** child. The camera frames both characters and their six-pose comparison rows.
 
 Enter Play Mode and select transforms under each **Control Rig**: move **Left/Right Hand Target** or **Left/Right Leg Target**, adjust their **Hint** to steer the elbow/knee, move **Hip target**, rotate the spine targets, or move **Head LookAt Target**. The `Rig` weight blends the controls with the base pose. Unity Animation Rigging also supports preview through the Animation window. Stop Play Mode to return to the saved rest pose; runtime target edits are temporary.
 
@@ -113,7 +173,7 @@ This is a review of the documented systems, not an audit of Auto-Rig Pro's imple
 
 | System | Auto-Rig Pro | Riggle / this integration |
 |---|---|---|
-| Detection and skeleton authoring | Smart markers, optional AI guessing, finger detection; presets and modular limbs | Mirrored landmarks and bounds fitting; manually fitted biped templates; no AI, fingers, facial or quadruped generation |
+| Detection and skeleton authoring | Smart markers, optional AI guessing, finger detection; presets and modular limbs | Mirrored landmarks and bounds fitting; manually fitted biped templates; separate Generic quadruped preset; no AI, fingers or facial generation |
 | Skin binding | Heat Maps, approximate Voxelized surface binding, optional third-party Voxel Heat Diffuse; split-parts and selected-region options | Envelope or contiguous surface propagation, welded seams, anatomical island masks; no volumetric solver |
 | Deformation refinement | Weight painting, corrective shapes, secondary/twist/bendy controls | Four influences per vertex, a seam-aware weight brush, twist helpers and sculptable pose-driven shoulder/hip correctives |
 | Animation controls | IK/FK snapping/baking, poles, space switching, foot roll, pinning, spline IK, head/finger/facial controls | Imported two-bone IK, hints, hip, spine twist, head aim, fitted foot pivots, matched IK/FK switching and FK rotation controls; no space-switch or animation bake tools |
@@ -132,8 +192,8 @@ Each bake saves a reusable `<character>_Skinned.prefab` in **Asset Folder**. **S
 
 The test scene contains:
 
-- `Assets/RiggleGenerated/Bean/Riggle Demo - Bean Biped_Skinned.prefab`
-- `Assets/RiggleGenerated/Dog/model_doggy_avatar_sketch_Skinned.prefab`
+- `Assets/_EXPERIMENTAL/Riggle/Demo/Generated/Bean/Riggle Demo - Bean Biped_Skinned.prefab`
+- `Assets/_EXPERIMENTAL/Riggle/Demo/Generated/Dog/model_doggy_avatar_sketch_Skinned.prefab`
 
 In Play Mode, select either original character's **Riggle** component, or use **Tools → Control Rig Builder**. Each limb has **Switch to FK / Switch to IK**. Switching matches all three FK controls to the current bones, or matches the IK target and pole to the current FK pose. In FK, rotate the nested root/bend/tip controls under **Control Rig/FK controls**; the builder window has selection buttons. Hips/spine evaluate before the FK base and limb IK, so a rotated character root does not introduce a pose jump. The matched FK base stays beneath IK to preserve axial rotation. These controls own the limb pose: disable Rig Builder to let ordinary Animator clips fully drive the character. This is a pose switch, not a keyframe or animation-curve baking system.
 
@@ -209,8 +269,8 @@ import, retaining the generated runtime skeleton, skins and controls.
 six visible pose tests to the right of each authoring character. Their reusable
 prefabs are:
 
-- `Assets/RiggleGenerated/Fox Girl/Fox Girl_Skinned.prefab`
-- `Assets/RiggleGenerated/Base Mesh/Base Mesh_Skinned.prefab`
+- `Assets/_EXPERIMENTAL/Riggle/Demo/Generated/Fox Girl/Fox Girl_Skinned.prefab`
+- `Assets/_EXPERIMENTAL/Riggle/Demo/Generated/Base Mesh/Base Mesh_Skinned.prefab`
 
 Both have valid Humanoid Avatars, contiguous surface weighting, twist distribution
 and matched IK/FK controls. Fox Girl uses one-sided reference empties with inferred
@@ -265,7 +325,7 @@ modified by the merge.
 
 Example: `Riggle Rigid Parts.unity` has a retro robot with 16 merged parts, a
 `Head^ Hat`, a `Chest^ Backpack`, and six posed copies. Its runtime prefab is
-`Assets/RiggleGenerated/Retro Robot/Retro Robot_Skinned.prefab`.
+`Assets/_EXPERIMENTAL/Riggle/Demo/Generated/Retro Robot/Retro Robot_Skinned.prefab`.
 
 ### Body chunks with strict bone scopes
 
@@ -404,3 +464,19 @@ Open `Riggle Kawaii Retargeting.unity` for seven character rows and eight shared
 Offline capture must refresh skinning as well as evaluate the animation graph. Multiple manual `Step` / `Camera.Render` calls without a player frame can render a cached skinned pose while the root keeps moving. The showcase recorder bakes each current `SkinnedMeshRenderer` pose into temporary render meshes per captured frame, then removes them and restores the saved scene. This is capture-only; live playback retains normal skinned renderers. The retarget tests also check arm/leg rotation and a changing rendered silhouette with root motion disabled across real player frames.
 
 The reusable recorder is `Tools/RiggleRetargetVideo.cs` (outside Assets). With the saved comparison scene open in Edit Mode, run `unity command script run --file Tools/RiggleRetargetVideo.cs --entry RiggleRetargetVideo.Main` from the Unity project directory. It writes the 90-second MP4, frame checks and progress status under `Builds/Riggle Showcase`, and restores the saved scene after capture.
+
+## Ponytails
+
+In Rig Helper → Fit, add optional appendages and enable **Middle ponytail**, **Left ponytail**, and/or **Right ponytail**. All start disabled; all three can coexist. Each chain attaches to `Riggle_Head`. Choose **2–7 points including tip** (1–6 deforming bones and a terminal marker), weighting radius, source-origin/empty guides, and **Y direction (degrees)**. Defaults are straight and horizontal in character space: middle points back (180°), left outward (-90°), right outward (90°). Y direction rotates the guide path around its first point; reposition guides to fit the model, then rebake. A path accepts 2–7 authored guides.
+
+Named Body Parts use `Ponytail` or `Ponytail.M` / `Ponytail.L` / `Ponytail.R`; the Body Part component also has Ponytail and Middle/Left/Right choices. Smooth Skin supports corresponding whole-mesh/island Skin Binding parts. Numbered rigid targets include `MiddlePonytail01`, `Ponytail02.L`, and `RightPonytail06`. Generated names are `Riggle_MiddlePonytail01`…`06`, likewise Left/Right, with a `*PonytailEnd` tip. Hair stays scoped to its selected chain.
+
+Ponytail chains default to **External Motion** on Riggle Appendage Rig, so its LateUpdate and pose preview leave those bones alone. Configure your chosen dynamic bone system with the corresponding `Riggle_*Ponytail01` root and terminal child; the bones follow the head through parenting. Riggle generates and skins the chains; it does not simulate hair physics. Clear External Motion only when you want the generated FK controls to own that chain instead. Existing ear/tail/wing FK behavior is retained.
+
+### Dynamic animal ears
+
+Enable **Two animal ears** in Rig Helper → Fit and **Ear external motion (dynamic bones)** for external simulation. Fit the ear paths and use **Orientation (X / Y / Z)** for upright, sideways, back-facing or floppy-ear rest directions. Mirrored ears reflect both guide positions and orientation; disable ear mirroring to fit each independently. Ears keep their existing 2–16 bend-segment setting. They attach to Head and use `Riggle_LeftEar01` / `Riggle_RightEar01` as dynamic-system roots. Existing FK ear setups remain compatible; enable external motion explicitly for a dynamic setup.
+
+### Hidden alternate attachments
+
+In either named-part assembly mode, a doubled attachment symbol means attach separately and start inactive: `Head^^ Alternate hat`, `^^Head`, or a `^^ Alternate hat` under a Head-named parent. A single `^` retains its usual visibility. Custom symbols double in the same way (`Head@@ Alternate hat` for `@`). Alternatives retain their meshes/components and can be enabled with `SetActive(true)`. Rebaking reapplies the hidden default; Clear restores the source's original parent, local pose and active state. Exported prefabs retain the hidden alternatives, so they can be switched at runtime.

@@ -1,0 +1,1 @@
+{"name": "Riggle.Demo.Runtime", "references": ["Riggle.Runtime", "ControlRig.Runtime", "Unity.Animation.Rigging"]}

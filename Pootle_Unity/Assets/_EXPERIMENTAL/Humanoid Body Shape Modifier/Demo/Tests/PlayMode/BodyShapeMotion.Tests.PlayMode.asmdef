@@ -1,0 +1,10 @@
+{
+  "name": "BodyShapeMotion.Tests.PlayMode",
+  "references": [
+    "BodyShapeMotion.Runtime",
+    "HumanoidBodyShapeModifier.Demo.Runtime"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

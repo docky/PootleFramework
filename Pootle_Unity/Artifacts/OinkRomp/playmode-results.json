@@ -1,0 +1,104 @@
+{
+  "status": "completed",
+  "duration": 4.31,
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "results": [
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.BalloonsDeflateAndLandingRestoresHopBudgetButNotSupply",
+      "Status": "Passed",
+      "Duration": 0.4496228,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.BirdsOnlyShowDialogueWithinRange",
+      "Status": "Passed",
+      "Duration": 0.4185423,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.CoastalTunnelHasClearEntranceAndExit",
+      "Status": "Passed",
+      "Duration": 0.2895406,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.DarkRoomIsWalkableAndRestoresOutdoorLighting",
+      "Status": "Passed",
+      "Duration": 0.4464542,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.FirstHopIsRegularThenOnlyThreeBalloonsAndHoldPops",
+      "Status": "Passed",
+      "Duration": 0.2322783,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.GatesRequirePushAndTheirObjective",
+      "Status": "Passed",
+      "Duration": 0.2914209,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.KeyboardAndJoystickBindingsProduceMovementAndJump",
+      "Status": "Passed",
+      "Duration": 0.4597112,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.MudSubmergesPigAndBankIsWalkable",
+      "Status": "Passed",
+      "Duration": 0.2662168,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.PickupsSupplyApplesAndBalloonsOnceAndRespectCapacity",
+      "Status": "Passed",
+      "Duration": 0.272851,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.SpringCountsAsFirstHopAndKeepsThreeInflations",
+      "Status": "Passed",
+      "Duration": 0.275581,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.TunnelCanBeWalkedThroughAndRecoveryKeepsSupplies",
+      "Status": "Passed",
+      "Duration": 0.2772362,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.TunnelZoneCutsAwayRoofAndRestoresItOnExit",
+      "Status": "Passed",
+      "Duration": 0.3727304,
+      "Message": null,
+      "StackTrace": null
+    },
+    {
+      "FullName": "OinkRomp.Tests.OinkRompPlayModeTests.WalkOntoSpringThenHoverAndPopOntoLookout",
+      "Status": "Passed",
+      "Duration": 0.2156332,
+      "Message": null,
+      "StackTrace": null
+    }
+  ]
+}

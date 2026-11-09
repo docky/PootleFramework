@@ -1,0 +1,4 @@
+93f5de4acdfd1d6a68d4269eccb5359595833042210d8a4b4618bf898e12a075  Riggle-v0.2-Core.unitypackage
+ea2545bc6e79000c4415e80245c6769722d8a5d6a022c81d5f56a54c5b7d2afe  Riggle-v0.2-Demo.unitypackage
+d1aad7808f1b4bfbdf650c587119ad7931191822b32069b2183f9847750d354d  Humanoid-Body-Shape-Modifier-v0.1-Core.unitypackage
+74657364136600ad5a846d6fa43d2ab988540fd32d2456ca35fe7809b0a3c5a9  Humanoid-Body-Shape-Modifier-v0.1-Demo.unitypackage

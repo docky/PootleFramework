@@ -45,9 +45,9 @@ Names can be on a mesh or a parent group containing unnamed meshes. Use a **Rigg
 
 ## Accessories and optional appendages
 
-In either named mode, use **`Head^ Hat`**, **`UpperChest^ Backpack`** or **`Hand.L^ Tool`**. These remain separate objects and follow the target bone. The `^` convention does not apply to Smooth Skin.
+In either named mode, use **`Head^ Hat`**, **`UpperChest^ Backpack`** or **`Hand.L^ Tool`**. These remain separate objects and follow the target bone. Double the marker (`Head^^ Alternate hat`) to attach but start hidden; Clear restores original source visibility. The `^` convention does not apply to Smooth Skin.
 
-Optional bendable parts are `Ear.L`/`Ear.R`, `Tail`, `Wing.L`/`Wing.R`. Enable them in Riggle Appendages and provide ordered root-to-tip guides. Names alone do not enable them. Default segment counts are four per ear/wing and eight for the tail; each chain supports 2–16. Supply both sides’ geometry even when guides are mirrored.
+Optional bendable parts are `Ear.L`/`Ear.R`, `Tail`, `Wing.L`/`Wing.R`, and `Ponytail` (Middle), `Ponytail.L`/`Ponytail.R`. Enable them in Riggle Appendages and provide ordered root-to-tip guides. Names alone do not enable them. Default segment counts are four per ear/wing and eight for the tail; each chain supports 2–16. Supply both sides’ geometry even when guides are mirrored. Ponytails instead use 2–7 points including the tip (1–6 deforming segments), default five points, with straight horizontal paths and a Y direction. All three attach to Head. Ear paths support XYZ orientation and optional external motion; ponytails default to external motion. Configure the external dynamic bone system on each first bone; Riggle does not simulate bending or flopping.
 
 Enable separate limb meshes when future swapping is needed. This preserves separate skins sharing one skeleton; it does not generate rubber-hose replacements.
 

@@ -1,0 +1,44 @@
+Shot 0 starts at 0 frames, (-6.60, 3.04, 10.21)
+0 frames: position=(-6.60, 3.00, 10.22), hop=0, active=0, capacity=0, mode=Grounded, slam=0, zone=ZONE 02 · Pine meadow
+90 frames: position=(-6.60, 3.00, 12.99), hop=0, active=0, capacity=1, mode=Grounded, slam=0, zone=ZONE 02 · Pine meadow
+180 frames: position=(-10.13, 3.00, 15.43), hop=0, active=0, capacity=1, mode=Grounded, slam=0, zone=ZONE 02 · Pine meadow
+270 frames: position=(-9.30, 3.00, 17.98), hop=0, active=0, capacity=1, mode=Grounded, slam=0, zone=ZONE 02 · Pine meadow
+Shot 1 starts at 300 frames, (-17.00, 0.15, -4.60)
+360 frames: position=(-17.00, -0.01, -2.98), hop=0, active=0, capacity=2, mode=Grounded, slam=0, zone=ZONE · Beach rail · default comparison
+Shot 2 starts at 420 frames, (5.00, 7.24, 28.40)
+450 frames: position=(5.08, 7.00, 28.26), hop=0, active=0, capacity=2, mode=Grounded, slam=0, zone=ZONE 03 · Sun terrace
+Shot 3 starts at 540 frames, (-4.00, 11.15, 45.40)
+540 frames: position=(-3.92, 11.08, 45.52), hop=0, active=0, capacity=3, mode=Grounded, slam=0, zone=ZONE 04 · High meadow
+630 frames: position=(-4.00, 11.00, 47.01), hop=0, active=0, capacity=4, mode=Grounded, slam=0, zone=ZONE 04 · High meadow
+Shot 4 starts at 660 frames, (22.00, 103.20, 36.40)
+720 frames: position=(22.00, 103.00, 38.00), hop=0, active=0, capacity=5, mode=Grounded, slam=0, zone=ZONE · Cave hidden fern room
+810 frames: position=(22.00, 103.00, 37.97), hop=0, active=0, capacity=5, mode=Grounded, slam=0, zone=ZONE · Cave hidden fern room
+Shot 5 starts at 900 frames, (-16.00, 10.35, 17.40)
+900 frames: position=(-16.28, 10.28, 17.53), hop=1, active=0, capacity=5, mode=Airborne, slam=0, zone=ZONE 02 · Pine meadow
+990 frames: position=(-16.05, 10.17, 18.65), hop=0, active=0, capacity=6, mode=RailWalking, slam=0, zone=ZONE 02 · Pine meadow
+Shot 6 starts at 1020 frames, (2.00, 15.24, 60.40)
+1080 frames: position=(2.00, 15.09, 62.02), hop=0, active=0, capacity=7, mode=Grounded, slam=0, zone=ZONE · Summit hut porch
+Shot 7 starts at 1140 frames, (9.00, 103.03, 24.00)
+1170 frames: position=(9.00, 103.03, 27.13), hop=0, active=0, capacity=7, mode=Grounded, slam=0, zone=ZONE · Cave south tunnel
+Shot 8 starts at 1260 frames, (-12.00, 5.14, 2.00)
+1260 frames: position=(-12.00, 5.08, 2.00), hop=0, active=0, capacity=7, mode=Grounded, slam=0, zone=fallback
+1350 frames: position=(-12.00, 19.55, 2.00), hop=5, active=4, capacity=7, mode=Airborne, slam=0, zone=fallback
+1440 frames: position=(-12.00, 38.55, 2.00), hop=8, active=7, capacity=7, mode=Airborne, slam=0, zone=fallback
+1530 frames: position=(-12.28, -0.01, 0.56), hop=0, active=0, capacity=7, mode=Grounded, slam=33.19946, zone=ZONE · Beach rail · default comparison
+1620 frames: position=(-12.28, -0.01, 0.56), hop=0, active=0, capacity=7, mode=Grounded, slam=33.19946, zone=ZONE · Beach rail · default comparison
+Shot 9 starts at 1680 frames, (-16.02, 10.35, 18.85)
+1710 frames: position=(-16.63, 9.90, 16.86), hop=0, active=0, capacity=7, mode=RailSliding, slam=3.742069, zone=fallback
+1800 frames: position=(-25.13, 2.99, 14.97), hop=0, active=0, capacity=7, mode=Grounded, slam=3.742069, zone=ZONE · Hidden three-wall courtyard
+1890 frames: position=(-25.13, 2.99, 14.97), hop=0, active=0, capacity=7, mode=Grounded, slam=3.742069, zone=ZONE · Hidden three-wall courtyard
+Shot 10 starts at 1980 frames, (-18.23, 5.22, 19.41)
+1980 frames: position=(-18.23, 5.22, 19.41), hop=0, active=0, capacity=7, mode=Dangling, slam=3.742069, zone=ZONE 02 · Pine meadow
+2070 frames: position=(-15.62, 5.53, 18.78), hop=0, active=0, capacity=7, mode=Dangling, slam=3.742069, zone=ZONE 02 · Pine meadow
+2160 frames: position=(-14.20, 5.61, 19.26), hop=1, active=0, capacity=7, mode=Airborne, slam=3.742069, zone=ZONE 02 · Pine meadow
+Shot 11 starts at 2190 frames, (9.00, 12.10, 30.50)
+2250 frames: position=(9.00, 5.30, 16.46), hop=0, active=0, capacity=7, mode=Airborne, slam=3.742069, zone=ZONE 02 · Pine meadow
+2340 frames: position=(9.00, 3.11, 14.27), hop=0, active=0, capacity=7, mode=Grounded, slam=3.742069, zone=ZONE 02 · Pine meadow
+Shot 12 starts at 2400 frames, (13.00, 0.05, 12.60)
+2430 frames: position=(13.00, -0.01, 14.06), hop=0, active=0, capacity=7, mode=Grounded, slam=3.742069, zone=ZONE 02 · Pine meadow
+2520 frames: position=(13.08, 0.51, 18.96), hop=0, active=0, capacity=7, mode=Grounded, slam=3.742069, zone=ZONE 02 · Pine meadow
+Shot 13 starts at 2580 frames, (-6.60, 3.04, 10.21)
+2610 frames: position=(-5.18, 3.00, 11.26), hop=0, active=0, capacity=7, mode=Grounded, slam=3.742069, zone=ZONE 02 · Pine meadow

@@ -1,0 +1,15 @@
+{
+  "name": "OinkRomp.Tests",
+  "references": [
+    "OinkRomp.Runtime",
+    "Pootle.Runtime",
+    "Unity.InputSystem",
+    "Pootle.Cinemachine",
+    "Pootle.Splines",
+    "Unity.Cinemachine",
+    "Unity.Splines"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

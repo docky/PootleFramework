@@ -1,0 +1,1 @@
+{"name": "HumanoidBodyShapeModifier.Editor", "references": ["BodyShapeMotion.Runtime"], "includePlatforms": ["Editor"]}

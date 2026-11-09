@@ -1,0 +1,33 @@
+{
+  "unity": "6000.6.3f1",
+  "coreExports": {
+    "modifier": {
+      "passed": true,
+      "riggle": false,
+      "modifier": true
+    },
+    "riggle": {
+      "passed": true,
+      "riggle": true,
+      "modifier": false
+    }
+  },
+  "riggleAnimationRigging": "6.6.0 (installed from existing local package cache)",
+  "method": "Compile exact exported assets in separate empty projects; verify runtime types, Riggle control-rig resource scripts and helper UXML.",
+  "demoValidation": "Archive contents verified against asset manifests; demo scenes were not run in these clean projects.",
+  "riggleFeatureUpdate": {
+    "features": [
+      "Middle/Left/Right ponytails with 2\u20137 points",
+      "Oriented externally driven animal ears",
+      "Double-marker hidden alternate attachments"
+    ],
+    "editorChecks": 88,
+    "playModeChecks": 12,
+    "coreCleanCompile": {
+      "passed": true,
+      "riggle": true,
+      "modifier": false
+    },
+    "note": "Final package code compiled in clean project; subsequent changes were model-contract documentation only."
+  }
+}

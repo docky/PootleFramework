@@ -1,0 +1,15 @@
+{
+  "name": "BodyShapeMotion.Tests.Editor",
+  "references": [
+    "BodyShapeMotion.Runtime",
+    "BodyShapeMotion.Editor",
+    "HumanoidBodyShapeModifier.Editor",
+    "HumanoidBodyShapeModifier.Demo.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
